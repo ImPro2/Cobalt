@@ -1,5 +1,6 @@
 #pragma once
 #include "Window.hpp"
+#include "Vulkan/GraphicsContext.hpp"
 
 #include <memory>
 
@@ -21,6 +22,7 @@ namespace Cobalt
 		bool mRunning = true;
 
 		std::unique_ptr<Window> mWindow;
+		std::unique_ptr<GraphicsContext> mGraphicsContext;
 	};
 
 }

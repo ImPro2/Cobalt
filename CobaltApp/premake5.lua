@@ -8,6 +8,7 @@ project "CobaltApp"
         "ImGui",
         "GLFW",
         "stb_image",
+        "VkBootstrap",
 		"%{Library.Vulkan}",
 	}
 
@@ -25,4 +26,5 @@ project "CobaltApp"
 		"%{IncludeDir.GLM}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.ImGui}",
+        "%{IncludeDir.VkBootstrap}"
 	}

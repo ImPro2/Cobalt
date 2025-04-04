@@ -23,6 +23,8 @@ namespace Cobalt
 			std::exit(1);
 		}
 
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
 		mWindow = glfwCreateWindow(mWidth, mHeight, mTitle.c_str(), nullptr, nullptr);
 
 		glfwSetWindowUserPointer(mWindow, this);

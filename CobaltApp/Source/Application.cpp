@@ -9,6 +9,8 @@ namespace Cobalt
 		{
 			mRunning = false;
 		});
+
+		mGraphicsContext = std::make_unique<GraphicsContext>(*mWindow);
 	}
 
 	Application::~Application()
@@ -18,12 +20,21 @@ namespace Cobalt
 	void Application::Init()
 	{
 		mWindow->Create();
+		mGraphicsContext->Init();
 	}
 
 	void Application::Run()
 	{
 		while (mRunning)
 		{
+
+			// Update
+
+			mGraphicsContext->RecreateSwapchainIfNeeded();
+
+			mGraphicsContext->RenderFrame();
+			mGraphicsContext->PresentFrame();
+
 			mWindow->Update();
 		}
 	}

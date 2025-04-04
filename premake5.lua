@@ -15,6 +15,7 @@ IncludeDir["GLM"]         = "%{wks.location}/Dependencies/GLM/"
 IncludeDir["stb_image"]   = "%{wks.location}/Dependencies/stb_image/include"
 IncludeDir["ImGui"]       = "%{wks.location}/Dependencies/ImGui"
 IncludeDir["VulkanSDK"]   = "%{VULKAN_SDK}/Include"
+IncludeDir["VkBootstrap"] = "%{wks.location}/Dependencies/VkBootstrap/src"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
@@ -58,6 +59,7 @@ group "Dependencies"
     include "Dependencies/GLFW"
     include "Dependencies/ImGui"
     include "Dependencies/stb_image"
+	include "Dependencies/VkBootstrap"
 group ""
 
 include "CobaltApp"
