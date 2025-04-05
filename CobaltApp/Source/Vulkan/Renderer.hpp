@@ -21,7 +21,7 @@ namespace Cobalt
 		static void BeginScene();
 		static void EndScene();
 
-		static void DrawSquare();
+		static void DrawCube();
 
 	private:
 		static void CreateOrRecreateFramebuffers();
@@ -39,6 +39,7 @@ namespace Cobalt
 			VkDeviceMemory DepthTextureMemory;
 
 			glm::vec3 CameraPosition = glm::vec3(0, 0, 3);
+			glm::vec3 CubeRotation = glm::vec3(0);
 		};
 
 		struct PushConstants

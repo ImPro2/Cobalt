@@ -2,6 +2,7 @@
 #include "Application.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
 namespace Cobalt
@@ -11,6 +12,7 @@ namespace Cobalt
 	{
 		alignas(16) glm::vec3 aPosition;
 		alignas(16) glm::vec3 aColor;
+		alignas(16) glm::vec3 aNormal;
 	};
 
 	void Renderer::Init()
@@ -30,40 +32,40 @@ namespace Cobalt
 			std::array<Vertex, vertexCount> vertices;
 
 			// front
-			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
-			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
-			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
-			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
+			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
 
 			// back 
-			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
-			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
-			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
-			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
+			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
 
 			// right 
-			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
-			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
-			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
-			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
+			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
 
 			// left
-			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
-			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
-			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
-			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
+			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
 
 			// top
-			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
-			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
-			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
-			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
+			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
 
 			// bottom
-			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
-			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
-			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
-			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
+			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
 
 			std::array<uint32_t, indexCount> indices;
 
@@ -242,7 +244,8 @@ namespace Cobalt
 			PipelineInfo pipelineInfo = {
 				.InputLayout = VertexInputLayout({
 					VertexInputLayoutAttribute(0, VK_FORMAT_R32G32B32A32_SFLOAT),
-					VertexInputLayoutAttribute(1, VK_FORMAT_R32G32B32A32_SFLOAT)
+					VertexInputLayoutAttribute(1, VK_FORMAT_R32G32B32A32_SFLOAT),
+					VertexInputLayoutAttribute(2, VK_FORMAT_R32G32B32A32_SFLOAT)
 				}),
 				.VertexShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/VertexShader.spv", VK_SHADER_STAGE_VERTEX_BIT),
 				.FragmentShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/FragmentShader.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
@@ -307,7 +310,7 @@ namespace Cobalt
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void Renderer::DrawSquare()
+	void Renderer::DrawCube()
 	{
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
 
@@ -333,11 +336,11 @@ namespace Cobalt
 			float inc = 0.05f;
 
 			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-				sData->CameraPosition.z += inc;
+				sData->CameraPosition.z -= inc;
 			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 				sData->CameraPosition.x -= inc;
 			if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-				sData->CameraPosition.z -= inc;
+				sData->CameraPosition.z += inc;
 			if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 				sData->CameraPosition.x += inc;
 			if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
@@ -346,12 +349,14 @@ namespace Cobalt
 				sData->CameraPosition.y -= inc;
 		}
 
+		sData->CubeRotation.y += 1;
+
 		glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), sData->CameraPosition);
 		glm::vec3 squarePosition = glm::vec3(0, 0.0f, 0);
 
 		PushConstants pushConstants;
 		pushConstants.ViewProjection = glm::perspectiveFov(glm::radians(45.0f), width, height, 0.1f, 1000.0f) * glm::inverse(cameraTransform);
-		pushConstants.Transform = glm::translate(glm::mat4(1.0f), squarePosition);
+		pushConstants.Transform = glm::translate(glm::mat4(1.0f), squarePosition) * glm::eulerAngleXYZ(glm::radians(sData->CubeRotation.x), glm::radians(sData->CubeRotation.y), glm::radians(sData->CubeRotation.z));
 
 		vkCmdPushConstants(commandBuffer, sData->TrianglePipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
 

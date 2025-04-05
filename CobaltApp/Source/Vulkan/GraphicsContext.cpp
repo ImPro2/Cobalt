@@ -402,7 +402,7 @@ namespace Cobalt
 
 		{
 			Renderer::BeginScene();
-			Renderer::DrawSquare();
+			Renderer::DrawCube();
 			Renderer::EndScene();
 		}
 		
