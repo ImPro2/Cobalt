@@ -10,6 +10,11 @@ namespace Cobalt
 	class Application
 	{
 	public:
+		static Application* Get() { return sInstance; }
+
+		const Window& GetWindow() const { return *mWindow; }
+
+	public:
 		Application();
 		~Application();
 
@@ -19,6 +24,8 @@ namespace Cobalt
 		void Shutdown();
 
 	private:
+		inline static Application* sInstance;
+
 		bool mRunning = true;
 
 		std::unique_ptr<Window> mWindow;

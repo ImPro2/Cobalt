@@ -27,6 +27,9 @@ namespace Cobalt
 		const VkImage*     GetBackBuffers()     const { return mBackBuffers;     }
 		const VkImageView* GetBackBufferViews() const { return mBackBufferViews; }
 
+		uint32_t        GetBackBufferIndex()    const { return mBackBufferIndex;  }
+		uint32_t* GetBackBufferIndexPtr() const { return (uint32_t*)&mBackBufferIndex; }
+
 	private:
 		void CreateOrRecreateSwapchain();
 		void CreateOrRecreateBackbuffers();
@@ -46,6 +49,8 @@ namespace Cobalt
 		uint32_t           mBackBufferCount = 0;
 		VkImage*           mBackBuffers     = nullptr;
 		VkImageView*       mBackBufferViews = nullptr;
+
+		uint32_t           mBackBufferIndex = 0;
 	};
 
 }

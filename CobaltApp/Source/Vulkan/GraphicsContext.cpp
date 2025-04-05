@@ -1,5 +1,6 @@
 #include "GraphicsContext.hpp"
 #include "VulkanUtils.hpp"
+#include "Renderer.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -17,6 +18,10 @@ namespace Cobalt
 	GraphicsContext::GraphicsContext(const Window& window)
 		: mWindow(window)
 	{
+		if (sGraphicsContextInstance)
+			return;
+
+		sGraphicsContextInstance = this;
 	}
 
 	GraphicsContext::~GraphicsContext()
@@ -213,47 +218,16 @@ namespace Cobalt
 			mSwapchain = std::make_unique<Swapchain>(mWindow, mDevice, mPhysicalDevice, mSurface);
 		}
 
-		// Create the Render Pass
+		// Create transient command pool
 
 		{
-			VkAttachmentDescription attachment = {};
-			attachment.format = mSwapchain->GetSurfaceFormat().format;
-			attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			VkAttachmentReference color_attachment = {};
-			color_attachment.attachment = 0;
-			color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			VkSubpassDescription subpass = {};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = 1;
-			subpass.pColorAttachments = &color_attachment;
-			VkSubpassDependency dependency = {};
-			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-			dependency.dstSubpass = 0;
-			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.srcAccessMask = 0;
-			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			VkRenderPassCreateInfo info = {};
-			info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			info.attachmentCount = 1;
-			info.pAttachments = &attachment;
-			info.subpassCount = 1;
-			info.pSubpasses = &subpass;
-			info.dependencyCount = 1;
-			info.pDependencies = &dependency;
-			VK_CALL(vkCreateRenderPass(mDevice, &info, nullptr, &mRenderPass));
-		}
+			VkCommandPoolCreateInfo commandPoolCreateInfo = {
+				.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+				.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
+				.queueFamilyIndex = (uint32_t)mQueueFamily,
+			};
 
-		// Create framebuffers
-
-		{
-			CreateOrRecreateFramebuffers();
+			VK_CALL(vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mTransientCommandPool));
 		}
 
 		// Create frames
@@ -315,6 +289,56 @@ namespace Cobalt
 		vkDestroyInstance(mInstance, nullptr);
 	}
 
+	VkCommandBuffer GraphicsContext::AllocateTransientCommandBuffer()
+	{
+		VkCommandBuffer commandBuffer;
+
+		VkCommandBufferAllocateInfo allocInfo = {
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+			.commandPool = mTransientCommandPool,
+			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+			.commandBufferCount = 1,
+		};
+
+		vkAllocateCommandBuffers(mDevice, &allocInfo, &commandBuffer);
+
+		return commandBuffer;
+	}
+
+	void GraphicsContext::SubmitSingleTimeCommands(VkQueue queue, std::function<void(VkCommandBuffer)> fn)
+	{
+		VkFenceCreateInfo fenceCreateInfo = {
+			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+			.flags = 0
+		};
+
+		VkFence fence;
+		VK_CALL(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &fence));
+
+		VkCommandBuffer commandBuffer = AllocateTransientCommandBuffer();
+
+		VkCommandBufferBeginInfo beginInfo = {
+			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+		};
+
+		VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+		fn(commandBuffer);
+		VK_CALL(vkEndCommandBuffer(commandBuffer));
+
+		VkSubmitInfo submitInfo = {
+			.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			.commandBufferCount = 1,
+			.pCommandBuffers = &commandBuffer
+		};
+
+		VK_CALL(vkQueueSubmit(queue, 1, &submitInfo, fence));
+		VK_CALL(vkWaitForFences(mDevice, 1, &fence, VK_TRUE, UINT64_MAX));
+
+		vkDestroyFence(mDevice, fence, nullptr);
+		vkFreeCommandBuffers(mDevice, mTransientCommandPool, 1, &commandBuffer);
+	}
+
 	void GraphicsContext::RenderFrame()
 	{
 		VkResult result;
@@ -326,9 +350,9 @@ namespace Cobalt
 		{
 			VK_CALL(vkWaitForFences(mDevice, 1, &fd.AcquireNextImageFence, VK_TRUE, UINT64_MAX));
 
-			result = vkAcquireNextImageKHR(mDevice, mSwapchain->GetHandle(), UINT64_MAX, fd.ImageAcquiredSemaphore, VK_NULL_HANDLE, &mBackbufferIndex);
+			result = vkAcquireNextImageKHR(mDevice, mSwapchain->GetHandle(), UINT64_MAX, fd.ImageAcquiredSemaphore, VK_NULL_HANDLE, mSwapchain->GetBackBufferIndexPtr());
 
-			if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR || mBackbufferIndex == -1)
+			if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR || mSwapchain->GetBackBufferIndex() == -1)
 			{
 				mRecreateSwapchain = true;
 				return;
@@ -356,24 +380,11 @@ namespace Cobalt
 		// Do rendering
 
 		{
-			VkClearValue clearValues = {.color = {{1.0f, 0.0f, 0.0f, 1.0f}}};
-
-			VkRenderPassBeginInfo beginInfo = {
-				.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-				.renderPass = mRenderPass,
-				.framebuffer = mFramebuffers[mBackbufferIndex],
-				.renderArea = {.extent = mSwapchain->GetExtent() },
-				.clearValueCount = 1,
-				.pClearValues = &clearValues,
-			};
-
-			vkCmdBeginRenderPass(fd.CommandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-			// ...
-
-			vkCmdEndRenderPass(fd.CommandBuffer);
+			Renderer::BeginScene();
+			Renderer::DrawTriangle();
+			Renderer::EndScene();
 		}
-
+		
 		// Submit command buffer
 
 		{
@@ -410,7 +421,7 @@ namespace Cobalt
 			.pWaitSemaphores = &mFrames[mFrameIndex].RenderFinishedSemaphore,
 			.swapchainCount = 1,
 			.pSwapchains = &swapchain,
-			.pImageIndices = &mBackbufferIndex
+			.pImageIndices = mSwapchain->GetBackBufferIndexPtr()
 		};
 
 		VkResult result = vkQueuePresentKHR(mQueue, &presentInfo);
@@ -439,38 +450,6 @@ namespace Cobalt
 				return;
 
 			mSwapchain->Recreate();
-			CreateOrRecreateFramebuffers();
-		}
-	}
-
-	void GraphicsContext::CreateOrRecreateFramebuffers()
-	{
-		if (mFramebuffers.size() > 0)
-		{
-			for (VkFramebuffer framebuffer : mFramebuffers)
-				vkDestroyFramebuffer(mDevice, framebuffer, nullptr);
-
-			mFramebuffers.clear();
-		}
-
-		mFramebuffers.resize(mSwapchain->GetBackBufferCount());
-
-		VkFramebufferCreateInfo createInfo = {
-			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-			.flags = 0,
-			.renderPass = mRenderPass,
-			.attachmentCount = 1,
-			.width = mSwapchain->GetExtent().width,
-			.height = mSwapchain->GetExtent().height,
-			.layers = 1,
-		};
-
-		for (uint32_t i = 0; i < mSwapchain->GetBackBufferCount(); i++)
-		{
-			VkImageView attachment[1] = { mSwapchain->GetBackBufferViews()[i] };
-			createInfo.pAttachments = attachment;
-
-			VK_CALL(vkCreateFramebuffer(mDevice, &createInfo, nullptr, &mFramebuffers[i]));
 		}
 	}
 

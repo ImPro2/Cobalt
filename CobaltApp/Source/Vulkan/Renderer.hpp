@@ -1,5 +1,10 @@
 #pragma once
 #include "GraphicsContext.hpp"
+#include "Pipeline.hpp"
+#include "VulkanBuffer.hpp"
+
+#include <glm/glm.hpp>
+#include <array>
 
 namespace Cobalt
 {
@@ -7,19 +12,28 @@ namespace Cobalt
 	class Renderer
 	{
 	public:
-		Renderer(const GraphicsContext& graphicsContext);
-		~Renderer();
+		static void Init();
+		static void Shutdown();
 
 	public:
-		void Init();
-		void Shutdown();
+		static void BeginScene();
+		static void EndScene();
 
-	public:
-		void BeginScene();
-		void EndScene();
+		static void DrawTriangle();
 
 	private:
-		const GraphicsContext& mGraphicsContext;
+		static void CreateOrRecreateFramebuffers();
+
+	private:
+		struct RendererData
+		{
+			VkRenderPass MainRenderPass;
+			std::shared_ptr<Pipeline> TrianglePipeline;
+			std::vector<VkFramebuffer> Framebuffers;
+			std::unique_ptr<VulkanBuffer> VertexBuffer, IndexBuffer;
+		};
+
+		inline static RendererData* sData = nullptr;
 	};
 
 }

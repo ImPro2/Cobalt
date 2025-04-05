@@ -25,6 +25,20 @@ namespace Cobalt
 	class GraphicsContext
 	{
 	public:
+		static GraphicsContext& Get() { return *sGraphicsContextInstance; }
+
+		VkInstance       GetInstance()       const { return mInstance; }
+		VkDevice         GetDevice()         const { return mDevice;   }
+		VkPhysicalDevice GetPhysicalDevice() const { return mPhysicalDevice; }
+		VkQueue          GetQueue()          const { return mQueue;    }
+
+		const Swapchain& GetSwapchain() const { return *mSwapchain; }
+
+	public:
+		VkCommandBuffer AllocateTransientCommandBuffer();
+		void SubmitSingleTimeCommands(VkQueue queue, std::function<void(VkCommandBuffer)> fn);
+
+	public:
 		GraphicsContext(const Window& window);
 		~GraphicsContext();
 
@@ -41,37 +55,30 @@ namespace Cobalt
 		VkCommandBuffer GetActiveCommandBuffer() const { return mActiveCommandBuffer; }
 
 	private:
-		void CreateOrRecreateFramebuffers();
-
-	private:
 		const Window& mWindow;
 
 		uint32_t mFrameCount = 2;
 		uint32_t mFrameIndex = 0;
 		std::vector<FrameData> mFrames;
 
-		uint32_t mBackbufferIndex = 0;
-
 		VkCommandBuffer mActiveCommandBuffer;
 
 	private:
-		VkInstance       mInstance;
+		inline static GraphicsContext* sGraphicsContextInstance = nullptr;
+
+		VkInstance               mInstance;
 		VkDebugUtilsMessengerEXT mDebugUtilsMessenger;
-		VkPhysicalDevice mPhysicalDevice;
-		int32_t          mQueueFamily;
-		VkQueue          mQueue;
-		VkDevice         mDevice;
-		VkDescriptorPool mDescriptorPool;
-		VkSurfaceKHR     mSurface;
+		VkPhysicalDevice         mPhysicalDevice;
+		int32_t                  mQueueFamily;
+		VkQueue                  mQueue;
+		VkDevice                 mDevice;
+		VkDescriptorPool         mDescriptorPool;
+		VkSurfaceKHR             mSurface;
+		VkCommandPool            mTransientCommandPool;
 
 		std::unique_ptr<Swapchain> mSwapchain;
 
 		bool mRecreateSwapchain = false;
-
-		VkRenderPass mRenderPass;
-
-		std::vector<VkFramebuffer> mFramebuffers;
-
 		bool mEnableValidationLayers = true;
 	};
 
