@@ -437,19 +437,12 @@ namespace Cobalt
 		mFrameIndex = (mFrameIndex + 1) % mFrameCount;
 	}
 
-	void GraphicsContext::RecreateSwapchainIfNeeded()
+	void GraphicsContext::OnResize()
 	{
 		if (mRecreateSwapchain)
 		{
-			mRecreateSwapchain = false;
-
-			int32_t width, height;
-			glfwGetFramebufferSize(mWindow.GetWindow(), &width, &height);
-
-			if (width == 0 || height == 0)
-				return;
-
 			mSwapchain->Recreate();
+			mRecreateSwapchain = false;
 		}
 	}
 

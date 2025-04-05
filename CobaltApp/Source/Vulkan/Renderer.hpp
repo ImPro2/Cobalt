@@ -15,6 +15,8 @@ namespace Cobalt
 		static void Init();
 		static void Shutdown();
 
+		static void OnResize();
+
 	public:
 		static void BeginScene();
 		static void EndScene();

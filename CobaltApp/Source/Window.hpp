@@ -12,9 +12,10 @@ namespace Cobalt
 	{
 	public:
 		using CloseCallback = std::function<void()>;
+		using ResizeCallback = std::function<void(uint32_t, uint32_t)>;
 
 	public:
-		Window(CloseCallback closeCallback, uint32_t width = 1024, uint32_t height = 800, const char* title = "Cobalt App");
+		Window(uint32_t width = 1024, uint32_t height = 800, const char* title = "Cobalt App");
 		~Window();
 
 	public:
@@ -22,6 +23,11 @@ namespace Cobalt
 		void Close();
 
 		void Update();
+
+	public:
+		// called by Application
+		void OnWindowClose(CloseCallback callback) { mCloseCallback = callback; }
+		void OnWindowResize(ResizeCallback callback) { mResizeCallback = callback; }
 
 	public:
 		GLFWwindow*        GetWindow() const { return mWindow; }
@@ -37,6 +43,7 @@ namespace Cobalt
 		std::string mTitle;
 
 		CloseCallback mCloseCallback;
+		ResizeCallback mResizeCallback;
 	};
 
 }

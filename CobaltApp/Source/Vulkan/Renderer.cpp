@@ -126,6 +126,11 @@ namespace Cobalt
 		delete sData;
 	}
 
+	void Renderer::OnResize()
+	{
+		CreateOrRecreateFramebuffers();
+	}
+
 	void Renderer::BeginScene()
 	{
 		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();

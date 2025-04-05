@@ -34,6 +34,8 @@ namespace Cobalt
 
 		const Swapchain& GetSwapchain() const { return *mSwapchain; }
 
+		bool ShouldRecreateSwapchain() const { return mRecreateSwapchain; }
+
 	public:
 		VkCommandBuffer AllocateTransientCommandBuffer();
 		void SubmitSingleTimeCommands(VkQueue queue, std::function<void(VkCommandBuffer)> fn);
@@ -49,7 +51,7 @@ namespace Cobalt
 		void RenderFrame();
 		void PresentFrame();
 
-		void RecreateSwapchainIfNeeded();
+		void OnResize();
 
 	public:
 		VkCommandBuffer GetActiveCommandBuffer() const { return mActiveCommandBuffer; }

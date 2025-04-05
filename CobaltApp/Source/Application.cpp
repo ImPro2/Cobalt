@@ -11,10 +11,9 @@ namespace Cobalt
 
 		sInstance = this;
 
-		mWindow = std::make_unique<Window>([this]()
-		{
-			mRunning = false;
-		});
+		mWindow = std::make_unique<Window>();
+		mWindow->OnWindowClose([this]() { this->OnWindowClose(); });
+		mWindow->OnWindowResize([this](uint32_t width, uint32_t height) { this->OnWindowResize(width, height); });
 
 		mGraphicsContext = std::make_unique<GraphicsContext>(*mWindow);
 	}
@@ -37,7 +36,11 @@ namespace Cobalt
 		{
 			mWindow->Update();
 
-			mGraphicsContext->RecreateSwapchainIfNeeded();
+			if (mGraphicsContext->ShouldRecreateSwapchain())
+			{
+				mGraphicsContext->OnResize();
+				Renderer::OnResize();
+			}
 
 			mGraphicsContext->RenderFrame();
 			mGraphicsContext->PresentFrame();
@@ -50,6 +53,15 @@ namespace Cobalt
 
 		mGraphicsContext->Shutdown();
 		mWindow->Close();
+	}
+
+	void Application::OnWindowClose()
+	{
+		mRunning = false;
+	}
+
+	void Application::OnWindowResize(uint32_t width, uint32_t height)
+	{
 	}
 
 }

@@ -4,8 +4,8 @@
 namespace Cobalt
 {
 
-	Window::Window(CloseCallback closeCallback, uint32_t width, uint32_t height, const char* title)
-		: mCloseCallback(closeCallback), mWidth(width), mHeight(height), mTitle(title)
+	Window::Window(uint32_t width, uint32_t height, const char* title)
+		: mWidth(width), mHeight(height), mTitle(title)
 	{
 	}
 
@@ -32,7 +32,19 @@ namespace Cobalt
 		glfwSetWindowCloseCallback(mWindow, [](GLFWwindow* window)
 		{
 			Window* self = (Window*)glfwGetWindowUserPointer(window);
-			self->mCloseCallback();
+
+			if (self->mCloseCallback)
+				self->mCloseCallback();
+		});
+
+		glfwSetWindowSizeCallback(mWindow, [](GLFWwindow* window, int32_t width, int32_t height)
+		{
+			Window* self = (Window*)glfwGetWindowUserPointer(window);
+			self->mWidth = (uint32_t)width;
+			self->mHeight = (uint32_t)height;
+
+			if (self->mResizeCallback)
+				self->mResizeCallback(self->mWidth, self->mHeight);
 		});
 	}
 

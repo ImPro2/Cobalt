@@ -24,6 +24,10 @@ namespace Cobalt
 		void Shutdown();
 
 	private:
+		void OnWindowClose();
+		void OnWindowResize(uint32_t width, uint32_t height);
+
+	private:
 		inline static Application* sInstance;
 
 		bool mRunning = true;
