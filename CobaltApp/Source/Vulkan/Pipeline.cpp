@@ -164,13 +164,20 @@ namespace Cobalt
 
 		//Vector<VkDescriptorSetLayout> descriptorSetLayouts = mInfo.Shader.As<VulkanShader>()->GetDescriptorSetLayouts();
 
+		VkPushConstantRange pushConstantRanges[1];
+		pushConstantRanges[0] = {
+			.stageFlags = mInfo.PushConstantShaderStage,
+			.offset = 0,
+			.size = mInfo.PushConstantSize,
+		};
+
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.flags = 0,
 			.setLayoutCount = 0,
 			.pSetLayouts = nullptr,
-			.pushConstantRangeCount = 0,
-			.pPushConstantRanges = nullptr
+			.pushConstantRangeCount = 1,
+			.pPushConstantRanges = pushConstantRanges
 		};
 
 		VK_CALL(vkCreatePipelineLayout(GraphicsContext::Get().GetDevice(), &pipelineLayoutCreateInfo, nullptr, &mPipelineLayout));

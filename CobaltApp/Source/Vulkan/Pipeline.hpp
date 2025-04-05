@@ -18,6 +18,9 @@ namespace Cobalt
 		VkPrimitiveTopology PrimitiveTopology;
 
 		bool EnableDepthTesting;
+
+		uint32_t PushConstantSize;
+		VkShaderStageFlags PushConstantShaderStage = VK_SHADER_STAGE_VERTEX_BIT;
 	};
 
 	class Pipeline
@@ -31,6 +34,7 @@ namespace Cobalt
 
 	public:
 		VkPipeline GetPipeline() const { return mPipeline; }
+		VkPipelineLayout GetPipelineLayout() const { return mPipelineLayout; }
 
 	private:
 		PipelineInfo mInfo;

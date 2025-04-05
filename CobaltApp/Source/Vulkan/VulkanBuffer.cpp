@@ -4,25 +4,20 @@
 namespace Cobalt
 {
 
-	namespace Utils
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDeviceHandle)
 	{
+		VkPhysicalDeviceMemoryProperties memoryProperties;
+		vkGetPhysicalDeviceMemoryProperties(physicalDeviceHandle, &memoryProperties);
 
-		static uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDeviceHandle)
+		for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
 		{
-			VkPhysicalDeviceMemoryProperties memoryProperties;
-			vkGetPhysicalDeviceMemoryProperties(physicalDeviceHandle, &memoryProperties);
-
-			for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
+			if (typeFilter & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
 			{
-				if (typeFilter & (1 << i) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
-				{
-					return i;
-				}
+				return i;
 			}
-
-			return 0;
 		}
 
+		return 0;
 	}
 
 	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags)
@@ -43,7 +38,7 @@ namespace Cobalt
 		VkMemoryAllocateInfo memoryAllocateInfo = {
 			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 			.allocationSize = mMemoryRequirements.size,
-			.memoryTypeIndex = Utils::FindMemoryType(mMemoryRequirements.memoryTypeBits, memoryPropertyFlags, GraphicsContext::Get().GetPhysicalDevice())
+			.memoryTypeIndex = FindMemoryType(mMemoryRequirements.memoryTypeBits, memoryPropertyFlags, GraphicsContext::Get().GetPhysicalDevice())
 		};
 
 		VK_CALL(vkAllocateMemory(GraphicsContext::Get().GetDevice(), &memoryAllocateInfo, nullptr, &mMemory));

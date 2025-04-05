@@ -21,7 +21,7 @@ namespace Cobalt
 		static void BeginScene();
 		static void EndScene();
 
-		static void DrawTriangle();
+		static void DrawSquare();
 
 	private:
 		static void CreateOrRecreateFramebuffers();
@@ -33,6 +33,18 @@ namespace Cobalt
 			std::shared_ptr<Pipeline> TrianglePipeline;
 			std::vector<VkFramebuffer> Framebuffers;
 			std::unique_ptr<VulkanBuffer> VertexBuffer, IndexBuffer;
+
+			VkImage DepthTexture;
+			VkImageView DepthTextureView;
+			VkDeviceMemory DepthTextureMemory;
+
+			glm::vec3 CameraPosition = glm::vec3(0, 0, 3);
+		};
+
+		struct PushConstants
+		{
+			glm::mat4 ViewProjection;
+			glm::mat4 Transform;
 		};
 
 		inline static RendererData* sData = nullptr;

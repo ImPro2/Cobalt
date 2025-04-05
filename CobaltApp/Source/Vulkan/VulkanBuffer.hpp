@@ -4,6 +4,8 @@
 namespace Cobalt
 {
 
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties, VkPhysicalDevice physicalDeviceHandle);
+
 	class VulkanBuffer
 	{
 	public:

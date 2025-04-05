@@ -1,6 +1,9 @@
 #include "Renderer.hpp"
 #include "Application.hpp"
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+
 namespace Cobalt
 {
 
@@ -20,17 +23,63 @@ namespace Cobalt
 		// Init buffers
 
 		{
-			std::array<Vertex, 4> vertices;
-			vertices[0].aPosition = { -0.5f,  0.5f, 0.0f };
-			vertices[0].aColor    = {  1.0f,  0.0f, 0.0f };
-			vertices[1].aPosition = { -0.5f, -0.5f, 0.0f };
-			vertices[1].aColor    = {  0.0f,  1.0f, 0.0f };
-			vertices[2].aPosition = {  0.5f, -0.5f, 0.0f };
-			vertices[2].aColor    = {  0.0f,  0.0f, 1.0f };
-			vertices[3].aPosition = {  0.5f,  0.5f, 0.0f };
-			vertices[3].aColor    = {  1.0f,  1.0f, 1.0f };
+			constexpr uint32_t squareCount = 6;
+			constexpr uint32_t vertexCount = squareCount * 4;
+			constexpr uint32_t indexCount = squareCount * 6;
 
-			std::array<uint32_t, 6> indices = { 0, 1, 2,  2, 3, 0};
+			std::array<Vertex, vertexCount> vertices;
+
+			// front
+			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
+			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
+			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
+			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f } };
+
+			// back 
+			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
+			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
+			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
+			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f } };
+
+			// right 
+			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
+			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
+			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
+			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f } };
+
+			// left
+			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
+			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
+			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
+			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f } };
+
+			// top
+			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
+			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
+			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
+			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f } };
+
+			// bottom
+			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
+			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
+			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
+			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f } };
+
+			std::array<uint32_t, indexCount> indices;
+
+			uint32_t offset = 0;
+			for (uint32_t i = 0; i < indices.size(); i += 6)
+			{
+				indices[i + 0] = offset + 0;
+				indices[i + 1] = offset + 1;
+				indices[i + 2] = offset + 2;
+
+				indices[i + 3] = offset + 2;
+				indices[i + 4] = offset + 3;
+				indices[i + 5] = offset + 0;
+
+				offset += 4;
+			}
 
 			VulkanBuffer vertexStagingBuffer = VulkanBuffer(sizeof(vertices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			vertexStagingBuffer.CopyData(0, sizeof(vertices), vertices.data());
@@ -62,36 +111,120 @@ namespace Cobalt
 			});
 		}
 
+		// Create depth texture
+
+		{
+			uint32_t width  = Application::Get()->GetWindow().GetWidth();
+			uint32_t height = Application::Get()->GetWindow().GetHeight();
+
+			VkImageCreateInfo imageCreateInfo = {
+				.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+				.flags = 0,
+				.imageType = VK_IMAGE_TYPE_2D,
+				.format = VK_FORMAT_D16_UNORM_S8_UINT,
+				.extent = { width, height, 1 },
+				.mipLevels = 1,
+				.arrayLayers = 1,
+				.samples = VK_SAMPLE_COUNT_1_BIT,
+				.tiling = VK_IMAGE_TILING_OPTIMAL,
+				.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+				.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+				.queueFamilyIndexCount = 0,
+				.pQueueFamilyIndices = nullptr,
+				.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
+			};
+
+			VK_CALL(vkCreateImage(GraphicsContext::Get().GetDevice(), &imageCreateInfo, nullptr, &sData->DepthTexture));
+
+			VkMemoryRequirements memoryRequirements;
+			vkGetImageMemoryRequirements(GraphicsContext::Get().GetDevice(), sData->DepthTexture, &memoryRequirements);
+
+			VkMemoryAllocateInfo memoryAllocateInfo = {
+				.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+				.allocationSize = memoryRequirements.size,
+				.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, GraphicsContext::Get().GetPhysicalDevice())
+			};
+
+			VK_CALL(vkAllocateMemory(GraphicsContext::Get().GetDevice(), &memoryAllocateInfo, nullptr, &sData->DepthTextureMemory));
+
+			VK_CALL(vkBindImageMemory(GraphicsContext::Get().GetDevice(), sData->DepthTexture, sData->DepthTextureMemory, 0));
+
+			VkImageViewCreateInfo imageViewCreateInfo = {
+				.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+				.flags = 0,
+				.image = sData->DepthTexture,
+				.viewType = VK_IMAGE_VIEW_TYPE_2D,
+				.format = imageCreateInfo.format,
+				.components = {
+					.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+					.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+					.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+					.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+				},
+				.subresourceRange = {
+					.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
+					.baseMipLevel = 0,
+					.levelCount = 1,
+					.baseArrayLayer = 0,
+					.layerCount = 1
+				}
+			};
+
+			VK_CALL(vkCreateImageView(GraphicsContext::Get().GetDevice(), &imageViewCreateInfo, nullptr, &sData->DepthTextureView));
+		}
+
 		// Create the Render Pass
 
 		{
-			VkAttachmentDescription attachment = {};
-			attachment.format = GraphicsContext::Get().GetSwapchain().GetSurfaceFormat().format;
-			attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-			attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-			attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-			VkAttachmentReference color_attachment = {};
-			color_attachment.attachment = 0;
-			color_attachment.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			VkAttachmentDescription colorAttachment = {};
+			colorAttachment.format = GraphicsContext::Get().GetSwapchain().GetSurfaceFormat().format;
+			colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+			colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+			VkAttachmentReference colorAttachmentRef = {};
+			colorAttachmentRef.attachment = 0;
+			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+			VkAttachmentDescription depthAttachment = {};
+			depthAttachment.format = VK_FORMAT_D16_UNORM_S8_UINT;
+			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+			depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+			depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+			depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+			depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			VkAttachmentReference depthAttachmentRef = {};
+			depthAttachmentRef.attachment = 1;
+			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+			VkAttachmentDescription attachments[2] = { colorAttachment, depthAttachment };
+			VkAttachmentReference attachmentRefs[2] = { colorAttachmentRef, depthAttachmentRef };
+
 			VkSubpassDescription subpass = {};
 			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 			subpass.colorAttachmentCount = 1;
-			subpass.pColorAttachments = &color_attachment;
+			subpass.pColorAttachments = &colorAttachmentRef;
+			subpass.pDepthStencilAttachment = &depthAttachmentRef;
+
 			VkSubpassDependency dependency = {};
 			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 			dependency.dstSubpass = 0;
-			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			dependency.srcAccessMask = 0;
-			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
 			VkRenderPassCreateInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-			info.attachmentCount = 1;
-			info.pAttachments = &attachment;
+			info.attachmentCount = 2;
+			info.pAttachments = attachments;
 			info.subpassCount = 1;
 			info.pSubpasses = &subpass;
 			info.dependencyCount = 1;
@@ -114,7 +247,8 @@ namespace Cobalt
 				.VertexShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/VertexShader.spv", VK_SHADER_STAGE_VERTEX_BIT),
 				.FragmentShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/FragmentShader.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-				.EnableDepthTesting = false
+				.EnableDepthTesting = true,
+				.PushConstantSize = sizeof(PushConstants)
 			};
 
 			sData->TrianglePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
@@ -124,6 +258,10 @@ namespace Cobalt
 	void Renderer::Shutdown()
 	{
 		vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
+
+		vkDestroyImage(GraphicsContext::Get().GetDevice(), sData->DepthTexture, nullptr);
+		vkDestroyImageView(GraphicsContext::Get().GetDevice(), sData->DepthTextureView, nullptr);
+		vkFreeMemory(GraphicsContext::Get().GetDevice(), sData->DepthTextureMemory, nullptr);
 
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->MainRenderPass, nullptr);
 
@@ -144,15 +282,19 @@ namespace Cobalt
 
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
 
-		VkClearValue clearValues = {.color = {{0.0f, 0.0f, 0.0f, 1.0f}}};
+		VkClearValue clearValues[2] = {};
+		clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+		clearValues[0].depthStencil = {};
+		clearValues[1].color = {};
+		clearValues[1].depthStencil = {1.0f, 0};
 
 		VkRenderPassBeginInfo beginInfo = {
 			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 			.renderPass = sData->MainRenderPass,
 			.framebuffer = sData->Framebuffers[swapchain.GetBackBufferIndex()],
 			.renderArea = { .extent = swapchain.GetExtent() },
-			.clearValueCount = 1,
-			.pClearValues = &clearValues,
+			.clearValueCount = 2,
+			.pClearValues = clearValues,
 		};
 
 		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -165,7 +307,7 @@ namespace Cobalt
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void Renderer::DrawTriangle()
+	void Renderer::DrawSquare()
 	{
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
 
@@ -186,6 +328,33 @@ namespace Cobalt
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
+		{
+			GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
+			float inc = 0.05f;
+
+			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+				sData->CameraPosition.z += inc;
+			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+				sData->CameraPosition.x -= inc;
+			if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+				sData->CameraPosition.z -= inc;
+			if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+				sData->CameraPosition.x += inc;
+			if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+				sData->CameraPosition.y += inc;
+			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+				sData->CameraPosition.y -= inc;
+		}
+
+		glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), sData->CameraPosition);
+		glm::vec3 squarePosition = glm::vec3(0, 0.0f, 0);
+
+		PushConstants pushConstants;
+		pushConstants.ViewProjection = glm::perspectiveFov(glm::radians(45.0f), width, height, 0.1f, 1000.0f) * glm::inverse(cameraTransform);
+		pushConstants.Transform = glm::translate(glm::mat4(1.0f), squarePosition);
+
+		vkCmdPushConstants(commandBuffer, sData->TrianglePipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
+
 		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
 		VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
 
@@ -194,7 +363,7 @@ namespace Cobalt
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->TrianglePipeline->GetPipeline());
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, 0);
 	}
 
 	void Renderer::CreateOrRecreateFramebuffers()
@@ -215,7 +384,6 @@ namespace Cobalt
 			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 			.flags = 0,
 			.renderPass = sData->MainRenderPass,
-			.attachmentCount = 1,
 			.width = swapchain.GetExtent().width,
 			.height = swapchain.GetExtent().height,
 			.layers = 1,
@@ -223,8 +391,9 @@ namespace Cobalt
 
 		for (uint32_t i = 0; i < swapchain.GetBackBufferCount(); i++)
 		{
-			VkImageView attachment[1] = { swapchain.GetBackBufferViews()[i] };
-			createInfo.pAttachments = attachment;
+			VkImageView attachments[2] = { swapchain.GetBackBufferViews()[i], sData->DepthTextureView };
+			createInfo.attachmentCount = 2;
+			createInfo.pAttachments = attachments;
 
 			VK_CALL(vkCreateFramebuffer(GraphicsContext::Get().GetDevice(), &createInfo, nullptr, &sData->Framebuffers[i]));
 		}
