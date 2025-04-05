@@ -1,6 +1,7 @@
 #include "GraphicsContext.hpp"
 #include "VulkanUtils.hpp"
 #include "Renderer.hpp"
+#include "ImGuiBackend.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -404,20 +405,24 @@ namespace Cobalt
 			Renderer::BeginScene();
 			Renderer::DrawCube();
 			Renderer::EndScene();
+
+			ImGuiBackend::RenderFrame();
 		}
 		
-		// Submit command buffer
+		// Submit command buffers
 
 		{
 			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+			VkCommandBuffer commandBuffers[] = { mActiveCommandBuffer, ImGuiBackend::GetActiveCommandBuffer() };
 
 			VkSubmitInfo submitInfo = {
 				.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 				.waitSemaphoreCount = 1,
 				.pWaitSemaphores = &fd.ImageAcquiredSemaphore,
 				.pWaitDstStageMask = &waitStage,
-				.commandBufferCount = 1,
-				.pCommandBuffers = &fd.CommandBuffer,
+				.commandBufferCount = sizeof(commandBuffers) / sizeof(commandBuffers[0]),
+				.pCommandBuffers = commandBuffers,
 				.signalSemaphoreCount = 1,
 				.pSignalSemaphores = &fd.RenderFinishedSemaphore
 			};

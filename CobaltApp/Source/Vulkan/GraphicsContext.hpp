@@ -38,6 +38,9 @@ namespace Cobalt
 
 		bool ShouldRecreateSwapchain() const { return mRecreateSwapchain; }
 
+		uint32_t GetFrameCount() const { return mFrameCount; }
+		uint32_t GetFrameIndex() const { return mFrameIndex; }
+
 	public:
 		VkCommandBuffer AllocateTransientCommandBuffer();
 		void SubmitSingleTimeCommands(VkQueue queue, std::function<void(VkCommandBuffer)> fn);
