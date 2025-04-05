@@ -174,6 +174,13 @@ namespace Cobalt
 	void ImGuiBackend::EndFrame()
 	{
 		ImGui::Render();
+
+		// Render viewports
+
+		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			ImGui::UpdatePlatformWindows();
+		}
 	}
 
 	void ImGuiBackend::RenderFrame()
@@ -219,7 +226,6 @@ namespace Cobalt
 
 		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
 		}
 	}
@@ -227,6 +233,11 @@ namespace Cobalt
 	VkCommandBuffer ImGuiBackend::GetActiveCommandBuffer()
 	{
 		return sData->CommandBuffers[GraphicsContext::Get().GetFrameIndex()];
+	}
+
+	void ImGuiBackend::OnResize()
+	{
+		CreateOrRecreateFramebuffers();
 	}
 
 	void ImGuiBackend::CreateOrRecreateFramebuffers()
@@ -261,6 +272,5 @@ namespace Cobalt
 			VK_CALL(vkCreateFramebuffer(GraphicsContext::Get().GetDevice(), &createInfo, nullptr, &sData->Framebuffers[i]));
 		}
 	}
-
 
 }

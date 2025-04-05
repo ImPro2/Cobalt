@@ -16,6 +16,8 @@ namespace Cobalt
 		static void EndFrame();    // called by Application
 		static void RenderFrame(); // called by GraphicsContext
 
+		static void OnResize();
+
 	public:
 		static VkCommandBuffer GetActiveCommandBuffer();
 

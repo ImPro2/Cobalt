@@ -27,6 +27,7 @@ namespace Cobalt
 		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
 
 	private:
+		static void CreateOrRecreateDepthTexture();
 		static void CreateOrRecreateFramebuffers();
 
 	private:

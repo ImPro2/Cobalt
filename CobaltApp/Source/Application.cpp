@@ -42,14 +42,18 @@ namespace Cobalt
 			{
 				mGraphicsContext->OnResize();
 				Renderer::OnResize();
+				ImGuiBackend::OnResize();
 			}
+			else
+			{
 
-			ImGuiBackend::BeginFrame();
-			ImGui::ShowDemoWindow();
-			ImGuiBackend::EndFrame();
+				ImGuiBackend::BeginFrame();
+				ImGui::ShowDemoWindow();
+				ImGuiBackend::EndFrame();
 
-			mGraphicsContext->RenderFrame();
-			mGraphicsContext->PresentFrame();
+				mGraphicsContext->RenderFrame();
+				mGraphicsContext->PresentFrame();
+			}
 		}
 	}
 
