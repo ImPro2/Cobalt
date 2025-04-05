@@ -31,6 +31,8 @@ namespace Cobalt
 		VkDevice         GetDevice()         const { return mDevice;   }
 		VkPhysicalDevice GetPhysicalDevice() const { return mPhysicalDevice; }
 		VkQueue          GetQueue()          const { return mQueue;    }
+		int32_t GetQueueFamily() const { return mQueueFamily; }
+		VkDescriptorPool GetDescriptorPool() const { return mDescriptorPool; }
 
 		const Swapchain& GetSwapchain() const { return *mSwapchain; }
 

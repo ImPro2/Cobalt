@@ -1,5 +1,6 @@
 #include "Application.hpp"
 #include "Vulkan/Renderer.hpp"
+#include "Vulkan/ImGuiBackend.hpp"
 
 namespace Cobalt
 {
@@ -28,6 +29,7 @@ namespace Cobalt
 		mGraphicsContext->Init();
 
 		Renderer::Init();
+		ImGuiBackend::Init();
 	}
 
 	void Application::Run()
@@ -42,6 +44,10 @@ namespace Cobalt
 				Renderer::OnResize();
 			}
 
+			ImGuiBackend::BeginFrame();
+			ImGui::ShowDemoWindow();
+			ImGuiBackend::EndFrame();
+
 			mGraphicsContext->RenderFrame();
 			mGraphicsContext->PresentFrame();
 		}
@@ -49,6 +55,7 @@ namespace Cobalt
 
 	void Application::Shutdown()
 	{
+		ImGuiBackend::Shutdown();
 		Renderer::Shutdown();
 
 		mGraphicsContext->Shutdown();

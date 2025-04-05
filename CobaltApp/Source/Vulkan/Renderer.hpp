@@ -23,6 +23,9 @@ namespace Cobalt
 
 		static void DrawCube();
 
+	public:
+		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
+
 	private:
 		static void CreateOrRecreateFramebuffers();
 

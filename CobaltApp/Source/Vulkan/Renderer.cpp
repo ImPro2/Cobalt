@@ -5,6 +5,8 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
+#include <backends/imgui_impl_vulkan.h>
+
 namespace Cobalt
 {
 
@@ -206,31 +208,35 @@ namespace Cobalt
 			depthAttachmentRef.attachment = 1;
 			depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-			VkAttachmentDescription attachments[2] = { colorAttachment, depthAttachment };
+			VkAttachmentDescription attachments[2] = { colorAttachment, depthAttachment};
 			VkAttachmentReference attachmentRefs[2] = { colorAttachmentRef, depthAttachmentRef };
 
-			VkSubpassDescription subpass = {};
-			subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-			subpass.colorAttachmentCount = 1;
-			subpass.pColorAttachments = &colorAttachmentRef;
-			subpass.pDepthStencilAttachment = &depthAttachmentRef;
+			VkSubpassDescription subpass1 = {};
+			subpass1.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+			subpass1.colorAttachmentCount = 1;
+			subpass1.pColorAttachments = &colorAttachmentRef;
+			subpass1.pDepthStencilAttachment = &depthAttachmentRef;
 
-			VkSubpassDependency dependency = {};
-			dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-			dependency.dstSubpass = 0;
-			dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			dependency.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-			dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			VkSubpassDependency dependency1 = {};
+			dependency1.srcSubpass = VK_SUBPASS_EXTERNAL;
+			dependency1.dstSubpass = 0;
+			dependency1.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dependency1.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			dependency1.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			dependency1.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT/* | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT*/;
+			
+			VkSubpassDescription subpasses[1] = { subpass1 };
+			VkSubpassDependency dependencies[1] = { dependency1 };
 
 			VkRenderPassCreateInfo info = {};
 			info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 			info.attachmentCount = 2;
 			info.pAttachments = attachments;
 			info.subpassCount = 1;
-			info.pSubpasses = &subpass;
+			info.pSubpasses = subpasses;
 			info.dependencyCount = 1;
-			info.pDependencies = &dependency;
+			info.pDependencies = dependencies;
+
 			VK_CALL(vkCreateRenderPass(GraphicsContext::Get().GetDevice(), &info, nullptr, &sData->MainRenderPass));
 		}
 
@@ -306,6 +312,8 @@ namespace Cobalt
 	void Renderer::EndScene()
 	{
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
+
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
 		vkCmdEndRenderPass(commandBuffer);
 	}
