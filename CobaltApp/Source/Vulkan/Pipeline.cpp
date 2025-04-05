@@ -13,6 +13,9 @@ namespace Cobalt
 
 	Pipeline::~Pipeline()
 	{
+		if (mPipelineLayout)
+			vkDestroyPipelineLayout(GraphicsContext::Get().GetDevice(), mPipelineLayout, nullptr);
+
 		if (mPipeline)
 			vkDestroyPipeline(GraphicsContext::Get().GetDevice(), mPipeline, nullptr);
 	}

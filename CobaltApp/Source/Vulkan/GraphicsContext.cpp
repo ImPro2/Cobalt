@@ -286,6 +286,27 @@ namespace Cobalt
 
 	void GraphicsContext::Shutdown()
 	{
+		for (auto& fd : mFrames)
+		{
+			vkFreeCommandBuffers(mDevice, fd.CommandPool, 1, &fd.CommandBuffer);
+			vkDestroyCommandPool(mDevice, fd.CommandPool, nullptr);
+			vkDestroyFence(mDevice, fd.AcquireNextImageFence, nullptr);
+			vkDestroySemaphore(mDevice, fd.ImageAcquiredSemaphore, nullptr);
+			vkDestroySemaphore(mDevice, fd.RenderFinishedSemaphore, nullptr);
+		}
+
+		mFrames.clear();
+
+		vkDestroyCommandPool(mDevice, mTransientCommandPool, nullptr);
+
+		mSwapchain.reset();
+
+		vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
+		vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
+		vkDestroyDevice(mDevice, nullptr);
+
+		auto pfn_vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(mInstance, "vkDestroyDebugUtilsMessengerEXT");
+		pfn_vkDestroyDebugUtilsMessengerEXT(mInstance, mDebugUtilsMessenger, nullptr);
 		vkDestroyInstance(mInstance, nullptr);
 	}
 

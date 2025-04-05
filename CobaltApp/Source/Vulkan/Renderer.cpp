@@ -123,6 +123,13 @@ namespace Cobalt
 
 	void Renderer::Shutdown()
 	{
+		vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
+
+		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->MainRenderPass, nullptr);
+
+		for (VkFramebuffer framebuffer : sData->Framebuffers)
+			vkDestroyFramebuffer(GraphicsContext::Get().GetDevice(), framebuffer, nullptr);
+		
 		delete sData;
 	}
 
