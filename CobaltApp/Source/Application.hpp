@@ -39,6 +39,7 @@ namespace Cobalt
 	private:
 		void OnWindowClose();
 		void OnWindowResize(uint32_t width, uint32_t height);
+		void OnMouseMove(float x, float y);
 
 	private:
 		inline static Application* sInstance;

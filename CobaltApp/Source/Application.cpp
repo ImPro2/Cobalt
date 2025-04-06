@@ -15,6 +15,7 @@ namespace Cobalt
 		mWindow = std::make_unique<Window>();
 		mWindow->OnWindowClose([this]() { this->OnWindowClose(); });
 		mWindow->OnWindowResize([this](uint32_t width, uint32_t height) { this->OnWindowResize(width, height); });
+		mWindow->OnMouseMove([this](float x, float y) { this->OnMouseMove(x, y); });
 
 		mGraphicsContext = std::make_unique<GraphicsContext>(*mWindow);
 	}
@@ -37,12 +38,18 @@ namespace Cobalt
 
 	void Application::Run()
 	{
+		float lastFrameTime = 0.0f;
+
 		while (mRunning)
 		{
+			float currentTime = glfwGetTime();
+			float deltaTime = currentTime - lastFrameTime;
+			lastFrameTime = currentTime;
+
 			mWindow->Update();
 
 			for (Module* module : mModules)
-				module->OnUpdate();
+				module->OnUpdate(deltaTime);
 
 			if (mGraphicsContext->ShouldRecreateSwapchain())
 			{
@@ -90,6 +97,12 @@ namespace Cobalt
 
 	void Application::OnWindowResize(uint32_t width, uint32_t height)
 	{
+	}
+
+	void Application::OnMouseMove(float x, float y)
+	{
+		for (Module* module : mModules)
+			module->OnMouseMove(x, y);
 	}
 
 }

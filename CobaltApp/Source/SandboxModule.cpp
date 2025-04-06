@@ -1,4 +1,5 @@
 #include "SandboxModule.hpp"
+#include "Application.hpp"
 #include <imgui.h>
 
 namespace Cobalt
@@ -7,8 +8,10 @@ namespace Cobalt
 	SandboxModule::SandboxModule()
 		: Module("SandboxModule")
 	{
-		mCamera.Translation = glm::vec3(0.0f, 0.0f, 3.0f);
+		float width  = Application::Get()->GetWindow().GetWidth();
+		float height = Application::Get()->GetWindow().GetHeight();
 
+		mCameraController = CameraController(width, height);
 		mCubeTransform = Transform();
 	}
 
@@ -18,20 +21,37 @@ namespace Cobalt
 
 	void SandboxModule::OnInit()
 	{
+		GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
+
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 
 	void SandboxModule::OnShutdown()
 	{
 	}
 
-	void SandboxModule::OnUpdate()
+	void SandboxModule::OnUpdate(float deltaTime)
 	{
+		GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		{
+			mCaptureMouse = false;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+		}
+		else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		{
+			mCaptureMouse = true;
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		}
+
+		mCameraController.OnUpdate(deltaTime);
 
 	}
 
 	void SandboxModule::OnRender()
 	{
-		Renderer::BeginScene(mCamera, mLightPosition, mLightColor);
+		Renderer::BeginScene(mCameraController.GetViewProjectionMatrix(), mCameraController.GetTranslation(), mLightPosition, mLightColor);
 		Renderer::DrawCube(mCubeTransform);
 		Renderer::EndScene();
 	}
@@ -40,21 +60,27 @@ namespace Cobalt
 	{
 		if (ImGui::Begin("SandboxModule"))
 		{
-			ImGui::SliderFloat3("Camera Translation", &mCamera.Translation.x, -10.0f, 10.0f);
+			//ImGui::DragFloat3("Camera Translation", &mCamera.Translation.x, -10.0f, 10.0f);
+
+			//ImGui::Separator();
+
+			ImGui::DragFloat3("Cube Translation", &mCubeTransform.Translation.x, -10.0f, 10.0f);
+			ImGui::DragFloat3("Cube Rotation", &mCubeTransform.Rotation.x, -10.0f, 10.0f);
+			ImGui::DragFloat3("Cube Scale", &mCubeTransform.Scale.x, -10.0f, 10.0f);
 
 			ImGui::Separator();
 
-			ImGui::SliderFloat3("Cube Translation", &mCubeTransform.Translation.x, -10.0f, 10.0f);
-			ImGui::SliderFloat3("Cube Rotation", &mCubeTransform.Rotation.x, -10.0f, 10.0f);
-			ImGui::SliderFloat3("Cube Scale", &mCubeTransform.Scale.x, -10.0f, 10.0f);
-
-			ImGui::Separator();
-
-			ImGui::SliderFloat3("Light Position", &mLightPosition.x, -10.0f, 10.0f);
-			ImGui::SliderFloat3("Light Colour", &mLightColor.x, 0.0f, 1.0f);
+			ImGui::DragFloat3("Light Position", &mLightPosition.x, -10.0f, 10.0f);
+			ImGui::DragFloat3("Light Colour", &mLightColor.x, 0.0f, 1.0f);
 		}
 
 		ImGui::End();
+	}
+
+	void SandboxModule::OnMouseMove(float x, float y)
+	{
+		if (mCaptureMouse)
+			mCameraController.OnMouseMove(x, y);
 	}
 
 }

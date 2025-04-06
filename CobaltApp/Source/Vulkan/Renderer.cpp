@@ -296,7 +296,7 @@ namespace Cobalt
 		CreateOrRecreateFramebuffers();
 	}
 
-	void Renderer::BeginScene(const Camera& camera, const glm::vec3& lightPosition, const glm::vec3& lightColor)
+	void Renderer::BeginScene(const glm::mat4& viewProjectionMatrix, const glm::vec3& cameraTranslation, const glm::vec3& lightPosition, const glm::vec3& lightColor)
 	{
 		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
 
@@ -323,10 +323,10 @@ namespace Cobalt
 		VkExtent2D extent = GraphicsContext::Get().GetSwapchain().GetExtent();
 
 		SceneData sceneData = {};
-		sceneData.ViewProjection = camera.GetViewProjectionMatrix(extent.width, extent.height);
+		sceneData.ViewProjection = viewProjectionMatrix;
 		sceneData.LightPosition = lightPosition;
 		sceneData.LightColor = lightColor;
-		sceneData.CameraPosition = camera.Translation;
+		sceneData.CameraPosition = cameraTranslation;
  
 		memcpy(sData->CurrentSceneData, &sceneData, sizeof(SceneData));
 

@@ -14,17 +14,6 @@
 namespace Cobalt
 {
 
-	struct Camera
-	{
-		glm::vec3 Translation;
-
-		glm::mat4 GetViewProjectionMatrix(float width, float height) const
-		{
-			glm::mat4 view = glm::inverse(glm::translate(glm::mat4(1.0f), Translation));
-			return glm::perspectiveFov(glm::radians(45.0f), width, height, 0.1f, 1000.0f) * view;
-		}
-	};
-
 	struct Transform
 	{
 		glm::vec3 Translation;
@@ -48,7 +37,7 @@ namespace Cobalt
 		static void OnResize();
 
 	public:
-		static void BeginScene(const Camera& camera, const glm::vec3& lightPosition, const glm::vec3& lightColor);
+		static void BeginScene(const glm::mat4& viewProjectionMatrix, const glm::vec3& cameraTranslation, const glm::vec3& lightPosition, const glm::vec3& lightColor);
 		static void EndScene();
 
 		static void DrawCube(const Transform& transform);

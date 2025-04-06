@@ -46,6 +46,15 @@ namespace Cobalt
 			if (self->mResizeCallback)
 				self->mResizeCallback(self->mWidth, self->mHeight);
 		});
+
+		glfwSetCursorPosCallback(mWindow, [](GLFWwindow* window, double x, double y)
+		{
+			Window* self = (Window*)glfwGetWindowUserPointer(window);
+
+			if (self->mMouseMoveCallback)
+				self->mMouseMoveCallback((float)x, (float)y);
+		});
+
 	}
 
 	void Window::Close()

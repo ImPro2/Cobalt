@@ -17,9 +17,13 @@ namespace Cobalt
 	public:
 		virtual void OnInit() {}
 		virtual void OnShutdown() {}
-		virtual void OnUpdate() {}
+
+		virtual void OnUpdate(float deltaTime) {}
+
 		virtual void OnRender() {}
 		virtual void OnUIRender() {}
+
+		virtual void OnMouseMove(float x, float y) {}
 
 	public:
 		const std::string& GetName() const { return mName; }
