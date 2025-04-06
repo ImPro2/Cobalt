@@ -157,6 +157,19 @@ namespace Cobalt
 	{
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->ImGuiRenderPass, nullptr);
 
+		for (uint32_t i = 0; i < sData->CommandBuffers.size(); i++)
+		{
+			vkFreeCommandBuffers(GraphicsContext::Get().GetDevice(), sData->CommandPools[i], 1, &sData->CommandBuffers[i]);
+			vkDestroyCommandPool(GraphicsContext::Get().GetDevice(), sData->CommandPools[i], nullptr);
+		}
+
+		for (VkFramebuffer framebuffer : sData->Framebuffers)
+			vkDestroyFramebuffer(GraphicsContext::Get().GetDevice(), framebuffer, nullptr);
+
+		sData->CommandPools.clear();
+		sData->CommandBuffers.clear();
+		sData->Framebuffers.clear();
+
 		ImGui_ImplVulkan_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();

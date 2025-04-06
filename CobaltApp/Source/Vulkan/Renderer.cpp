@@ -1,9 +1,6 @@
 #include "Renderer.hpp"
 #include "Application.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -186,6 +183,69 @@ namespace Cobalt
 
 		CreateOrRecreateFramebuffers();
 
+		// Create scene data
+
+		{
+			// Uniform buffer
+
+			sData->CurrentSceneData = new SceneData;
+
+			sData->SceneDataUniformBuffer = std::make_unique<VulkanBuffer>(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			sData->SceneDataUniformBuffer->Map(0, sizeof(SceneData), (void**)&sData->CurrentSceneData);
+
+			// Descriptor set layout
+
+			VkDescriptorSetLayoutBinding descSetLayoutBinding = {
+				.binding = 0,
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.descriptorCount = 1,
+				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			};
+
+			VkDescriptorSetLayoutBinding bindings[] = { descSetLayoutBinding };
+
+			VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo = {
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+				.bindingCount = sizeof(bindings) / sizeof(bindings[0]),
+				.pBindings = bindings
+			};
+
+			VK_CALL(vkCreateDescriptorSetLayout(GraphicsContext::Get().GetDevice(), &descSetLayoutCreateInfo, nullptr, &sData->SceneDataDescriptorSetLayout));
+
+			// Descriptor set
+
+			VkDescriptorSetAllocateInfo descSetAllocInfo = {
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+				.descriptorPool = GraphicsContext::Get().GetDescriptorPool(),
+				.descriptorSetCount = 1,
+				.pSetLayouts = &sData->SceneDataDescriptorSetLayout
+			};
+
+			VK_CALL(vkAllocateDescriptorSets(GraphicsContext::Get().GetDevice(), &descSetAllocInfo, &sData->SceneDataDescriptorSet));
+
+			// Update descriptor sets
+
+			VkDescriptorBufferInfo descBufferInfo = {
+				.buffer = sData->SceneDataUniformBuffer->GetBuffer(),
+				.offset = 0,
+				.range = sizeof(SceneData)
+			};
+
+			VkWriteDescriptorSet writeDescSet = {
+				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+				.dstSet = sData->SceneDataDescriptorSet,
+				.dstBinding = 0,
+				.dstArrayElement = 0,
+				.descriptorCount = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				.pBufferInfo = &descBufferInfo,
+			};
+
+			VkWriteDescriptorSet writeDescSets[] = { writeDescSet };
+
+			vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(writeDescSets) / sizeof(writeDescSets[0]), writeDescSets, 0, nullptr);
+		}
+
 		// Create pipeline
 
 		{
@@ -199,16 +259,24 @@ namespace Cobalt
 				.FragmentShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/FragmentShader.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 				.EnableDepthTesting = true,
-				.PushConstantSize = sizeof(PushConstants)
+				.PushConstantSize = sizeof(PushConstants),
+				.DescriptorSetLayouts = { sData->SceneDataDescriptorSetLayout }
 			};
 
-			sData->TrianglePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
+			sData->CubePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
 		}
 	}
 
 	void Renderer::Shutdown()
 	{
-		vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
+		vkDestroyDescriptorSetLayout(GraphicsContext::Get().GetDevice(), sData->SceneDataDescriptorSetLayout, nullptr);
+		vkFreeDescriptorSets(GraphicsContext::Get().GetDevice(), GraphicsContext::Get().GetDescriptorPool(), 1, &sData->SceneDataDescriptorSet);
+
+		sData->SceneDataUniformBuffer->Unmap();
+		sData->SceneDataUniformBuffer.reset();
+
+		//delete sData->CurrentSceneData;
+		sData->CurrentSceneData = nullptr;
 
 		vkDestroyImage(GraphicsContext::Get().GetDevice(), sData->DepthTexture, nullptr);
 		vkDestroyImageView(GraphicsContext::Get().GetDevice(), sData->DepthTextureView, nullptr);
@@ -228,7 +296,7 @@ namespace Cobalt
 		CreateOrRecreateFramebuffers();
 	}
 
-	void Renderer::BeginScene()
+	void Renderer::BeginScene(const Camera& camera, const glm::vec3& lightPosition, const glm::vec3& lightColor)
 	{
 		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
 
@@ -250,6 +318,19 @@ namespace Cobalt
 		};
 
 		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Upload scene data
+		VkExtent2D extent = GraphicsContext::Get().GetSwapchain().GetExtent();
+
+		SceneData sceneData = {};
+		sceneData.ViewProjection = camera.GetViewProjectionMatrix(extent.width, extent.height);
+		sceneData.LightPosition = lightPosition;
+		sceneData.LightColor = lightColor;
+		sceneData.CameraPosition = camera.Translation;
+ 
+		memcpy(sData->CurrentSceneData, &sceneData, sizeof(SceneData));
+
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
 	}
 
 	void Renderer::EndScene()
@@ -261,7 +342,7 @@ namespace Cobalt
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void Renderer::DrawCube()
+	void Renderer::DrawCube(const Transform& transform)
 	{
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
 
@@ -282,41 +363,17 @@ namespace Cobalt
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-		{
-			GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
-			float inc = 0.05f;
-
-			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-				sData->CameraPosition.z -= inc;
-			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-				sData->CameraPosition.x -= inc;
-			if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-				sData->CameraPosition.z += inc;
-			if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-				sData->CameraPosition.x += inc;
-			if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-				sData->CameraPosition.y += inc;
-			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-				sData->CameraPosition.y -= inc;
-		}
-
-		sData->CubeRotation.y += 1;
-
-		glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), sData->CameraPosition);
-		glm::vec3 squarePosition = glm::vec3(0, 0.0f, 0);
-
 		PushConstants pushConstants;
-		pushConstants.ViewProjection = glm::perspectiveFov(glm::radians(45.0f), width, height, 0.1f, 1000.0f) * glm::inverse(cameraTransform);
-		pushConstants.Transform = glm::translate(glm::mat4(1.0f), squarePosition) * glm::eulerAngleXYZ(glm::radians(sData->CubeRotation.x), glm::radians(sData->CubeRotation.y), glm::radians(sData->CubeRotation.z));
+		pushConstants.CubeTransform = transform.GetTransform();
 
-		vkCmdPushConstants(commandBuffer, sData->TrianglePipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
+		vkCmdPushConstants(commandBuffer, sData->CubePipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
 
 		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
 		VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
 
 		VkDeviceSize offset = 0;
 
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->TrianglePipeline->GetPipeline());
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipeline());
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 		vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, 0);

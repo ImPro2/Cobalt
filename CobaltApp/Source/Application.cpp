@@ -30,6 +30,9 @@ namespace Cobalt
 
 		Renderer::Init();
 		ImGuiBackend::Init();
+
+		for (Module* module : mModules)
+			module->OnInit();
 	}
 
 	void Application::Run()
@@ -38,27 +41,41 @@ namespace Cobalt
 		{
 			mWindow->Update();
 
+			for (Module* module : mModules)
+				module->OnUpdate();
+
 			if (mGraphicsContext->ShouldRecreateSwapchain())
 			{
 				mGraphicsContext->OnResize();
 				Renderer::OnResize();
 				ImGuiBackend::OnResize();
 			}
-			else
-			{
 
-				ImGuiBackend::BeginFrame();
-				ImGui::ShowDemoWindow();
-				ImGuiBackend::EndFrame();
+			ImGuiBackend::BeginFrame();
 
-				mGraphicsContext->RenderFrame();
-				mGraphicsContext->PresentFrame();
-			}
+			for (Module* module : mModules)
+				module->OnUIRender();
+
+			ImGuiBackend::EndFrame();
+
+			mGraphicsContext->RenderFrame(mModules);
+			mGraphicsContext->PresentFrame();
 		}
 	}
 
 	void Application::Shutdown()
 	{
+		for (Module* module : mModules)
+		{
+			module->OnShutdown();
+			delete module;
+			module = nullptr;
+		}
+
+		mModules.clear();
+
+		vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
+
 		ImGuiBackend::Shutdown();
 		Renderer::Shutdown();
 

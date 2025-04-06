@@ -4,10 +4,40 @@
 #include "VulkanBuffer.hpp"
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+
 #include <array>
 
 namespace Cobalt
 {
+
+	struct Camera
+	{
+		glm::vec3 Translation;
+
+		glm::mat4 GetViewProjectionMatrix(float width, float height) const
+		{
+			glm::mat4 view = glm::inverse(glm::translate(glm::mat4(1.0f), Translation));
+			return glm::perspectiveFov(glm::radians(45.0f), width, height, 0.1f, 1000.0f) * view;
+		}
+	};
+
+	struct Transform
+	{
+		glm::vec3 Translation;
+		glm::vec3 Rotation;
+		glm::vec3 Scale = glm::vec3(1.0f);
+
+		glm::mat4 GetTransform() const
+		{
+			glm::mat4 rotation = glm::toMat4(glm::quat(Rotation));
+
+			return glm::translate(glm::mat4(1.0f), Translation) * rotation * glm::scale(glm::mat4(1.0f), Scale);
+		}
+	};
 
 	class Renderer
 	{
@@ -18,10 +48,10 @@ namespace Cobalt
 		static void OnResize();
 
 	public:
-		static void BeginScene();
+		static void BeginScene(const Camera& camera, const glm::vec3& lightPosition, const glm::vec3& lightColor);
 		static void EndScene();
 
-		static void DrawCube();
+		static void DrawCube(const Transform& transform);
 
 	public:
 		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
@@ -31,10 +61,23 @@ namespace Cobalt
 		static void CreateOrRecreateFramebuffers();
 
 	private:
+		struct SceneData
+		{
+			glm::mat4 ViewProjection;
+			alignas(16) glm::vec3 LightPosition;
+			alignas(16) glm::vec3 LightColor;
+			alignas(16) glm::vec3 CameraPosition;
+		};
+
+		struct PushConstants
+		{
+			glm::mat4 CubeTransform;
+		};
+		
 		struct RendererData
 		{
 			VkRenderPass MainRenderPass;
-			std::shared_ptr<Pipeline> TrianglePipeline;
+			std::shared_ptr<Pipeline> CubePipeline;
 			std::vector<VkFramebuffer> Framebuffers;
 			std::unique_ptr<VulkanBuffer> VertexBuffer, IndexBuffer;
 
@@ -42,14 +85,11 @@ namespace Cobalt
 			VkImageView DepthTextureView;
 			VkDeviceMemory DepthTextureMemory;
 
-			glm::vec3 CameraPosition = glm::vec3(0, 0, 3);
-			glm::vec3 CubeRotation = glm::vec3(0);
-		};
+			std::unique_ptr<VulkanBuffer> SceneDataUniformBuffer;
+			VkDescriptorSetLayout SceneDataDescriptorSetLayout;
+			VkDescriptorSet SceneDataDescriptorSet;
 
-		struct PushConstants
-		{
-			glm::mat4 ViewProjection;
-			glm::mat4 Transform;
+			SceneData* CurrentSceneData = nullptr;
 		};
 
 		inline static RendererData* sData = nullptr;

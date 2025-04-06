@@ -21,6 +21,8 @@ namespace Cobalt
 
 		uint32_t PushConstantSize;
 		VkShaderStageFlags PushConstantShaderStage = VK_SHADER_STAGE_VERTEX_BIT;
+
+		std::vector<VkDescriptorSetLayout> DescriptorSetLayouts;
 	};
 
 	class Pipeline

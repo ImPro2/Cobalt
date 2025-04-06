@@ -1,4 +1,5 @@
 #include "GraphicsContext.hpp"
+#include "Application.hpp"
 #include "VulkanUtils.hpp"
 #include "Renderer.hpp"
 #include "ImGuiBackend.hpp"
@@ -361,7 +362,7 @@ namespace Cobalt
 		vkFreeCommandBuffers(mDevice, mTransientCommandPool, 1, &commandBuffer);
 	}
 
-	void GraphicsContext::RenderFrame()
+	void GraphicsContext::RenderFrame(const std::vector<Module*> modules)
 	{
 		VkResult result;
 
@@ -402,9 +403,36 @@ namespace Cobalt
 		// Do rendering
 
 		{
-			Renderer::BeginScene();
-			Renderer::DrawCube();
+#if 0
+			GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
+			float width = mSwapchain->GetExtent().width;
+			float height = mSwapchain->GetExtent().height;
+
+			static Camera camera = { .Translation = { 0, 0, 3 } };
+
+			static Transform transform;
+			//transform.Rotation.y += 0.005f;
+
+			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+				camera.Translation.z -= 0.01f;
+			if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+				camera.Translation.z += 0.01f;
+			if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+				camera.Translation.x += 0.01f;
+			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+				camera.Translation.x -= 0.01f;
+			if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+				camera.Translation.y += 0.01f;
+			if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+				camera.Translation.y -= 0.01f;
+
+			Renderer::BeginScene(camera);
+			Renderer::DrawCube(transform);
 			Renderer::EndScene();
+#endif
+
+			for (Module* module : modules)
+				module->OnRender();
 
 			ImGuiBackend::RenderFrame();
 		}

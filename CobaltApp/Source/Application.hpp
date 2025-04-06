@@ -1,6 +1,7 @@
 #pragma once
 #include "Window.hpp"
 #include "Vulkan/GraphicsContext.hpp"
+#include "Module.hpp"
 
 #include <memory>
 
@@ -19,6 +20,18 @@ namespace Cobalt
 		~Application();
 
 	public:
+		template<typename T>
+		Module* AddModule()
+		{
+			static_assert(std::is_base_of_v<Module, T>);
+
+			Module* module = new T;
+			mModules.push_back(module);
+
+			return module;
+		}
+
+	public:
 		void Init();
 		void Run();
 		void Shutdown();
@@ -34,6 +47,8 @@ namespace Cobalt
 
 		std::unique_ptr<Window> mWindow;
 		std::unique_ptr<GraphicsContext> mGraphicsContext;
+
+		std::vector<Module*> mModules;
 	};
 
 }

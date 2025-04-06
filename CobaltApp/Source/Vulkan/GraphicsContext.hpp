@@ -1,6 +1,7 @@
 #pragma once
 #include "../Window.hpp"
 #include "Swapchain.hpp"
+#include "Module.hpp"
 
 #define GLFW_INCLUDE_NONE
 #define GLFW_INCLUDE_VULKAN
@@ -53,7 +54,7 @@ namespace Cobalt
 		void Init();
 		void Shutdown();
 
-		void RenderFrame();
+		void RenderFrame(const std::vector<Module*> modules);
 		void PresentFrame();
 
 		void OnResize();
