@@ -24,10 +24,15 @@ namespace Cobalt
 		virtual void OnMouseMove(float x, float y) override;
 
 	private:
-		CameraController mCameraController;
-		Transform mCubeTransform;
+		void RenderUITransform(const char* name, Transform& transform);
 
-		glm::vec3 mLightPosition = glm::vec3(1.2f, 1.0f, 2.0f);
+	private:
+		CameraController mCameraController;
+
+		Transform mFloorTransform = Transform();
+		Transform mCubeTransform = Transform();
+		Transform mLightTransform = Transform();
+
 		glm::vec3 mLightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
 		bool mCaptureMouse = true;

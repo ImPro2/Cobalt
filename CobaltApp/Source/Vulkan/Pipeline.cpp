@@ -123,8 +123,8 @@ namespace Cobalt
 		VkPipelineDepthStencilStateCreateInfo depthStencilStateCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
 			.flags = 0,
-			.depthTestEnable = mInfo.EnableDepthTesting,
-			.depthWriteEnable = mInfo.EnableDepthTesting,
+			.depthTestEnable = mInfo.EnableDepthTesting ? VK_TRUE : VK_FALSE,
+			.depthWriteEnable = mInfo.EnableDepthTesting ? VK_TRUE : VK_FALSE,
 			.depthCompareOp = VK_COMPARE_OP_LESS,
 			.depthBoundsTestEnable = VK_FALSE,
 			.stencilTestEnable = VK_FALSE,

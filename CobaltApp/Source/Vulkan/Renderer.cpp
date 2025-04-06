@@ -161,8 +161,8 @@ namespace Cobalt
 			dependency1.dstSubpass = 0;
 			dependency1.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			dependency1.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-			dependency1.srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-			dependency1.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT/* | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT*/;
+			dependency1.srcAccessMask = 0;
+			dependency1.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			
 			VkSubpassDescription subpasses[1] = { subpass1 };
 			VkSubpassDependency dependencies[1] = { dependency1 };
@@ -302,10 +302,10 @@ namespace Cobalt
 
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
 
+		// Begin render pass
+
 		VkClearValue clearValues[2] = {};
 		clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-		clearValues[0].depthStencil = {};
-		clearValues[1].color = {};
 		clearValues[1].depthStencil = {1.0f, 0};
 
 		VkRenderPassBeginInfo beginInfo = {
@@ -320,6 +320,7 @@ namespace Cobalt
 		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		// Upload scene data
+
 		VkExtent2D extent = GraphicsContext::Get().GetSwapchain().GetExtent();
 
 		SceneData sceneData = {};
@@ -331,6 +332,24 @@ namespace Cobalt
 		memcpy(sData->CurrentSceneData, &sceneData, sizeof(SceneData));
 
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
+
+		// Viewport & scissor
+
+		VkViewport viewport = {
+			.x = 0,
+			.y = (float)extent.height,
+			.width = (float)extent.width,
+			.height = -(float)extent.height,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f
+		};
+
+		VkRect2D scissor = {
+			.extent = extent
+		};
+
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
 	void Renderer::EndScene()
@@ -345,23 +364,6 @@ namespace Cobalt
 	void Renderer::DrawCube(const Transform& transform)
 	{
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
-
-		float width  = (float)Application::Get()->GetWindow().GetWidth();
-		float height = (float)Application::Get()->GetWindow().GetHeight();
-
-		VkViewport viewport = {
-			.x = 0,
-			.y = height,
-			.width = width,
-			.height = -height,
-		};
-
-		VkRect2D scissor = {
-			.extent = { (uint32_t)width, (uint32_t)height }
-		};
-
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 		PushConstants pushConstants;
 		pushConstants.CubeTransform = transform.GetTransform();

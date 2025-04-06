@@ -12,7 +12,12 @@ namespace Cobalt
 		float height = Application::Get()->GetWindow().GetHeight();
 
 		mCameraController = CameraController(width, height);
-		mCubeTransform = Transform();
+
+		mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
+		mCubeTransform.Translation = glm::vec3(0.0f, 0.5f, 0.0f);
+
+		mLightTransform.Translation = glm::vec3(1.2f, 1.0f, 2.0f);
+		mLightTransform.Scale = glm::vec3(0.2f, 0.2f, 0.2f);
 	}
 
 	SandboxModule::~SandboxModule()
@@ -46,13 +51,13 @@ namespace Cobalt
 		}
 
 		mCameraController.OnUpdate(deltaTime);
-
 	}
 
 	void SandboxModule::OnRender()
 	{
-		Renderer::BeginScene(mCameraController.GetViewProjectionMatrix(), mCameraController.GetTranslation(), mLightPosition, mLightColor);
+		Renderer::BeginScene(mCameraController.GetViewProjectionMatrix(), mCameraController.GetTranslation(), mLightTransform.Translation, mLightColor);
 		Renderer::DrawCube(mCubeTransform);
+		Renderer::DrawCube(mFloorTransform);
 		Renderer::EndScene();
 	}
 
@@ -60,18 +65,11 @@ namespace Cobalt
 	{
 		if (ImGui::Begin("SandboxModule"))
 		{
-			//ImGui::DragFloat3("Camera Translation", &mCamera.Translation.x, -10.0f, 10.0f);
+			RenderUITransform("Floor", mFloorTransform);
+			RenderUITransform("Cube", mCubeTransform);
+			RenderUITransform("Light", mLightTransform);
 
-			//ImGui::Separator();
-
-			ImGui::DragFloat3("Cube Translation", &mCubeTransform.Translation.x, -10.0f, 10.0f);
-			ImGui::DragFloat3("Cube Rotation", &mCubeTransform.Rotation.x, -10.0f, 10.0f);
-			ImGui::DragFloat3("Cube Scale", &mCubeTransform.Scale.x, -10.0f, 10.0f);
-
-			ImGui::Separator();
-
-			ImGui::DragFloat3("Light Position", &mLightPosition.x, -10.0f, 10.0f);
-			ImGui::DragFloat3("Light Colour", &mLightColor.x, 0.0f, 1.0f);
+			ImGui::ColorPicker3("Light Color", &mLightColor.x);
 		}
 
 		ImGui::End();
@@ -81,6 +79,15 @@ namespace Cobalt
 	{
 		if (mCaptureMouse)
 			mCameraController.OnMouseMove(x, y);
+	}
+
+	void SandboxModule::RenderUITransform(const char* name, Transform& transform)
+	{
+		ImGui::DragFloat3(std::format("{} Translation", name).c_str(), &transform.Translation.x, 0.2f, -10.0f, 10.0f);
+		ImGui::DragFloat3(std::format("{} Rotation", name).c_str(),    &transform.Rotation.x, 1.0f, 0.0f, 360.0f);
+		ImGui::DragFloat3(std::format("{} Scale", name).c_str(),       &transform.Scale.x, 0.2f, -10.0f, 10.0f);
+
+		ImGui::Separator();
 	}
 
 }
