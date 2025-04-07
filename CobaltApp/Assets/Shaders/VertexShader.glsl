@@ -1,33 +1,46 @@
-#version 440 core
+#version 460
+
+layout(location = 0) out vec3 vNormal;
+layout(location = 1) out vec3 vFragPosition;
+layout(location = 2) out flat int vBaseInstance;
 
 layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aColor;
-layout(location = 2) in vec3 aNormal;
+layout(location = 1) in vec3 aNormal;
 
-layout(set = 0, binding = 0) uniform SceneData
+struct MaterialData
 {
-	mat4 ViewProjection;
-	vec3 LightPosition;
-	vec3 LightColor;
-	vec3 CameraPosition;
-} uSceneData;
+	vec3  Ambient;
+	vec3  Diffuse;
+	vec3  Specular;
+	float Shininess;
+};
 
-layout(push_constant) uniform PushConstants
+struct ObjectData
 {
 	mat4 Transform;
-} uPushConstants;
+	MaterialData Material;
+};
 
-layout(location = 0) out vec3 vColor;
-layout(location = 1) out flat vec3 vNormal;
-layout(location = 2) out vec3 vFragPosition;
+layout(std140, set = 0, binding = 0) uniform SceneBuffer
+{
+	mat4 ViewProjection;
+	vec3 CameraPosition;
+	vec3 LightPosition;
+	vec3 LightColor;
+} uSceneBuffer;
+
+layout(std140, set = 1, binding = 0) readonly buffer ObjectBuffer
+{
+	ObjectData Objects[];
+} uObjectBuffer;
 
 void main()
 {
-	gl_Position = uSceneData.ViewProjection * uPushConstants.Transform * vec4(aPosition, 1.0);
+	mat4 transform = uObjectBuffer.Objects[gl_BaseInstance].Transform;
+	mat3 normalMatrix = mat3(transpose(inverse(transform)));
 
-	mat3 normalMatrix = mat3(transpose(inverse(uPushConstants.Transform)));
-
-	vColor  = aColor;
+	gl_Position = uSceneBuffer.ViewProjection * transform * vec4(aPosition, 1.0);
 	vNormal = normalMatrix * aNormal;
-	vFragPosition = vec3(uPushConstants.Transform * vec4(aPosition, 1.0));
+	vFragPosition = vec3(transform * vec4(aPosition, 1.0));
+	vBaseInstance = gl_BaseInstance;
 }

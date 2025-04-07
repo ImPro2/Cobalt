@@ -10,7 +10,6 @@ namespace Cobalt
 	struct Vertex
 	{
 		alignas(16) glm::vec3 aPosition;
-		alignas(16) glm::vec3 aColor;
 		alignas(16) glm::vec3 aNormal;
 	};
 
@@ -31,40 +30,40 @@ namespace Cobalt
 			std::array<Vertex, vertexCount> vertices;
 
 			// front
-			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
-			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
-			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
-			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aColor = { 1.0f, 0.0f, 0.0f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
 
 			// back 
-			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
-			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
-			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
-			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 1.0f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
 
 			// right 
-			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
-			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
-			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
-			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 1.0f, 0.0f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
 
 			// left
-			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
-			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
-			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
-			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 0.0f, 0.0f, 1.0f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
 
 			// top
-			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
-			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
-			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
-			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aColor = { 1.0f, 0.0f, 1.0f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
 
 			// bottom
-			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
-			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
-			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
-			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aColor = { 1.0f, 1.0f, 0.0f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
 
 			std::array<uint32_t, indexCount> indices;
 
@@ -183,67 +182,123 @@ namespace Cobalt
 
 		CreateOrRecreateFramebuffers();
 
-		// Create scene data
+		// Create scene & material uniform buffers & descriptors
 
 		{
-			// Uniform buffer
+			// Uniform buffers
 
-			sData->CurrentSceneData = new SceneData;
+			sData->MappedSceneData = new SceneData;
 
 			sData->SceneDataUniformBuffer = std::make_unique<VulkanBuffer>(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			sData->SceneDataUniformBuffer->Map(0, sizeof(SceneData), (void**)&sData->CurrentSceneData);
+			sData->SceneDataUniformBuffer->Map(0, sizeof(SceneData), (void**)&sData->MappedSceneData);
 
-			// Descriptor set layout
+			sData->MappedObjectData = new ObjectData;
+			sData->ObjectDataUniformBuffer = std::make_unique<VulkanBuffer>(sData->MaxObjectCount * sizeof(ObjectData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			sData->ObjectDataUniformBuffer->Map(0, sData->MaxObjectCount * sizeof(ObjectData), (void**)&sData->MappedObjectData);
 
-			VkDescriptorSetLayoutBinding descSetLayoutBinding = {
+			// Scene data descriptor set layout
+
+			VkDescriptorSetLayoutBinding sceneDataDescSetLayoutBinding = {
 				.binding = 0,
 				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 				.descriptorCount = 1,
 				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 			};
 
-			VkDescriptorSetLayoutBinding bindings[] = { descSetLayoutBinding };
+			VkDescriptorSetLayoutBinding sceneDataDescSetLayoutBindings[] = { sceneDataDescSetLayoutBinding };
 
-			VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo = {
+			VkDescriptorSetLayoutCreateInfo sceneDataDescSetLayoutCreateInfo = {
 				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-				.bindingCount = sizeof(bindings) / sizeof(bindings[0]),
-				.pBindings = bindings
+				.bindingCount = sizeof(sceneDataDescSetLayoutBindings) / sizeof(sceneDataDescSetLayoutBindings[0]),
+				.pBindings = sceneDataDescSetLayoutBindings
 			};
 
-			VK_CALL(vkCreateDescriptorSetLayout(GraphicsContext::Get().GetDevice(), &descSetLayoutCreateInfo, nullptr, &sData->SceneDataDescriptorSetLayout));
+			VK_CALL(vkCreateDescriptorSetLayout(GraphicsContext::Get().GetDevice(), &sceneDataDescSetLayoutCreateInfo, nullptr, &sData->SceneDataDescriptorSetLayout));
 
-			// Descriptor set
+			// Object data descriptor set layout
 
-			VkDescriptorSetAllocateInfo descSetAllocInfo = {
+			VkDescriptorSetLayoutBinding objectDataDescSetLayoutBinding = {
+				.binding = 0,
+				.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+				.descriptorCount = 1,
+				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+			};
+
+			VkDescriptorSetLayoutBinding objectDataDescSetLayoutBindings[] = { objectDataDescSetLayoutBinding };
+
+			VkDescriptorSetLayoutCreateInfo objectDataDescSetLayoutCreateInfo = {
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+				.bindingCount = sizeof(objectDataDescSetLayoutBindings) / sizeof(objectDataDescSetLayoutBindings[0]),
+				.pBindings = objectDataDescSetLayoutBindings
+			};
+
+			VK_CALL(vkCreateDescriptorSetLayout(GraphicsContext::Get().GetDevice(), &objectDataDescSetLayoutCreateInfo, nullptr, &sData->ObjectDataDescriptorSetLayout));
+
+			// Scene Data Descriptor set
+
+			VkDescriptorSetAllocateInfo sceneDataDescSetAllocInfo = {
 				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 				.descriptorPool = GraphicsContext::Get().GetDescriptorPool(),
 				.descriptorSetCount = 1,
 				.pSetLayouts = &sData->SceneDataDescriptorSetLayout
 			};
 
-			VK_CALL(vkAllocateDescriptorSets(GraphicsContext::Get().GetDevice(), &descSetAllocInfo, &sData->SceneDataDescriptorSet));
+			VK_CALL(vkAllocateDescriptorSets(GraphicsContext::Get().GetDevice(), &sceneDataDescSetAllocInfo, &sData->SceneDataDescriptorSet));
 
-			// Update descriptor sets
+			// Object Data Descriptor set
 
-			VkDescriptorBufferInfo descBufferInfo = {
+			VkDescriptorSetAllocateInfo objectDataDescSetAllocInfo = {
+				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+				.descriptorPool = GraphicsContext::Get().GetDescriptorPool(),
+				.descriptorSetCount = 1,
+				.pSetLayouts = &sData->ObjectDataDescriptorSetLayout
+			};
+
+			VK_CALL(vkAllocateDescriptorSets(GraphicsContext::Get().GetDevice(), &objectDataDescSetAllocInfo, &sData->ObjectDataDescriptorSet));
+
+			// Update scene descriptor sets
+
+			VkDescriptorBufferInfo sceneDataDescBufferInfo = {
 				.buffer = sData->SceneDataUniformBuffer->GetBuffer(),
 				.offset = 0,
 				.range = sizeof(SceneData)
 			};
 
-			VkWriteDescriptorSet writeDescSet = {
+			VkWriteDescriptorSet sceneDataWriteDescSet = {
 				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 				.dstSet = sData->SceneDataDescriptorSet,
 				.dstBinding = 0,
 				.dstArrayElement = 0,
 				.descriptorCount = 1,
 				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.pBufferInfo = &descBufferInfo,
+				.pBufferInfo = &sceneDataDescBufferInfo,
 			};
 
-			VkWriteDescriptorSet writeDescSets[] = { writeDescSet };
+			VkWriteDescriptorSet sceneDataWriteDescSets[] = { sceneDataWriteDescSet };
 
-			vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(writeDescSets) / sizeof(writeDescSets[0]), writeDescSets, 0, nullptr);
+			vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(sceneDataWriteDescSets) / sizeof(sceneDataWriteDescSets[0]), sceneDataWriteDescSets, 0, nullptr);
+
+			// Update object descriptor sets
+
+			VkDescriptorBufferInfo objectDataDescBufferInfo = {
+				.buffer = sData->ObjectDataUniformBuffer->GetBuffer(),
+				.offset = 0,
+				.range = sData->MaxObjectCount * sizeof(ObjectData)
+			};
+
+			VkWriteDescriptorSet objectDataWriteDescSet = {
+				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+				.dstSet = sData->ObjectDataDescriptorSet,
+				.dstBinding = 0,
+				.dstArrayElement = 0,
+				.descriptorCount = 1,
+				.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+				.pBufferInfo = &objectDataDescBufferInfo,
+			};
+
+			VkWriteDescriptorSet objectDataWriteDescSets[] = { objectDataWriteDescSet };
+
+			vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(objectDataWriteDescSets) / sizeof(objectDataWriteDescSets[0]), objectDataWriteDescSets, 0, nullptr);
 		}
 
 		// Create pipeline
@@ -252,15 +307,14 @@ namespace Cobalt
 			PipelineInfo pipelineInfo = {
 				.InputLayout = VertexInputLayout({
 					VertexInputLayoutAttribute(0, VK_FORMAT_R32G32B32A32_SFLOAT),
-					VertexInputLayoutAttribute(1, VK_FORMAT_R32G32B32A32_SFLOAT),
-					VertexInputLayoutAttribute(2, VK_FORMAT_R32G32B32A32_SFLOAT)
+					VertexInputLayoutAttribute(1, VK_FORMAT_R32G32B32A32_SFLOAT)
 				}),
 				.VertexShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/VertexShader.spv", VK_SHADER_STAGE_VERTEX_BIT),
 				.FragmentShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/FragmentShader.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
 				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 				.EnableDepthTesting = true,
 				.PushConstantSize = sizeof(PushConstants),
-				.DescriptorSetLayouts = { sData->SceneDataDescriptorSetLayout }
+				.DescriptorSetLayouts = { sData->SceneDataDescriptorSetLayout, sData->ObjectDataDescriptorSetLayout }
 			};
 
 			sData->CubePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
@@ -270,13 +324,19 @@ namespace Cobalt
 	void Renderer::Shutdown()
 	{
 		vkDestroyDescriptorSetLayout(GraphicsContext::Get().GetDevice(), sData->SceneDataDescriptorSetLayout, nullptr);
+		vkDestroyDescriptorSetLayout(GraphicsContext::Get().GetDevice(), sData->ObjectDataDescriptorSetLayout, nullptr);
 		vkFreeDescriptorSets(GraphicsContext::Get().GetDevice(), GraphicsContext::Get().GetDescriptorPool(), 1, &sData->SceneDataDescriptorSet);
+		vkFreeDescriptorSets(GraphicsContext::Get().GetDevice(), GraphicsContext::Get().GetDescriptorPool(), 1, &sData->ObjectDataDescriptorSet);
 
 		sData->SceneDataUniformBuffer->Unmap();
 		sData->SceneDataUniformBuffer.reset();
 
+		sData->ObjectDataUniformBuffer->Unmap();
+		sData->ObjectDataUniformBuffer.reset();
+
 		//delete sData->CurrentSceneData;
-		sData->CurrentSceneData = nullptr;
+		sData->MappedSceneData = nullptr;
+		sData->MappedObjectData = nullptr;
 
 		vkDestroyImage(GraphicsContext::Get().GetDevice(), sData->DepthTexture, nullptr);
 		vkDestroyImageView(GraphicsContext::Get().GetDevice(), sData->DepthTextureView, nullptr);
@@ -296,8 +356,19 @@ namespace Cobalt
 		CreateOrRecreateFramebuffers();
 	}
 
-	void Renderer::BeginScene(const glm::mat4& viewProjectionMatrix, const glm::vec3& cameraTranslation, const glm::vec3& lightPosition, const glm::vec3& lightColor)
+	void Renderer::BeginScene(const SceneData& scene)
 	{
+		memset(sData->Objects.data(), 0, sizeof(sData->Objects));
+		sData->ObjectIndex = 0;
+
+		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
+
+		// Upload scene data
+
+		memcpy(sData->MappedSceneData, &scene, sizeof(SceneData));
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
+
+#if 0
 		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
 
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
@@ -321,19 +392,13 @@ namespace Cobalt
 
 		// Upload scene data
 
-		VkExtent2D extent = GraphicsContext::Get().GetSwapchain().GetExtent();
-
-		SceneData sceneData = {};
-		sceneData.ViewProjection = viewProjectionMatrix;
-		sceneData.LightPosition = lightPosition;
-		sceneData.LightColor = lightColor;
-		sceneData.CameraPosition = cameraTranslation;
- 
-		memcpy(sData->CurrentSceneData, &sceneData, sizeof(SceneData));
+		memcpy(sData->CurrentSceneData, &scene, sizeof(SceneData));
 
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
 
 		// Viewport & scissor
+
+		VkExtent2D extent = GraphicsContext::Get().GetSwapchain().GetExtent();
 
 		VkViewport viewport = {
 			.x = 0,
@@ -350,25 +415,85 @@ namespace Cobalt
 
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+#endif
 	}
 
 	void Renderer::EndScene()
 	{
-		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
+		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
 
-		//ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
+		
+		// Viewport & scissor
+
+		VkExtent2D extent = GraphicsContext::Get().GetSwapchain().GetExtent();
+
+		VkViewport viewport = {
+			.x = 0,
+			.y = (float)extent.height,
+			.width = (float)extent.width,
+			.height = -(float)extent.height,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f
+		};
+
+		VkRect2D scissor = {
+			.extent = extent
+		};
+
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+		// Begin render pass
+
+		VkClearValue clearValues[2] = {};
+		clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+		clearValues[1].depthStencil = {1.0f, 0};
+
+		VkRenderPassBeginInfo beginInfo = {
+			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+			.renderPass = sData->MainRenderPass,
+			.framebuffer = sData->Framebuffers[swapchain.GetBackBufferIndex()],
+			.renderArea = { .extent = swapchain.GetExtent() },
+			.clearValueCount = 2,
+			.pClearValues = clearValues,
+		};
+
+		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// Render objects
+
+		memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 1, 1, &sData->ObjectDataDescriptorSet, 0, nullptr);
+
+		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
+		{
+			VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
+			VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
+			VkDeviceSize offset = 0;
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipeline());
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+			vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, i);
+		}
 
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void Renderer::DrawCube(const Transform& transform)
+	void Renderer::DrawCube(const Transform& transform, const MaterialData& material)
 	{
+		ObjectData objectData;
+		objectData.Transform = transform.GetTransform();
+		objectData.Material = material;
+
+		sData->Objects[sData->ObjectIndex++] = objectData;
+
+#if 0
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
 
-		PushConstants pushConstants;
-		pushConstants.CubeTransform = transform.GetTransform();
 
-		vkCmdPushConstants(commandBuffer, sData->CubePipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 1, 1, &sData->MaterialDataDescriptorSet, 0, nullptr);
 
 		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
 		VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
@@ -379,6 +504,7 @@ namespace Cobalt
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
 		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 		vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, 0);
+#endif
 	}
 
 	void Renderer::CreateOrRecreateDepthTexture()

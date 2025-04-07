@@ -28,6 +28,32 @@ namespace Cobalt
 		}
 	};
 
+	struct MaterialData
+	{
+		alignas(16) glm::vec3 Ambient;
+		alignas(16) glm::vec3 Diffuse;
+		alignas(16) glm::vec3 Specular;
+		float Shininess;
+	};
+
+	struct CameraData
+	{
+		glm::mat4 ViewProjectionMatrix;
+		alignas(16) glm::vec3 CameraTranslation;
+	};
+
+	struct LightData
+	{
+		alignas(16) glm::vec3 Position;
+		alignas(16) glm::vec3 Color;
+	};
+
+	struct SceneData
+	{
+		CameraData Camera;
+		LightData Light;
+	};
+
 	class Renderer
 	{
 	public:
@@ -37,10 +63,10 @@ namespace Cobalt
 		static void OnResize();
 
 	public:
-		static void BeginScene(const glm::mat4& viewProjectionMatrix, const glm::vec3& cameraTranslation, const glm::vec3& lightPosition, const glm::vec3& lightColor);
+		static void BeginScene(const SceneData& scene);
 		static void EndScene();
 
-		static void DrawCube(const Transform& transform);
+		static void DrawCube(const Transform& transform, const MaterialData& material);
 
 	public:
 		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
@@ -50,17 +76,15 @@ namespace Cobalt
 		static void CreateOrRecreateFramebuffers();
 
 	private:
-		struct SceneData
-		{
-			glm::mat4 ViewProjection;
-			alignas(16) glm::vec3 LightPosition;
-			alignas(16) glm::vec3 LightColor;
-			alignas(16) glm::vec3 CameraPosition;
-		};
-
 		struct PushConstants
 		{
 			glm::mat4 CubeTransform;
+		};
+
+		struct ObjectData
+		{
+			glm::mat4 Transform;
+			MaterialData Material;
 		};
 		
 		struct RendererData
@@ -78,7 +102,17 @@ namespace Cobalt
 			VkDescriptorSetLayout SceneDataDescriptorSetLayout;
 			VkDescriptorSet SceneDataDescriptorSet;
 
-			SceneData* CurrentSceneData = nullptr;
+			static constexpr uint32_t MaxObjectCount = 10000;
+
+			std::unique_ptr<VulkanBuffer> ObjectDataUniformBuffer;
+			VkDescriptorSetLayout ObjectDataDescriptorSetLayout;
+			VkDescriptorSet ObjectDataDescriptorSet;
+
+			SceneData* MappedSceneData = nullptr;
+			ObjectData* MappedObjectData = nullptr;
+
+			std::array<ObjectData, MaxObjectCount> Objects;
+			uint32_t ObjectIndex = 0;
 		};
 
 		inline static RendererData* sData = nullptr;

@@ -25,6 +25,7 @@ namespace Cobalt
 
 	private:
 		void RenderUITransform(const char* name, Transform& transform);
+		void RenderUIMaterial(const char* name, MaterialData& material);
 
 	private:
 		CameraController mCameraController;
@@ -33,7 +34,11 @@ namespace Cobalt
 		Transform mCubeTransform = Transform();
 		Transform mLightTransform = Transform();
 
-		glm::vec3 mLightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+		MaterialData mFloorMat = MaterialData();
+		MaterialData mCubeMat = MaterialData();
+		MaterialData mLightMat = MaterialData();
+
+		SceneData mScene;
 
 		bool mCaptureMouse = true;
 	};

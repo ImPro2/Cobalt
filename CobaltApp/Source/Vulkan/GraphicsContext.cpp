@@ -155,8 +155,13 @@ namespace Cobalt
 		// Create logical device
 
 		{
-			const char* deviceExtensions[] = { "VK_KHR_swapchain" };
+			const char* deviceExtensions[] = { "VK_KHR_swapchain", "VK_KHR_shader_draw_parameters" };
 			const float queuePriority[] = { 1.0f };
+
+			VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParametersFeatures = {
+				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
+				.shaderDrawParameters = VK_TRUE
+			};
 
 			VkDeviceQueueCreateInfo queueCreateInfo[1] = {
 				{
@@ -169,6 +174,7 @@ namespace Cobalt
 
 			VkDeviceCreateInfo createInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+				.pNext = (void*)&shaderDrawParametersFeatures,
 				.queueCreateInfoCount = 1,
 				.pQueueCreateInfos = queueCreateInfo,
 				.enabledExtensionCount = 1,
