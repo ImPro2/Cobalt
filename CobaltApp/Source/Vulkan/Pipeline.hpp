@@ -1,8 +1,9 @@
 #pragma once
 #include "Shader.hpp"
-#include "InputLayout.hpp"
+#include "VulkanDescriptorSet.hpp"
 #include <vulkan/vulkan.h>
 #include <memory>
+#include <vector>
 
 namespace Cobalt
 {
@@ -10,19 +11,11 @@ namespace Cobalt
 
 	struct PipelineInfo
 	{
-		VertexInputLayout InputLayout;
-
-		std::shared_ptr<Shader> VertexShader;
-		std::shared_ptr<Shader> FragmentShader;
+		std::shared_ptr<Shader> Shader;
 
 		VkPrimitiveTopology PrimitiveTopology;
 
 		bool EnableDepthTesting;
-
-		uint32_t PushConstantSize;
-		VkShaderStageFlags PushConstantShaderStage = VK_SHADER_STAGE_VERTEX_BIT;
-
-		std::vector<VkDescriptorSetLayout> DescriptorSetLayouts;
 	};
 
 	class Pipeline
@@ -34,6 +27,8 @@ namespace Cobalt
 		// Called automatically
 		void Invalidate();
 
+		VulkanDescriptorSet* AllocateDescriptorSet(uint32_t set, VkDescriptorPool descriptorPool);
+
 	public:
 		VkPipeline GetPipeline() const { return mPipeline; }
 		VkPipelineLayout GetPipelineLayout() const { return mPipelineLayout; }
@@ -44,6 +39,8 @@ namespace Cobalt
 
 		VkPipeline mPipeline;
 		VkPipelineLayout mPipelineLayout;
+
+		std::vector<std::unique_ptr<VulkanDescriptorSet>> mDescriptorSets;
 	};
 
 }

@@ -21,6 +21,7 @@ namespace Cobalt
 	public:
 		VkBuffer GetBuffer() const { return mBuffer; }
 		const VkMemoryRequirements& GetMemoryRequirements() const { return mMemoryRequirements; }
+		VkBufferUsageFlags GetUsageFlags() const { return mUsage; }
 
 	private:
 		VkBuffer mBuffer = VK_NULL_HANDLE;

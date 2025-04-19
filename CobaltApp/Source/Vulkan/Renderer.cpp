@@ -9,8 +9,8 @@ namespace Cobalt
 
 	struct Vertex
 	{
-		alignas(16) glm::vec3 aPosition;
-		alignas(16) glm::vec3 aNormal;
+		glm::vec3 aPosition;
+		glm::vec3 aNormal;
 	};
 
 	void Renderer::Init()
@@ -182,6 +182,18 @@ namespace Cobalt
 
 		CreateOrRecreateFramebuffers();
 
+		// Create pipeline
+
+		{
+			PipelineInfo pipelineInfo = {
+				.Shader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/CubeShader.glsl"),
+				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+				.EnableDepthTesting = true
+			};
+
+			sData->CubePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
+		}
+
 		// Create scene & material uniform buffers & descriptors
 
 		{
@@ -192,10 +204,15 @@ namespace Cobalt
 			sData->SceneDataUniformBuffer = std::make_unique<VulkanBuffer>(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			sData->SceneDataUniformBuffer->Map(0, sizeof(SceneData), (void**)&sData->MappedSceneData);
 
-			sData->MappedObjectData = new ObjectData;
-			sData->ObjectDataUniformBuffer = std::make_unique<VulkanBuffer>(sData->MaxObjectCount * sizeof(ObjectData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			sData->ObjectDataUniformBuffer->Map(0, sData->MaxObjectCount * sizeof(ObjectData), (void**)&sData->MappedObjectData);
+			sData->MappedMaterialData = new MaterialData;
+			sData->MaterialDataStorageBuffer = std::make_unique<VulkanBuffer>(sData->MaxMaterialCount * sizeof(MaterialData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			sData->MaterialDataStorageBuffer->Map(0, sData->MaxMaterialCount * sizeof(MaterialData), (void**)&sData->MappedMaterialData);
 
+			sData->MappedObjectData = new ObjectData;
+			sData->ObjectDataStorageBuffer = std::make_unique<VulkanBuffer>(sData->MaxObjectCount * sizeof(ObjectData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			sData->ObjectDataStorageBuffer->Map(0, sData->MaxObjectCount * sizeof(ObjectData), (void**)&sData->MappedObjectData);
+
+#if 0
 			// Scene data descriptor set layout
 
 			VkDescriptorSetLayoutBinding sceneDataDescSetLayoutBinding = {
@@ -299,44 +316,34 @@ namespace Cobalt
 			VkWriteDescriptorSet objectDataWriteDescSets[] = { objectDataWriteDescSet };
 
 			vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(objectDataWriteDescSets) / sizeof(objectDataWriteDescSets[0]), objectDataWriteDescSets, 0, nullptr);
-		}
+#endif
 
-		// Create pipeline
+			sData->SceneDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(0, GraphicsContext::Get().GetDescriptorPool());
+			sData->SceneDataDescriptorSet->SetBufferBinding(0, sData->SceneDataUniformBuffer.get());
 
-		{
-			PipelineInfo pipelineInfo = {
-				.InputLayout = VertexInputLayout({
-					VertexInputLayoutAttribute(0, VK_FORMAT_R32G32B32A32_SFLOAT),
-					VertexInputLayoutAttribute(1, VK_FORMAT_R32G32B32A32_SFLOAT)
-				}),
-				.VertexShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/VertexShader.spv", VK_SHADER_STAGE_VERTEX_BIT),
-				.FragmentShader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/FragmentShader.spv", VK_SHADER_STAGE_FRAGMENT_BIT),
-				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-				.EnableDepthTesting = true,
-				.PushConstantSize = sizeof(PushConstants),
-				.DescriptorSetLayouts = { sData->SceneDataDescriptorSetLayout, sData->ObjectDataDescriptorSetLayout }
-			};
+			sData->MaterialDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(1, GraphicsContext::Get().GetDescriptorPool());
+			sData->MaterialDataDescriptorSet->SetBufferBinding(0, sData->MaterialDataStorageBuffer.get());
 
-			sData->CubePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
+			sData->ObjectDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(2, GraphicsContext::Get().GetDescriptorPool());
+			sData->ObjectDataDescriptorSet->SetBufferBinding(0, sData->ObjectDataStorageBuffer.get());
 		}
 	}
 
 	void Renderer::Shutdown()
 	{
-		vkDestroyDescriptorSetLayout(GraphicsContext::Get().GetDevice(), sData->SceneDataDescriptorSetLayout, nullptr);
-		vkDestroyDescriptorSetLayout(GraphicsContext::Get().GetDevice(), sData->ObjectDataDescriptorSetLayout, nullptr);
-		vkFreeDescriptorSets(GraphicsContext::Get().GetDevice(), GraphicsContext::Get().GetDescriptorPool(), 1, &sData->SceneDataDescriptorSet);
-		vkFreeDescriptorSets(GraphicsContext::Get().GetDevice(), GraphicsContext::Get().GetDescriptorPool(), 1, &sData->ObjectDataDescriptorSet);
-
 		sData->SceneDataUniformBuffer->Unmap();
 		sData->SceneDataUniformBuffer.reset();
 
-		sData->ObjectDataUniformBuffer->Unmap();
-		sData->ObjectDataUniformBuffer.reset();
+		sData->ObjectDataStorageBuffer->Unmap();
+		sData->ObjectDataStorageBuffer.reset();
+
+		sData->MaterialDataStorageBuffer->Unmap();
+		sData->MaterialDataStorageBuffer.reset();
 
 		//delete sData->CurrentSceneData;
 		sData->MappedSceneData = nullptr;
 		sData->MappedObjectData = nullptr;
+		sData->MappedMaterialData = nullptr;
 
 		vkDestroyImage(GraphicsContext::Get().GetDevice(), sData->DepthTexture, nullptr);
 		vkDestroyImageView(GraphicsContext::Get().GetDevice(), sData->DepthTextureView, nullptr);
@@ -356,6 +363,20 @@ namespace Cobalt
 		CreateOrRecreateFramebuffers();
 	}
 
+	uint32_t Renderer::RegisterMaterial(const MaterialData& materialData)
+	{
+		uint32_t materialIndex = sData->MaterialIndex++;
+
+		sData->MappedMaterialData[materialIndex] = materialData;
+
+		return materialIndex;
+	}
+
+	MaterialData& Renderer::GetMaterial(uint32_t materialIndex)
+	{
+		return sData->MappedMaterialData[materialIndex];
+	}
+
 	void Renderer::BeginScene(const SceneData& scene)
 	{
 		memset(sData->Objects.data(), 0, sizeof(sData->Objects));
@@ -366,56 +387,8 @@ namespace Cobalt
 		// Upload scene data
 
 		memcpy(sData->MappedSceneData, &scene, sizeof(SceneData));
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
-
-#if 0
-		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
-
-		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
-
-		// Begin render pass
-
-		VkClearValue clearValues[2] = {};
-		clearValues[0].color = {{0.0f, 0.0f, 0.0f, 1.0f}};
-		clearValues[1].depthStencil = {1.0f, 0};
-
-		VkRenderPassBeginInfo beginInfo = {
-			.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-			.renderPass = sData->MainRenderPass,
-			.framebuffer = sData->Framebuffers[swapchain.GetBackBufferIndex()],
-			.renderArea = { .extent = swapchain.GetExtent() },
-			.clearValueCount = 2,
-			.pClearValues = clearValues,
-		};
-
-		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		// Upload scene data
-
-		memcpy(sData->CurrentSceneData, &scene, sizeof(SceneData));
-
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
-
-		// Viewport & scissor
-
-		VkExtent2D extent = GraphicsContext::Get().GetSwapchain().GetExtent();
-
-		VkViewport viewport = {
-			.x = 0,
-			.y = (float)extent.height,
-			.width = (float)extent.width,
-			.height = -(float)extent.height,
-			.minDepth = 0.0f,
-			.maxDepth = 1.0f
-		};
-
-		VkRect2D scissor = {
-			.extent = extent
-		};
-
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-#endif
+		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
+		sData->SceneDataDescriptorSet->Bind(commandBuffer);
 	}
 
 	void Renderer::EndScene()
@@ -463,48 +436,35 @@ namespace Cobalt
 
 		// Render objects
 
+		sData->MaterialDataDescriptorSet->Bind(commandBuffer);
+
 		memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 1, 1, &sData->ObjectDataDescriptorSet, 0, nullptr);
+		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 1, 1, &sData->ObjectDataDescriptorSet, 0, nullptr);
+		sData->ObjectDataDescriptorSet->Bind(commandBuffer);
+
+		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
+		VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
+		VkDeviceSize offset = 0;
+
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipeline());
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
 		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
 		{
-			VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
-			VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
-			VkDeviceSize offset = 0;
-
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipeline());
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
-			vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 			vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, i);
 		}
 
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void Renderer::DrawCube(const Transform& transform, const MaterialData& material)
+	void Renderer::DrawCube(const Transform& transform, uint32_t materialIndex)
 	{
 		ObjectData objectData;
 		objectData.Transform = transform.GetTransform();
-		objectData.Material = material;
+		objectData.MaterialIndex = materialIndex;
 
 		sData->Objects[sData->ObjectIndex++] = objectData;
-
-#if 0
-		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
-
-
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 1, 1, &sData->MaterialDataDescriptorSet, 0, nullptr);
-
-		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
-		VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
-
-		VkDeviceSize offset = 0;
-
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipeline());
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
-		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, 0);
-#endif
 	}
 
 	void Renderer::CreateOrRecreateDepthTexture()

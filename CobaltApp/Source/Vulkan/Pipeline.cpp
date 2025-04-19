@@ -22,43 +22,32 @@ namespace Cobalt
 	
 	void Pipeline::Invalidate()
 	{
-		VkPipelineShaderStageCreateInfo shaderStageCreateInfos[2];
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
 
-		shaderStageCreateInfos[0] = {
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.flags = 0,
-			.stage = VK_SHADER_STAGE_VERTEX_BIT,
-			.module = mInfo.VertexShader->GetShaderModule(),
-			.pName = "main"
-		};
-
-		shaderStageCreateInfos[1] = {
-			.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-			.flags = 0,
-			.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-			.module = mInfo.FragmentShader->GetShaderModule(),
-			.pName = "main"
-		};
-
-		VkVertexInputBindingDescription vertexInputBindingDescription = {
-			.binding = 0,
-			.stride = mInfo.InputLayout.GetStride(),
-			.inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
-		};
-
-		std::vector<VkVertexInputAttributeDescription> vertexInputAttributeDescriptions(mInfo.InputLayout.GetAttributes().size());
-
-		for (uint32_t i = 0; i < mInfo.InputLayout.GetAttributes().size(); i++)
+		if (mInfo.Shader->HasStage(VK_SHADER_STAGE_VERTEX_BIT))
 		{
-			const auto& attribute = mInfo.InputLayout.GetAttributes()[i];
-
-			vertexInputAttributeDescriptions[i] = {
-				.location = attribute.Location,
-				.binding = 0,
-				.format = attribute.Type,
-				.offset = attribute.Offset
-			};
+			shaderStageCreateInfos.push_back({
+				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+				.flags = 0,
+				.stage = VK_SHADER_STAGE_VERTEX_BIT,
+				.module = mInfo.Shader->GetShaderModule(),
+				.pName = "main"
+			});
 		}
+
+		if (mInfo.Shader->HasStage(VK_SHADER_STAGE_FRAGMENT_BIT))
+		{
+			shaderStageCreateInfos.push_back({
+				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+				.flags = 0,
+				.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+				.module = mInfo.Shader->GetShaderModule(),
+				.pName = "main"
+			});
+		}
+
+		const auto& vertexInputBindingDescription = mInfo.Shader->GetVertexInputBindingDescription();
+		const auto& vertexInputAttributeDescriptions = mInfo.Shader->GetVertexInputAttributeDescriptions();
 
 		VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -162,20 +151,16 @@ namespace Cobalt
 			.pDynamicStates = dynamicStates
 		};
 
-		VkPushConstantRange pushConstantRanges[1];
-		pushConstantRanges[0] = {
-			.stageFlags = mInfo.PushConstantShaderStage,
-			.offset = 0,
-			.size = mInfo.PushConstantSize,
-		};
+		const auto& descriptorSetLayouts = mInfo.Shader->GetDescriptorSetLayouts();
+		const auto& pushConstantRanges   = mInfo.Shader->GetPushConstantRanges();
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.flags = 0,
-			.setLayoutCount = (uint32_t)mInfo.DescriptorSetLayouts.size(),
-			.pSetLayouts = mInfo.DescriptorSetLayouts.data(),
-			.pushConstantRangeCount = 1,
-			.pPushConstantRanges = pushConstantRanges
+			.setLayoutCount = (uint32_t)descriptorSetLayouts.size(),
+			.pSetLayouts = descriptorSetLayouts.data(),
+			.pushConstantRangeCount = (uint32_t)pushConstantRanges.size(),
+			.pPushConstantRanges = pushConstantRanges.data()
 		};
 
 		VK_CALL(vkCreatePipelineLayout(GraphicsContext::Get().GetDevice(), &pipelineLayoutCreateInfo, nullptr, &mPipelineLayout));
@@ -183,8 +168,8 @@ namespace Cobalt
 		VkGraphicsPipelineCreateInfo pipelineCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
 			.flags = 0,
-			.stageCount = sizeof(shaderStageCreateInfos) / sizeof(shaderStageCreateInfos[0]),
-			.pStages = shaderStageCreateInfos,
+			.stageCount = (uint32_t)shaderStageCreateInfos.size(),
+			.pStages = shaderStageCreateInfos.data(),
 			.pVertexInputState = &vertexInputStateCreateInfo,
 			.pInputAssemblyState = &inputAssemblyStateCreateInfo,
 			.pViewportState = &viewportStateCreateInfo,
@@ -201,6 +186,13 @@ namespace Cobalt
 		};
 
 		VK_CALL(vkCreateGraphicsPipelines(GraphicsContext::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &mPipeline));
+	}
+
+	VulkanDescriptorSet* Pipeline::AllocateDescriptorSet(uint32_t set, VkDescriptorPool descriptorPool)
+	{
+		mDescriptorSets.emplace_back(std::make_unique<VulkanDescriptorSet>(set, mInfo.Shader->GetDescriptorSetLayouts()[set], descriptorPool, mPipelineLayout));
+		
+		return mDescriptorSets[mDescriptorSets.size() - 1].get();
 	}
 
 }

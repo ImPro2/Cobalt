@@ -9,7 +9,10 @@ project "CobaltApp"
         "GLFW",
         "stb_image",
         "VkBootstrap",
+		"spv_reflect",
 		"%{Library.Vulkan}",
+		"%{Library.shaderc}",
+		"%{Library.SPIRVTools}"
 	}
 
 	files
@@ -26,5 +29,6 @@ project "CobaltApp"
 		"%{IncludeDir.GLM}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.ImGui}",
-        "%{IncludeDir.VkBootstrap}"
+        "%{IncludeDir.VkBootstrap}",
+		"%{IncludeDir.spv_reflect}"
 	}

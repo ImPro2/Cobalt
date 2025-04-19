@@ -42,16 +42,39 @@ namespace Cobalt
 		alignas(16) glm::vec3 CameraTranslation;
 	};
 
-	struct LightData
+	struct DirectionalLightData
+	{
+		alignas(16) glm::vec3 Direction;
+
+		alignas(16) glm::vec3 Ambient;
+		alignas(16) glm::vec3 Diffuse;
+		alignas(16) glm::vec3 Specular;
+	};
+
+	struct PointLightData
 	{
 		alignas(16) glm::vec3 Position;
-		alignas(16) glm::vec3 Color;
+
+		alignas(16) glm::vec3 Ambient;
+		alignas(16) glm::vec3 Diffuse;
+		alignas(16) glm::vec3 Specular;
+
+		//float Constant;
+		//float Linear;
+		//float Quadratic;
 	};
 
 	struct SceneData
 	{
 		CameraData Camera;
-		LightData Light;
+		DirectionalLightData DirectionalLight;
+		PointLightData PointLight;
+	};
+
+	struct ObjectData
+	{
+		glm::mat4 Transform;
+		alignas(16) uint32_t MaterialIndex;
 	};
 
 	class Renderer
@@ -63,10 +86,13 @@ namespace Cobalt
 		static void OnResize();
 
 	public:
+		static uint32_t RegisterMaterial(const MaterialData& materialData);
+		static MaterialData& GetMaterial(uint32_t materialIndex);
+
 		static void BeginScene(const SceneData& scene);
 		static void EndScene();
 
-		static void DrawCube(const Transform& transform, const MaterialData& material);
+		static void DrawCube(const Transform& transform, uint32_t materialIndex);
 
 	public:
 		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
@@ -78,15 +104,9 @@ namespace Cobalt
 	private:
 		struct PushConstants
 		{
-			glm::mat4 CubeTransform;
+			//glm::mat4 CubeTransform;
 		};
 
-		struct ObjectData
-		{
-			glm::mat4 Transform;
-			MaterialData Material;
-		};
-		
 		struct RendererData
 		{
 			VkRenderPass MainRenderPass;
@@ -99,20 +119,25 @@ namespace Cobalt
 			VkDeviceMemory DepthTextureMemory;
 
 			std::unique_ptr<VulkanBuffer> SceneDataUniformBuffer;
-			VkDescriptorSetLayout SceneDataDescriptorSetLayout;
-			VkDescriptorSet SceneDataDescriptorSet;
+			std::unique_ptr<VulkanBuffer> MaterialDataStorageBuffer;
+			std::unique_ptr<VulkanBuffer> ObjectDataStorageBuffer;
 
-			static constexpr uint32_t MaxObjectCount = 10000;
-
-			std::unique_ptr<VulkanBuffer> ObjectDataUniformBuffer;
-			VkDescriptorSetLayout ObjectDataDescriptorSetLayout;
-			VkDescriptorSet ObjectDataDescriptorSet;
+			VulkanDescriptorSet* SceneDataDescriptorSet = nullptr;
+			VulkanDescriptorSet* MaterialDataDescriptorSet = nullptr;
+			VulkanDescriptorSet* ObjectDataDescriptorSet = nullptr;
 
 			SceneData* MappedSceneData = nullptr;
+			MaterialData* MappedMaterialData = nullptr;
 			ObjectData* MappedObjectData = nullptr;
+
+			static constexpr uint32_t MaxObjectCount = 10000;
+			static constexpr uint32_t MaxMaterialCount = 100;
 
 			std::array<ObjectData, MaxObjectCount> Objects;
 			uint32_t ObjectIndex = 0;
+
+			std::array<MaterialData, MaxMaterialCount> Materials;
+			uint32_t MaterialIndex = 0;
 		};
 
 		inline static RendererData* sData = nullptr;

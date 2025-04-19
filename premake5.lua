@@ -10,18 +10,21 @@ outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 VULKAN_SDK = os.getenv("VULKAN_SDK")
 
 IncludeDir = {}
-IncludeDir["GLFW"]        = "%{wks.location}/Dependencies/GLFW/include"
-IncludeDir["GLM"]         = "%{wks.location}/Dependencies/GLM/"
-IncludeDir["stb_image"]   = "%{wks.location}/Dependencies/stb_image/include"
-IncludeDir["ImGui"]       = "%{wks.location}/Dependencies/ImGui"
-IncludeDir["VulkanSDK"]   = "%{VULKAN_SDK}/Include"
-IncludeDir["VkBootstrap"] = "%{wks.location}/Dependencies/VkBootstrap/src"
+IncludeDir["GLFW"]          = "%{wks.location}/Dependencies/GLFW/include"
+IncludeDir["GLM"]           = "%{wks.location}/Dependencies/GLM/"
+IncludeDir["stb_image"]     = "%{wks.location}/Dependencies/stb_image/include"
+IncludeDir["ImGui"]         = "%{wks.location}/Dependencies/ImGui"
+IncludeDir["VulkanSDK"]     = "%{VULKAN_SDK}/Include"
+IncludeDir["VkBootstrap"]   = "%{wks.location}/Dependencies/VkBootstrap/src"
+IncludeDir["spv_reflect"] = "%{wks.location}/Dependencies/spv_reflect"
 
 LibraryDir = {}
 LibraryDir["VulkanSDK"] = "%{VULKAN_SDK}/Lib"
 
 Library = {}
 Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"
+Library["shaderc"] = "%{LibraryDir.VulkanSDK}/shaderc_combined.lib"
+Library["SPIRVTools"] = "%{LibraryDir.VulkanSDK}/SPIRV-Tools-link.lib"
 
 workspace "Cobalt"
 	architecture "x64"
@@ -60,6 +63,7 @@ group "Dependencies"
     include "Dependencies/ImGui"
     include "Dependencies/stb_image"
 	include "Dependencies/VkBootstrap"
+	include "Dependencies/spv_reflect"
 group ""
 
 include "CobaltApp"
