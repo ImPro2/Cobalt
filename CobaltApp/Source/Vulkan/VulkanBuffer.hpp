@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include <memory>
 
 namespace Cobalt
 {
@@ -8,6 +9,10 @@ namespace Cobalt
 
 	class VulkanBuffer
 	{
+	public:
+		// Copies data to a staging buffer and then to a device local gpu buffer
+		static std::unique_ptr<VulkanBuffer> CreateGPUBufferFromCPUData(uint32_t offset, uint32_t size, const void* data, VkBufferUsageFlags usage);
+
 	public:
 		VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags);
 		~VulkanBuffer();

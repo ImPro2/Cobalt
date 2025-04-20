@@ -20,6 +20,32 @@ namespace Cobalt
 		return 0;
 	}
 
+	std::unique_ptr<VulkanBuffer> VulkanBuffer::CreateGPUBufferFromCPUData(uint32_t offset, uint32_t size, const void* data, VkBufferUsageFlags usage)
+	{
+		std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+		// Upload data to stagingBuffer
+
+		VulkanBuffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		stagingBuffer.CopyData(offset, size, data);
+
+
+		// Copy stagingBuffer to buffer
+
+		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
+		{
+			VkBufferCopy bufferCopy = {
+				.srcOffset = 0,
+				.dstOffset = 0,
+				.size = size,
+			};
+
+			vkCmdCopyBuffer(commandBuffer, stagingBuffer.GetBuffer(), buffer->GetBuffer(), 1, &bufferCopy);
+		});
+
+		return buffer;
+	}
+
 	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags)
 		: mSize(size), mUsage(usage)
 	{

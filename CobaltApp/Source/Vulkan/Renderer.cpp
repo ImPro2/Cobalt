@@ -81,37 +81,9 @@ namespace Cobalt
 				offset += 4;
 			}
 
-			VulkanBuffer vertexStagingBuffer = VulkanBuffer(sizeof(vertices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			vertexStagingBuffer.CopyData(0, sizeof(vertices), vertices.data());
-
-			VulkanBuffer indexStagingBuffer = VulkanBuffer(sizeof(indices), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			indexStagingBuffer.CopyData(0, sizeof(indices), indices.data());
-
-			sData->VertexBuffer = std::make_unique<VulkanBuffer>(sizeof(vertices), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-			sData->IndexBuffer = std::make_unique<VulkanBuffer>(sizeof(indices), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-			// Transfer
-
-			GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
-			{
-				VkBufferCopy vertexBufferCopy = {
-					.srcOffset = 0,
-					.dstOffset = 0,
-					.size = sData->VertexBuffer->GetMemoryRequirements().size,
-				};
-
-				VkBufferCopy indexBufferCopy = {
-					.srcOffset = 0,
-					.dstOffset = 0,
-					.size = sData->IndexBuffer->GetMemoryRequirements().size,
-				};
-
-				vkCmdCopyBuffer(commandBuffer, vertexStagingBuffer.GetBuffer(), sData->VertexBuffer->GetBuffer(), 1, &vertexBufferCopy);
-				vkCmdCopyBuffer(commandBuffer, indexStagingBuffer.GetBuffer(), sData->IndexBuffer->GetBuffer(), 1, &indexBufferCopy);
-			});
+			sData->VertexBuffer = VulkanBuffer::CreateGPUBufferFromCPUData(0, sizeof(vertices), vertices.data(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+			sData->IndexBuffer  = VulkanBuffer::CreateGPUBufferFromCPUData(0, sizeof(indices),  indices.data(),  VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 		}
-
-		// Create depth texture
 
 		CreateOrRecreateDepthTexture();
 
@@ -177,8 +149,6 @@ namespace Cobalt
 
 			VK_CALL(vkCreateRenderPass(GraphicsContext::Get().GetDevice(), &info, nullptr, &sData->MainRenderPass));
 		}
-
-		// Create framebuffers
 
 		CreateOrRecreateFramebuffers();
 
