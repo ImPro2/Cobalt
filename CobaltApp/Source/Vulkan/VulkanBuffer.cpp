@@ -1,5 +1,6 @@
 #include "VulkanBuffer.hpp"
 #include "GraphicsContext.hpp"
+#include "VulkanCommands.hpp"
 
 namespace Cobalt
 {
@@ -29,11 +30,12 @@ namespace Cobalt
 		VulkanBuffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 		stagingBuffer.CopyData(offset, size, data);
 
-
 		// Copy stagingBuffer to buffer
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
 		{
+			VulkanCommands::CopyBuffer(commandBuffer, stagingBuffer, *buffer);
+#if 0
 			VkBufferCopy bufferCopy = {
 				.srcOffset = 0,
 				.dstOffset = 0,
@@ -41,6 +43,7 @@ namespace Cobalt
 			};
 
 			vkCmdCopyBuffer(commandBuffer, stagingBuffer.GetBuffer(), buffer->GetBuffer(), 1, &bufferCopy);
+#endif
 		});
 
 		return buffer;
