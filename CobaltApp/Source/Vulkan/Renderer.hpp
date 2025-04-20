@@ -2,6 +2,7 @@
 #include "GraphicsContext.hpp"
 #include "Pipeline.hpp"
 #include "VulkanBuffer.hpp"
+#include "Texture.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -114,9 +115,11 @@ namespace Cobalt
 			std::vector<VkFramebuffer> Framebuffers;
 			std::unique_ptr<VulkanBuffer> VertexBuffer, IndexBuffer;
 
-			VkImage DepthTexture;
-			VkImageView DepthTextureView;
-			VkDeviceMemory DepthTextureMemory;
+			std::unique_ptr<Texture> DepthTexture;
+
+			//VkImage DepthTexture;
+			//VkImageView DepthTextureView;
+			//VkDeviceMemory DepthTextureMemory;
 
 			std::unique_ptr<VulkanBuffer> SceneDataUniformBuffer;
 			std::unique_ptr<VulkanBuffer> MaterialDataStorageBuffer;

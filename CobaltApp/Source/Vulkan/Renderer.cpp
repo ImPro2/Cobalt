@@ -212,111 +212,7 @@ namespace Cobalt
 			sData->ObjectDataStorageBuffer = std::make_unique<VulkanBuffer>(sData->MaxObjectCount * sizeof(ObjectData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 			sData->ObjectDataStorageBuffer->Map(0, sData->MaxObjectCount * sizeof(ObjectData), (void**)&sData->MappedObjectData);
 
-#if 0
-			// Scene data descriptor set layout
-
-			VkDescriptorSetLayoutBinding sceneDataDescSetLayoutBinding = {
-				.binding = 0,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.descriptorCount = 1,
-				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			};
-
-			VkDescriptorSetLayoutBinding sceneDataDescSetLayoutBindings[] = { sceneDataDescSetLayoutBinding };
-
-			VkDescriptorSetLayoutCreateInfo sceneDataDescSetLayoutCreateInfo = {
-				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-				.bindingCount = sizeof(sceneDataDescSetLayoutBindings) / sizeof(sceneDataDescSetLayoutBindings[0]),
-				.pBindings = sceneDataDescSetLayoutBindings
-			};
-
-			VK_CALL(vkCreateDescriptorSetLayout(GraphicsContext::Get().GetDevice(), &sceneDataDescSetLayoutCreateInfo, nullptr, &sData->SceneDataDescriptorSetLayout));
-
-			// Object data descriptor set layout
-
-			VkDescriptorSetLayoutBinding objectDataDescSetLayoutBinding = {
-				.binding = 0,
-				.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-				.descriptorCount = 1,
-				.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-			};
-
-			VkDescriptorSetLayoutBinding objectDataDescSetLayoutBindings[] = { objectDataDescSetLayoutBinding };
-
-			VkDescriptorSetLayoutCreateInfo objectDataDescSetLayoutCreateInfo = {
-				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-				.bindingCount = sizeof(objectDataDescSetLayoutBindings) / sizeof(objectDataDescSetLayoutBindings[0]),
-				.pBindings = objectDataDescSetLayoutBindings
-			};
-
-			VK_CALL(vkCreateDescriptorSetLayout(GraphicsContext::Get().GetDevice(), &objectDataDescSetLayoutCreateInfo, nullptr, &sData->ObjectDataDescriptorSetLayout));
-
-			// Scene Data Descriptor set
-
-			VkDescriptorSetAllocateInfo sceneDataDescSetAllocInfo = {
-				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-				.descriptorPool = GraphicsContext::Get().GetDescriptorPool(),
-				.descriptorSetCount = 1,
-				.pSetLayouts = &sData->SceneDataDescriptorSetLayout
-			};
-
-			VK_CALL(vkAllocateDescriptorSets(GraphicsContext::Get().GetDevice(), &sceneDataDescSetAllocInfo, &sData->SceneDataDescriptorSet));
-
-			// Object Data Descriptor set
-
-			VkDescriptorSetAllocateInfo objectDataDescSetAllocInfo = {
-				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-				.descriptorPool = GraphicsContext::Get().GetDescriptorPool(),
-				.descriptorSetCount = 1,
-				.pSetLayouts = &sData->ObjectDataDescriptorSetLayout
-			};
-
-			VK_CALL(vkAllocateDescriptorSets(GraphicsContext::Get().GetDevice(), &objectDataDescSetAllocInfo, &sData->ObjectDataDescriptorSet));
-
-			// Update scene descriptor sets
-
-			VkDescriptorBufferInfo sceneDataDescBufferInfo = {
-				.buffer = sData->SceneDataUniformBuffer->GetBuffer(),
-				.offset = 0,
-				.range = sizeof(SceneData)
-			};
-
-			VkWriteDescriptorSet sceneDataWriteDescSet = {
-				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet = sData->SceneDataDescriptorSet,
-				.dstBinding = 0,
-				.dstArrayElement = 0,
-				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				.pBufferInfo = &sceneDataDescBufferInfo,
-			};
-
-			VkWriteDescriptorSet sceneDataWriteDescSets[] = { sceneDataWriteDescSet };
-
-			vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(sceneDataWriteDescSets) / sizeof(sceneDataWriteDescSets[0]), sceneDataWriteDescSets, 0, nullptr);
-
-			// Update object descriptor sets
-
-			VkDescriptorBufferInfo objectDataDescBufferInfo = {
-				.buffer = sData->ObjectDataUniformBuffer->GetBuffer(),
-				.offset = 0,
-				.range = sData->MaxObjectCount * sizeof(ObjectData)
-			};
-
-			VkWriteDescriptorSet objectDataWriteDescSet = {
-				.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-				.dstSet = sData->ObjectDataDescriptorSet,
-				.dstBinding = 0,
-				.dstArrayElement = 0,
-				.descriptorCount = 1,
-				.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-				.pBufferInfo = &objectDataDescBufferInfo,
-			};
-
-			VkWriteDescriptorSet objectDataWriteDescSets[] = { objectDataWriteDescSet };
-
-			vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(objectDataWriteDescSets) / sizeof(objectDataWriteDescSets[0]), objectDataWriteDescSets, 0, nullptr);
-#endif
+			// Set descriptor bindings
 
 			sData->SceneDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(0, GraphicsContext::Get().GetDescriptorPool());
 			sData->SceneDataDescriptorSet->SetBufferBinding(0, sData->SceneDataUniformBuffer.get());
@@ -340,14 +236,9 @@ namespace Cobalt
 		sData->MaterialDataStorageBuffer->Unmap();
 		sData->MaterialDataStorageBuffer.reset();
 
-		//delete sData->CurrentSceneData;
 		sData->MappedSceneData = nullptr;
 		sData->MappedObjectData = nullptr;
 		sData->MappedMaterialData = nullptr;
-
-		vkDestroyImage(GraphicsContext::Get().GetDevice(), sData->DepthTexture, nullptr);
-		vkDestroyImageView(GraphicsContext::Get().GetDevice(), sData->DepthTextureView, nullptr);
-		vkFreeMemory(GraphicsContext::Get().GetDevice(), sData->DepthTextureMemory, nullptr);
 
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->MainRenderPass, nullptr);
 
@@ -355,6 +246,7 @@ namespace Cobalt
 			vkDestroyFramebuffer(GraphicsContext::Get().GetDevice(), framebuffer, nullptr);
 		
 		delete sData;
+		sData = nullptr;
 	}
 
 	void Renderer::OnResize()
@@ -439,7 +331,6 @@ namespace Cobalt
 		sData->MaterialDataDescriptorSet->Bind(commandBuffer);
 
 		memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
-		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 1, 1, &sData->ObjectDataDescriptorSet, 0, nullptr);
 		sData->ObjectDataDescriptorSet->Bind(commandBuffer);
 
 		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
@@ -473,68 +364,9 @@ namespace Cobalt
 		uint32_t height = GraphicsContext::Get().GetSwapchain().GetExtent().height;
 
 		if (sData->DepthTexture)
-			vkDestroyImage(GraphicsContext::Get().GetDevice(), sData->DepthTexture, nullptr);
-
-		if (sData->DepthTextureView)
-			vkDestroyImageView(GraphicsContext::Get().GetDevice(), sData->DepthTextureView, nullptr);
-		
-		if (sData->DepthTextureMemory)
-			vkFreeMemory(GraphicsContext::Get().GetDevice(), sData->DepthTextureMemory, nullptr);
-
-		VkImageCreateInfo imageCreateInfo = {
-			.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-			.flags = 0,
-			.imageType = VK_IMAGE_TYPE_2D,
-			.format = VK_FORMAT_D16_UNORM_S8_UINT,
-			.extent = { width, height, 1 },
-			.mipLevels = 1,
-			.arrayLayers = 1,
-			.samples = VK_SAMPLE_COUNT_1_BIT,
-			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-			.queueFamilyIndexCount = 0,
-			.pQueueFamilyIndices = nullptr,
-			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
-		};
-
-		VK_CALL(vkCreateImage(GraphicsContext::Get().GetDevice(), &imageCreateInfo, nullptr, &sData->DepthTexture));
-
-		VkMemoryRequirements memoryRequirements;
-		vkGetImageMemoryRequirements(GraphicsContext::Get().GetDevice(), sData->DepthTexture, &memoryRequirements);
-
-		VkMemoryAllocateInfo memoryAllocateInfo = {
-			.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-			.allocationSize = memoryRequirements.size,
-			.memoryTypeIndex = FindMemoryType(memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, GraphicsContext::Get().GetPhysicalDevice())
-		};
-
-		VK_CALL(vkAllocateMemory(GraphicsContext::Get().GetDevice(), &memoryAllocateInfo, nullptr, &sData->DepthTextureMemory));
-
-		VK_CALL(vkBindImageMemory(GraphicsContext::Get().GetDevice(), sData->DepthTexture, sData->DepthTextureMemory, 0));
-
-		VkImageViewCreateInfo imageViewCreateInfo = {
-			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-			.flags = 0,
-			.image = sData->DepthTexture,
-			.viewType = VK_IMAGE_VIEW_TYPE_2D,
-			.format = imageCreateInfo.format,
-			.components = {
-				.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-				.g = VK_COMPONENT_SWIZZLE_IDENTITY,
-				.b = VK_COMPONENT_SWIZZLE_IDENTITY,
-				.a = VK_COMPONENT_SWIZZLE_IDENTITY,
-			},
-			.subresourceRange = {
-				.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT,
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1
-			}
-		};
-
-		VK_CALL(vkCreateImageView(GraphicsContext::Get().GetDevice(), &imageViewCreateInfo, nullptr, &sData->DepthTextureView));
+			sData->DepthTexture->Recreate(width, height);
+		else
+			sData->DepthTexture = std::make_unique<Texture>(width, height, VK_FORMAT_D16_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	}
 
 	void Renderer::CreateOrRecreateFramebuffers()
@@ -562,7 +394,7 @@ namespace Cobalt
 
 		for (uint32_t i = 0; i < swapchain.GetBackBufferCount(); i++)
 		{
-			VkImageView attachments[2] = { swapchain.GetBackBufferViews()[i], sData->DepthTextureView };
+			VkImageView attachments[2] = { swapchain.GetBackBufferViews()[i], sData->DepthTexture->GetImageView() };
 			createInfo.attachmentCount = 2;
 			createInfo.pAttachments = attachments;
 
