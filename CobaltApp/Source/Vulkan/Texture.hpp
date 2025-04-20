@@ -25,6 +25,7 @@ namespace Cobalt
 		VkImage GetImage() const { return mImage; }
 		VkImageView GetImageView() const { return mImageView; }
 		VkDeviceMemory GetMemory() const { return mMemory; }
+		VkSampler GetSampler() const { return mSampler; }
 
 		VkImageLayout GetImageLayout() const { return mImageLayout; }
 		void SetImageLayout(VkImageLayout layout) { mImageLayout = layout; }

@@ -53,6 +53,29 @@ namespace Cobalt
 		vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(writeDescSets) / sizeof(writeDescSets[0]), writeDescSets, 0, nullptr);
 	}
 
+	void VulkanDescriptorSet::SetImageBinding(uint32_t binding, const Texture* image)
+	{
+		VkDescriptorImageInfo descImageInfo = {
+			.sampler = image->GetSampler(),
+			.imageView = image->GetImageView(),
+			.imageLayout = image->GetImageLayout()
+		};
+
+		VkWriteDescriptorSet writeDescSet = {
+			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+			.dstSet = mDescriptorSet,
+			.dstBinding = binding,
+			.dstArrayElement = 0,
+			.descriptorCount = 1,
+			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			.pImageInfo = &descImageInfo
+		};
+
+		VkWriteDescriptorSet writeDescSets[] = { writeDescSet };
+
+		vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), sizeof(writeDescSets) / sizeof(writeDescSets[0]), writeDescSets, 0, nullptr);
+	}
+
 	void VulkanDescriptorSet::Bind(VkCommandBuffer commandBuffer)
 	{
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, mSetIndex, 1, &mDescriptorSet, 0, nullptr);

@@ -11,6 +11,7 @@ namespace Cobalt
 	{
 		glm::vec3 aPosition;
 		glm::vec3 aNormal;
+		glm::vec2 aTexCoord;
 	};
 
 	void Renderer::Init()
@@ -30,40 +31,40 @@ namespace Cobalt
 			std::array<Vertex, vertexCount> vertices;
 
 			// front
-			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
-			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
-			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
-			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f } };
+			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f },  .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 0.0f, 0.0f } };
+			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f },  .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 0.0f, 1.0f } };
+			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 1.0f, 1.0f } };
+			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 1.0f, 0.0f } };
 
 			// back 
-			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
-			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
-			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
-			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f } };
+			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 0.0f, 0.0f } };
+			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 0.0f, 1.0f } };
+			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 1.0f, 1.0f } };
+			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 1.0f, 0.0f } };
 
 			// right 
-			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
-			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
-			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
-			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f } };
+			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
+			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
+			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
+			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
 
 			// left
-			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
-			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
-			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
-			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f } };
+			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
+			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
+			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
+			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
 
 			// top
-			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
-			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
-			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
-			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f } };
+			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
+			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
+			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
+			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
 
 			// bottom
-			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
-			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
-			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
-			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f } };
+			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
+			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
+			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
+			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
 
 			std::array<uint32_t, indexCount> indices;
 
@@ -164,6 +165,10 @@ namespace Cobalt
 			sData->CubePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
 		}
 
+		// TEMPORARY: create diffuse texture
+
+		sData->DiffuseTexture = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_diffuse.png");
+
 		// Create scene & material uniform buffers & descriptors
 
 		{
@@ -189,6 +194,7 @@ namespace Cobalt
 
 			sData->MaterialDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(1, GraphicsContext::Get().GetDescriptorPool());
 			sData->MaterialDataDescriptorSet->SetBufferBinding(0, sData->MaterialDataStorageBuffer.get());
+			sData->MaterialDataDescriptorSet->SetImageBinding(1, sData->DiffuseTexture.get());
 
 			sData->ObjectDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(2, GraphicsContext::Get().GetDescriptorPool());
 			sData->ObjectDataDescriptorSet->SetBufferBinding(0, sData->ObjectDataStorageBuffer.get());

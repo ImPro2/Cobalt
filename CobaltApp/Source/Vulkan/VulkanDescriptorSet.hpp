@@ -1,6 +1,7 @@
 #pragma once
 #include "VulkanUtils.hpp"
 #include "VulkanBuffer.hpp"
+#include "Texture.hpp"
 
 namespace Cobalt
 {
@@ -13,6 +14,7 @@ namespace Cobalt
 
 	public:
 		void SetBufferBinding(uint32_t binding, const VulkanBuffer* buffer);
+		void SetImageBinding(uint32_t binding, const Texture* image);
 		void Bind(VkCommandBuffer commandBuffer);
 
 	private:

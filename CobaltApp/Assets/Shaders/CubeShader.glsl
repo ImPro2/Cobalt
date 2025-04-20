@@ -3,11 +3,13 @@
 #include "Common.glsl"
 
 layout(location = 0) out      vec3 vNormal;
-layout(location = 1) out      vec3 vFragPosition;
-layout(location = 2) out flat uint vMaterialIndex;
+layout(location = 1) out      vec2 vTexCoord;
+layout(location = 2) out      vec3 vFragPosition;
+layout(location = 3) out flat uint vMaterialIndex;
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
 
 layout(set = 0, binding = 0) uniform SceneDataBlock
 {
@@ -30,6 +32,7 @@ void main()
 	gl_Position = scene.Camera.ViewProjection * transform * vec4(aPosition, 1.0);
 
 	vNormal = normalMatrix * aNormal;
+	vTexCoord = aTexCoord;
 	vFragPosition = vec3(transform * vec4(aPosition, 1.0));
 	vMaterialIndex = object.MaterialIndex;
 }
@@ -40,9 +43,10 @@ void main()
 
 layout(location = 0) out vec4 oColor;
 
-layout(location = 0) in vec3 vNormal;
-layout(location = 1) in vec3 vFragPosition;
-layout(location = 2) in flat uint vMaterialIndex;
+layout(location = 0) in      vec3 vNormal;
+layout(location = 1) in      vec2 vTexCoord;
+layout(location = 2) in      vec3 vFragPosition;
+layout(location = 3) in flat uint vMaterialIndex;
 
 layout(set = 0, binding = 0) uniform SceneDataBlock
 {
@@ -53,6 +57,8 @@ layout(set = 1, binding = 0) readonly buffer MaterialDataBlock
 {
 	MaterialData Materials[];
 } uMaterialData;
+
+layout(set = 1, binding = 1) uniform sampler2D uTextureSampler;
 
 void main()
 {
@@ -72,5 +78,5 @@ void main()
 
 	vec3 result = ambient + diffuse + specular;
 
-	oColor = vec4(result, 1.0);
+	oColor = texture(uTextureSampler, vTexCoord) * vec4(result, 1.0);
 }

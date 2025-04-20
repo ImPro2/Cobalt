@@ -125,6 +125,8 @@ namespace Cobalt
 			std::unique_ptr<VulkanBuffer> MaterialDataStorageBuffer;
 			std::unique_ptr<VulkanBuffer> ObjectDataStorageBuffer;
 
+			std::unique_ptr<Texture> DiffuseTexture;
+
 			VulkanDescriptorSet* SceneDataDescriptorSet = nullptr;
 			VulkanDescriptorSet* MaterialDataDescriptorSet = nullptr;
 			VulkanDescriptorSet* ObjectDataDescriptorSet = nullptr;

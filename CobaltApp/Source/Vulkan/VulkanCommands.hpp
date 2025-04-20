@@ -23,7 +23,7 @@ namespace Cobalt
 
 		static void CopyBuffer(VkCommandBuffer commandBuffer, const VulkanBuffer& srcBuffer, const VulkanBuffer& dstBuffer, VkDeviceSize srcOffset = 0, VkDeviceSize dstOffset = 0)
 		{
-			CopyBuffer(commandBuffer, srcBuffer.GetBuffer(), dstBuffer.GetBuffer(), srcOffset, dstOffset);
+			CopyBuffer(commandBuffer, srcBuffer.GetBuffer(), dstBuffer.GetBuffer(), srcBuffer.GetMemoryRequirements().size, srcOffset, dstOffset);
 		}
 
 		// Image layout has to be VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
