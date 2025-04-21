@@ -63,24 +63,62 @@ layout(set = 1, binding = 0, std430) readonly buffer MaterialDataBlock
 	MaterialData Materials[];
 } uMaterialData;
 
+struct UnpackedMaterialData
+{
+	vec3 Diffuse;
+	vec3 Specular;
+	float Shininess;
+};
+
+vec3 CalculateDirectionalLightRadiance(DirectionalLightData directionalLight, UnpackedMaterialData material, vec3 normal, vec3 viewDir)
+{
+	vec3 lightDir = normalize(-directionalLight.Direction);
+	vec3 reflectDir = reflect(-lightDir, normal);
+
+	float diff = max(0.0, dot(lightDir, normal));
+	float spec = pow(max(0.0, dot(viewDir, reflectDir)), material.Shininess);
+
+	vec3 ambient = directionalLight.Ambient * material.Diffuse;
+	vec3 diffuse = directionalLight.Diffuse * diff * material.Diffuse;
+	vec3 specular = directionalLight.Specular * spec * material.Specular;
+
+	return ambient + diffuse + specular;
+}
+
+vec3 CalculatePointLightRadiance(PointLightData pointLight, UnpackedMaterialData material, vec3 normal, vec3 fragPosition, vec3 viewDir)
+{
+	vec3 lightDir = normalize(pointLight.Position - fragPosition);
+	vec3 reflectDir = reflect(-lightDir, normal);
+
+	float diff = max(0.0, dot(lightDir, normal));
+	float spec = pow(max(0.0, dot(viewDir, reflectDir)), material.Shininess);
+	float dist = length(pointLight.Position - fragPosition);
+	float attenuation = 1.0 / (pointLight.Constant + pointLight.Linear * dist + pointLight.Quadratic * dist * dist);
+
+	vec3 ambient = pointLight.Ambient * material.Diffuse;
+	vec3 diffuse = pointLight.Diffuse * diff * material.Diffuse;
+	vec3 specular = pointLight.Specular * spec * material.Specular;
+
+	return attenuation * (ambient + diffuse + specular);
+}
+
 void main()
 {
 	SceneData scene = uSceneData.Scene;
 	MaterialData material = uMaterialData.Materials[vMaterialHandle];
 
-	vec3 materialDiffuse  = vec3(texture(uTextures[material.DiffuseMapHandle],  vTexCoord));
-	vec3 materialSpecular = vec3(texture(uTextures[material.SpecularMapHandle], vTexCoord));
+	UnpackedMaterialData unpackedMaterial;
+	unpackedMaterial.Diffuse  = vec3(texture(uTextures[material.DiffuseMapHandle],  vTexCoord));
+	unpackedMaterial.Specular = vec3(texture(uTextures[material.SpecularMapHandle], vTexCoord));
+	unpackedMaterial.Shininess = material.Shininess;
 
-	vec3 lightDir = normalize(-scene.DirectionalLight.Direction - vFragPosition);
+	vec3 radiance = vec3(0.0);
+
+	vec3 normal = normalize(vNormal);
 	vec3 viewDir = normalize(scene.Camera.Translation - vFragPosition);
-	vec3 reflectDir = reflect(-lightDir, vNormal);
 
-	float diff = max(0.0, dot(lightDir, normalize(vNormal)));
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.Shininess);
+	radiance += CalculateDirectionalLightRadiance(scene.DirectionalLight, unpackedMaterial, normal, viewDir);
+	radiance += CalculatePointLightRadiance(scene.PointLight, unpackedMaterial, normal, vFragPosition, viewDir);
 
-	vec3 ambient = scene.DirectionalLight.Ambient * materialDiffuse;
-	vec3 diffuse = scene.DirectionalLight.Diffuse * diff * materialDiffuse;
-	vec3 specular = scene.DirectionalLight.Specular * spec * materialSpecular;
-
-	oColor = vec4(ambient + diffuse + specular, 1.0);
+	oColor = vec4(radiance, 1.0);
 }

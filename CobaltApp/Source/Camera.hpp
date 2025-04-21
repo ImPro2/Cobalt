@@ -38,7 +38,7 @@ namespace Cobalt
 		float mCameraSpeed = 10.0f;
 		float mMouseSensitivity = 0.1f;
 
-		glm::vec3 mTranslation = glm::vec3(0.0f, -3.0f, 15.0f);
+		glm::vec3 mTranslation = glm::vec3(0.0f, 3.0f, 15.0f);
 		glm::vec3 mForwardDir = glm::vec3(0.0f, 0.0f, -1.0f);
 		glm::vec3 mUpDir = glm::vec3(0.0f, 1.0f, 0.0f);
 

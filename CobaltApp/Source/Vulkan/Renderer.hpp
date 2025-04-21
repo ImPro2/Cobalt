@@ -57,9 +57,11 @@ namespace Cobalt
 		alignas(16) glm::vec3 Diffuse;
 		alignas(16) glm::vec3 Specular;
 
-		//float Constant;
-		//float Linear;
-		//float Quadratic;
+		float Constant;
+		float Linear;
+		float Quadratic;
+
+		float __padding0;
 	};
 
 	struct SceneData

@@ -21,9 +21,9 @@ struct PointLightData
 	vec3 Diffuse;
 	vec3 Specular;
 
-	//float Constant;
-	//float Linear;
-	//float Quadratic;
+	float Constant;
+	float Linear;
+	float Quadratic;
 };
 
 struct SceneData

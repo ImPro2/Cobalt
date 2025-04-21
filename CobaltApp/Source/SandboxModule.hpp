@@ -24,6 +24,7 @@ namespace Cobalt
 		virtual void OnMouseMove(float x, float y) override;
 
 	private:
+		void RenderPointLight(const char* name, PointLightData& pointLight);
 		void RenderUITransform(const char* name, Transform& transform);
 		void RenderUIMaterial(const char* name, MaterialHandle material);
 
