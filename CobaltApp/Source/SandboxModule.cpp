@@ -22,17 +22,38 @@ namespace Cobalt
 
 		mScene.Camera.CameraTranslation = mCameraController.GetTranslation();
 		mScene.Camera.ViewProjectionMatrix = mCameraController.GetViewProjectionMatrix();
+
 		mScene.DirectionalLight.Direction = glm::vec3(0.0f, -1.0f, 0.0f);
 		mScene.DirectionalLight.Ambient = glm::vec3(0.2f);
 		mScene.DirectionalLight.Diffuse = glm::vec3(0.5f);
 		mScene.DirectionalLight.Specular = glm::vec3(1.0f);
-		mScene.PointLight.Position = glm::vec3(0.0f, 3.0f, 0.0f);
-		mScene.PointLight.Ambient = glm::vec3(0.1f);
-		mScene.PointLight.Diffuse = glm::vec3(1.0f);
-		mScene.PointLight.Specular = glm::vec3(1.0f);
-		mScene.PointLight.Constant = 1.0f;
-		mScene.PointLight.Linear = 0.7f;
-		mScene.PointLight.Quadratic = 1.8f;
+
+		mScene.PointLightCount = 3;
+
+		mScene.PointLights[0].Position = glm::vec3(0.0f, 3.0f, 0.0f);
+		mScene.PointLights[0].Ambient = glm::vec3(0.1f);
+		mScene.PointLights[0].Diffuse = glm::vec3(1.0f, 0.0f, 0.0f);
+		mScene.PointLights[0].Specular = glm::vec3(1.0f);
+		mScene.PointLights[0].Constant = 1.0f;
+		mScene.PointLights[0].Linear = 0.7f;
+		mScene.PointLights[0].Quadratic = 1.8f;
+
+		mScene.PointLights[1].Position = glm::vec3(0.0f, 3.0f, 0.0f);
+		mScene.PointLights[1].Ambient = glm::vec3(0.1f);
+		mScene.PointLights[1].Diffuse = glm::vec3(0.0f, 1.0f, 0.0f);
+		mScene.PointLights[1].Specular = glm::vec3(1.0f);
+		mScene.PointLights[1].Constant = 1.0f;
+		mScene.PointLights[1].Linear = 0.7f;
+		mScene.PointLights[1].Quadratic = 1.8f;
+
+		mScene.PointLights[2].Position = glm::vec3(0.0f, 3.0f, 0.0f);
+		mScene.PointLights[2].Ambient = glm::vec3(0.1f);
+		mScene.PointLights[2].Diffuse = glm::vec3(0.0f, 0.0f, 1.0f);
+		mScene.PointLights[2].Specular = glm::vec3(1.0f);
+		mScene.PointLights[2].Constant = 1.0f;
+		mScene.PointLights[2].Linear = 0.7f;
+		mScene.PointLights[2].Quadratic = 1.8f;
+
 	}
 
 	SandboxModule::~SandboxModule()
@@ -105,7 +126,8 @@ namespace Cobalt
 		{
 			if (ImGui::TreeNode("Scene Settings"))
 			{
-				RenderPointLight("Point Light", mScene.PointLight);
+				for (uint32_t i = 0; i < mScene.PointLightCount; i++)
+					RenderPointLight(std::format("Point Light {}", i).c_str(), mScene.PointLights[i]);
 
 				ImGui::DragFloat3("Directional Light Direction", &mScene.DirectionalLight.Direction.x, 0.1f, -10.0f, 10.0f);
 				ImGui::ColorEdit3("Directional Light Ambient", &mScene.DirectionalLight.Ambient.r);
@@ -142,13 +164,13 @@ namespace Cobalt
 	{
 		ImGui::Text("Pointlight: %s", name);
 		
-		ImGui::DragFloat3("  Position",    &pointLight.Position.x, 0.2f, -10.0f, 10.0f);
-		ImGui::ColorEdit3("  Ambient Color", &pointLight.Ambient.r);
-		ImGui::ColorEdit3("  Diffuse Color", &pointLight.Diffuse.r);
-		ImGui::ColorEdit3("  Specular Color ", &pointLight.Specular.r);
-		ImGui::DragFloat ("  Constant Coefficient", &pointLight.Constant, 0.001f, 0.0f, 2.0f);
-		ImGui::DragFloat ("  Linear Coefficient", &pointLight.Linear, 0.001f, 0.0f, 2.0f);
-		ImGui::DragFloat ("  Quadratic Coefficient", &pointLight.Quadratic, 0.001f, 0.0f, 2.0f);
+		ImGui::DragFloat3(std::format("{} Position", name).c_str(), &pointLight.Position.x, 0.2f, -10.0f, 10.0f);
+		ImGui::ColorEdit3(std::format("{} Ambient Color", name).c_str(), &pointLight.Ambient.r);
+		ImGui::ColorEdit3(std::format("{} Diffuse Color", name).c_str(), &pointLight.Diffuse.r);
+		ImGui::ColorEdit3(std::format("{} Specular Color ", name).c_str(), &pointLight.Specular.r);
+		ImGui::DragFloat (std::format("{} Constant Coefficient", name).c_str(), &pointLight.Constant, 0.001f, 0.0f, 2.0f);
+		ImGui::DragFloat (std::format("{} Linear Coefficient", name).c_str(), &pointLight.Linear, 0.001f, 0.0f, 2.0f);
+		ImGui::DragFloat (std::format("{} Quadratic Coefficient", name).c_str(), &pointLight.Quadratic, 0.001f, 0.0f, 2.0f);
 
 		ImGui::Separator();
 	}
@@ -156,9 +178,9 @@ namespace Cobalt
 	void SandboxModule::RenderUITransform(const char* name, Transform& transform)
 	{
 		ImGui::Text("Transform: %s", name);
-		ImGui::DragFloat3("  Translation", &transform.Translation.x, 0.2f, -10.0f, 10.0f);
-		ImGui::DragFloat3("  Rotation",    &transform.Rotation.x, 1.0f, 0.0f, 360.0f);
-		ImGui::DragFloat3("  Scale",       &transform.Scale.x, 0.2f, -10.0f, 10.0f);
+		ImGui::DragFloat3(std::format("{} Translation", name).c_str(), &transform.Translation.x, 0.2f, -10.0f, 10.0f);
+		ImGui::DragFloat3(std::format("{} Rotation", name).c_str(),    &transform.Rotation.x, 1.0f, 0.0f, 360.0f);
+		ImGui::DragFloat3(std::format("{} Scale", name).c_str(),       &transform.Scale.x, 0.2f, -10.0f, 10.0f);
 
 		ImGui::Separator();
 	}
@@ -168,7 +190,7 @@ namespace Cobalt
 		MaterialData& materialData = Renderer::GetMaterial(material);
 
 		ImGui::Text("Material: %s", name);
-		ImGui::DragFloat(" Specular", &materialData.Shininess, 1.0f, 0.0f, 1024.0f);
+		ImGui::DragFloat(std::format("{}  Specular", name).c_str(), &materialData.Shininess, 1.0f, 0.0f, 1024.0f);
 
 		ImGui::Separator();
 	}

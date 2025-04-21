@@ -12,6 +12,8 @@
 
 #include <array>
 
+#define CO_MAX_POINT_LIGHT_COUNT 16
+
 namespace Cobalt
 {
 
@@ -31,8 +33,6 @@ namespace Cobalt
 			return glm::translate(glm::mat4(1.0f), Translation) * rotation * glm::scale(glm::mat4(1.0f), Scale);
 		}
 	};
-
-	
 
 	struct CameraData
 	{
@@ -68,7 +68,8 @@ namespace Cobalt
 	{
 		CameraData Camera;
 		DirectionalLightData DirectionalLight;
-		PointLightData PointLight;
+		PointLightData PointLights[CO_MAX_POINT_LIGHT_COUNT];
+		uint32_t PointLightCount;
 	};
 
 	struct MaterialData

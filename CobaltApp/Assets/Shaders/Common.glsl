@@ -26,11 +26,14 @@ struct PointLightData
 	float Quadratic;
 };
 
+#define MAX_POINT_LIGHT_COUNT 16
+
 struct SceneData
 {
 	CameraData Camera;
 	DirectionalLightData DirectionalLight;
-	PointLightData PointLight;
+	PointLightData PointLights[MAX_POINT_LIGHT_COUNT];
+	uint PointLightCount;
 };
 
 struct MaterialData
