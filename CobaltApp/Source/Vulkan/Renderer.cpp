@@ -165,44 +165,38 @@ namespace Cobalt
 			sData->CubePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
 		}
 
-		// TEMPORARY: create diffuse texture
-
-		sData->DiffuseTexture = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_diffuse.png");
-
 		// Create scene & material uniform buffers & descriptors
 
 		{
 			// Uniform buffers
 
-			sData->MappedSceneData = new SceneData;
+			sData->MappedSceneData = new SceneData();
+			sData->MappedMaterialData = new MaterialData[sData->MaxMaterialCount];
+			sData->MappedObjectData = new ObjectData[sData->MaxObjectCount];
 
-			sData->SceneDataUniformBuffer = std::make_unique<VulkanBuffer>(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			sData->SceneDataUniformBuffer->Map(0, sizeof(SceneData), (void**)&sData->MappedSceneData);
-
-			sData->MappedMaterialData = new MaterialData;
-			sData->MaterialDataStorageBuffer = std::make_unique<VulkanBuffer>(sData->MaxMaterialCount * sizeof(MaterialData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			sData->MaterialDataStorageBuffer->Map(0, sData->MaxMaterialCount * sizeof(MaterialData), (void**)&sData->MappedMaterialData);
-
-			sData->MappedObjectData = new ObjectData;
-			sData->ObjectDataStorageBuffer = std::make_unique<VulkanBuffer>(sData->MaxObjectCount * sizeof(ObjectData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			sData->ObjectDataStorageBuffer->Map(0, sData->MaxObjectCount * sizeof(ObjectData), (void**)&sData->MappedObjectData);
+			sData->SceneDataUniformBuffer    = VulkanBuffer::CreateMappedBuffer(0, sizeof(SceneData), (void**)&sData->MappedSceneData, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+			sData->MaterialDataStorageBuffer = VulkanBuffer::CreateMappedBuffer(0, sizeof(MaterialData) * sData->MaxMaterialCount, (void**)&sData->MappedMaterialData, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			sData->ObjectDataStorageBuffer   = VulkanBuffer::CreateMappedBuffer(0, sizeof(ObjectData) * sData->MaxObjectCount, (void**)&sData->MappedObjectData, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
 			// Set descriptor bindings
 
-			sData->SceneDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(0, GraphicsContext::Get().GetDescriptorPool());
-			sData->SceneDataDescriptorSet->SetBufferBinding(0, sData->SceneDataUniformBuffer.get());
+			auto descriptorSets = sData->CubePipeline->AllocateDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
 
-			sData->MaterialDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(1, GraphicsContext::Get().GetDescriptorPool());
-			sData->MaterialDataDescriptorSet->SetBufferBinding(0, sData->MaterialDataStorageBuffer.get());
-			sData->MaterialDataDescriptorSet->SetImageBinding(1, sData->DiffuseTexture.get());
+			sData->GlobalDescriptorSet = descriptorSets[sData->sGlobalDescriptorSetIndex];
+			sData->GlobalDescriptorSet->SetBufferBinding(sData->SceneDataUniformBuffer.get(), 0);
 
-			sData->ObjectDataDescriptorSet = sData->CubePipeline->AllocateDescriptorSet(2, GraphicsContext::Get().GetDescriptorPool());
-			sData->ObjectDataDescriptorSet->SetBufferBinding(0, sData->ObjectDataStorageBuffer.get());
+			sData->MaterialDescriptorSet = descriptorSets[sData->sMaterialDescriptorSetIndex];
+			sData->MaterialDescriptorSet->SetBufferBinding(sData->MaterialDataStorageBuffer.get(), 0);
+
+			sData->ObjectDescriptorSet = descriptorSets[sData->sObjectDescriptorSetIndex];
+			sData->ObjectDescriptorSet->SetBufferBinding(sData->ObjectDataStorageBuffer.get(), 0);
 		}
 	}
 
 	void Renderer::Shutdown()
 	{
+		sData->CubePipeline->FreeDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
+
 		sData->SceneDataUniformBuffer->Unmap();
 		sData->SceneDataUniformBuffer.reset();
 
@@ -231,18 +225,26 @@ namespace Cobalt
 		CreateOrRecreateFramebuffers();
 	}
 
-	uint32_t Renderer::RegisterMaterial(const MaterialData& materialData)
+	TextureHandle Renderer::RegisterTexture(const Texture* texture)
 	{
-		uint32_t materialIndex = sData->MaterialIndex++;
+		TextureHandle textureHandle = sData->BindlessTextureIndex++;
+		sData->GlobalDescriptorSet->SetImageBinding(texture, 1, textureHandle);
 
-		sData->MappedMaterialData[materialIndex] = materialData;
+		return textureHandle;
+	}
+
+	MaterialHandle Renderer::RegisterMaterial(const MaterialData& materialData)
+	{
+		MaterialHandle materialIndex = sData->MaterialIndex++;
+
+		sData->Materials[materialIndex] = materialData;
 
 		return materialIndex;
 	}
 
-	MaterialData& Renderer::GetMaterial(uint32_t materialIndex)
+	MaterialData& Renderer::GetMaterial(MaterialHandle materialHandle)
 	{
-		return sData->MappedMaterialData[materialIndex];
+		return sData->MappedMaterialData[materialHandle];
 	}
 
 	void Renderer::BeginScene(const SceneData& scene)
@@ -255,8 +257,8 @@ namespace Cobalt
 		// Upload scene data
 
 		memcpy(sData->MappedSceneData, &scene, sizeof(SceneData));
-		//vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipelineLayout(), 0, 1, &sData->SceneDataDescriptorSet, 0, nullptr);
-		sData->SceneDataDescriptorSet->Bind(commandBuffer);
+
+		sData->GlobalDescriptorSet->Bind(commandBuffer);
 	}
 
 	void Renderer::EndScene()
@@ -304,10 +306,11 @@ namespace Cobalt
 
 		// Render objects
 
-		sData->MaterialDataDescriptorSet->Bind(commandBuffer);
+		memcpy(sData->MappedMaterialData, sData->Materials.data(), sData->MaterialIndex * sizeof(MaterialData));
+		sData->MaterialDescriptorSet->Bind(commandBuffer);
 
 		memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
-		sData->ObjectDataDescriptorSet->Bind(commandBuffer);
+		sData->ObjectDescriptorSet->Bind(commandBuffer);
 
 		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
 		VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
@@ -325,11 +328,11 @@ namespace Cobalt
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void Renderer::DrawCube(const Transform& transform, uint32_t materialIndex)
+	void Renderer::DrawCube(const Transform& transform, MaterialHandle material)
 	{
 		ObjectData objectData;
 		objectData.Transform = transform.GetTransform();
-		objectData.MaterialIndex = materialIndex;
+		objectData.MaterialHandle = material;
 
 		sData->Objects[sData->ObjectIndex++] = objectData;
 	}

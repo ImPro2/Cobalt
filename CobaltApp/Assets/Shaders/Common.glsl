@@ -35,14 +35,13 @@ struct SceneData
 
 struct MaterialData
 {
-	vec3  Ambient;
-	vec3  Diffuse;
-	vec3  Specular;
+	uint  DiffuseMapHandle;
+	uint  SpecularMapHandle;
 	float Shininess;
 };
 
 struct ObjectData
 {
 	mat4 Transform;
-	uint MaterialIndex;
+	uint MaterialHandle;
 };

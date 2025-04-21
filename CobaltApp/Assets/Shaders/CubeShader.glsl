@@ -5,7 +5,7 @@
 layout(location = 0) out      vec3 vNormal;
 layout(location = 1) out      vec2 vTexCoord;
 layout(location = 2) out      vec3 vFragPosition;
-layout(location = 3) out flat uint vMaterialIndex;
+layout(location = 3) out flat uint vMaterialHandle;
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;
@@ -34,11 +34,14 @@ void main()
 	vNormal = normalMatrix * aNormal;
 	vTexCoord = aTexCoord;
 	vFragPosition = vec3(transform * vec4(aPosition, 1.0));
-	vMaterialIndex = object.MaterialIndex;
+	vMaterialHandle = object.MaterialHandle;
 }
 
 #shader fragment
 #version 460
+#extension GL_EXT_nonuniform_qualifier : require
+#line 44
+
 #include "Common.glsl"
 
 layout(location = 0) out vec4 oColor;
@@ -46,24 +49,27 @@ layout(location = 0) out vec4 oColor;
 layout(location = 0) in      vec3 vNormal;
 layout(location = 1) in      vec2 vTexCoord;
 layout(location = 2) in      vec3 vFragPosition;
-layout(location = 3) in flat uint vMaterialIndex;
+layout(location = 3) in flat uint vMaterialHandle;
 
 layout(set = 0, binding = 0) uniform SceneDataBlock
 {
 	SceneData Scene;
 } uSceneData;
 
-layout(set = 1, binding = 0) readonly buffer MaterialDataBlock
+layout(set = 0, binding = 1) uniform sampler2D uTextures[];
+
+layout(set = 1, binding = 0, std430) readonly buffer MaterialDataBlock
 {
 	MaterialData Materials[];
 } uMaterialData;
 
-layout(set = 1, binding = 1) uniform sampler2D uTextureSampler;
-
 void main()
 {
 	SceneData scene = uSceneData.Scene;
-	MaterialData material = uMaterialData.Materials[vMaterialIndex];
+	MaterialData material = uMaterialData.Materials[vMaterialHandle];
+
+	vec3 materialDiffuse  = vec3(texture(uTextures[material.DiffuseMapHandle],  vTexCoord));
+	vec3 materialSpecular = vec3(texture(uTextures[material.SpecularMapHandle], vTexCoord));
 
 	vec3 lightDir = normalize(-scene.DirectionalLight.Direction - vFragPosition);
 	vec3 viewDir = normalize(scene.Camera.Translation - vFragPosition);
@@ -72,11 +78,9 @@ void main()
 	float diff = max(0.0, dot(lightDir, normalize(vNormal)));
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.Shininess);
 
-	vec3 ambient = scene.DirectionalLight.Ambient * material.Ambient;
-	vec3 diffuse = scene.DirectionalLight.Diffuse * (diff * material.Diffuse);
-	vec3 specular = scene.DirectionalLight.Specular * (spec * material.Specular);
+	vec3 ambient = scene.DirectionalLight.Ambient * materialDiffuse;
+	vec3 diffuse = scene.DirectionalLight.Diffuse * diff * materialDiffuse;
+	vec3 specular = scene.DirectionalLight.Specular * spec * materialSpecular;
 
-	vec3 result = ambient + diffuse + specular;
-
-	oColor = texture(uTextureSampler, vTexCoord) * vec4(result, 1.0);
+	oColor = vec4(ambient + diffuse + specular, 1.0);
 }

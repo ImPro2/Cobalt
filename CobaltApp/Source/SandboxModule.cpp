@@ -38,20 +38,21 @@ namespace Cobalt
 
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-		MaterialData floorMat;
-		floorMat.Ambient = glm::vec3(1.0f);
-		floorMat.Diffuse = glm::vec3(1.0f);
-		floorMat.Specular = glm::vec3(1.0f);
-		floorMat.Shininess = 128.0f;
+		mDiffuseTexture  = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_diffuse.png");
+		mSpecularTexture = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_specular.png");
 
 		MaterialData cubeMat;
-		cubeMat.Ambient = glm::vec3(1.0f, 0.0f, 0.0f);
-		cubeMat.Diffuse = glm::vec3(1.0f, 0.0f, 0.0f);
-		cubeMat.Specular = glm::vec3(1.0f);
+		cubeMat.DiffuseMapHandle = Renderer::RegisterTexture(mDiffuseTexture.get());
+		cubeMat.SpecularMapHandle = Renderer::RegisterTexture(mSpecularTexture.get());
 		cubeMat.Shininess = 256.0f;
 
-		mFloorMatIdx = Renderer::RegisterMaterial(floorMat);
-		mCubeMatIdx  = Renderer::RegisterMaterial(cubeMat);
+		MaterialData floorMat;
+		floorMat.DiffuseMapHandle  = cubeMat.DiffuseMapHandle;
+		floorMat.SpecularMapHandle = cubeMat.SpecularMapHandle;
+		floorMat.Shininess = 128.0f;
+
+		mCubeMat  = Renderer::RegisterMaterial(cubeMat);
+		mFloorMat = Renderer::RegisterMaterial(floorMat);
 	}
 
 	void SandboxModule::OnShutdown()
@@ -81,10 +82,12 @@ namespace Cobalt
 		mScene.Camera.CameraTranslation = mCameraController.GetTranslation();
 		mScene.Camera.ViewProjectionMatrix = mCameraController.GetViewProjectionMatrix();
 
+		mScene.DirectionalLight.Direction = glm::normalize(mScene.DirectionalLight.Direction);
+
 		Renderer::BeginScene(mScene);
 		
-		Renderer::DrawCube(mFloorTransform, mFloorMatIdx);
-		Renderer::DrawCube(mCubeTransform, mCubeMatIdx);
+		Renderer::DrawCube(mCubeTransform, mCubeMat);
+		Renderer::DrawCube(mFloorTransform, mFloorMat);
 
 		Renderer::EndScene();
 	}
@@ -104,15 +107,15 @@ namespace Cobalt
 
 			if (ImGui::TreeNode("Transforms"))
 			{
-				RenderUITransform("Floor", mFloorTransform);
 				RenderUITransform("Cube", mCubeTransform);
+				RenderUITransform("Floor", mFloorTransform);
 				ImGui::TreePop();
 			}
 
 			if (ImGui::TreeNode("Materials"))
 			{
-				RenderUIMaterial("Floor", mFloorMatIdx);
-				RenderUIMaterial("Cube", mCubeMatIdx);
+				RenderUIMaterial("Cube", mCubeMat);
+				RenderUIMaterial("Floor", mFloorMat);
 				ImGui::TreePop();
 			}
 		}
@@ -128,6 +131,7 @@ namespace Cobalt
 
 	void SandboxModule::RenderUITransform(const char* name, Transform& transform)
 	{
+		ImGui::Text("%s", name);
 		ImGui::DragFloat3(std::format("{} Translation", name).c_str(), &transform.Translation.x, 0.2f, -10.0f, 10.0f);
 		ImGui::DragFloat3(std::format("{} Rotation", name).c_str(),    &transform.Rotation.x, 1.0f, 0.0f, 360.0f);
 		ImGui::DragFloat3(std::format("{} Scale", name).c_str(),       &transform.Scale.x, 0.2f, -10.0f, 10.0f);
@@ -135,17 +139,14 @@ namespace Cobalt
 		ImGui::Separator();
 	}
 
-	void SandboxModule::RenderUIMaterial(const char* name, uint32_t materialIndex)
+	void SandboxModule::RenderUIMaterial(const char* name, MaterialHandle material)
 	{
-		MaterialData& material = Renderer::GetMaterial(materialIndex);
+		MaterialData& materialData = Renderer::GetMaterial(material);
 
-		ImGui::DragFloat3(std::format("{} Ambient", name).c_str(),  &material.Ambient.x, 0.05f, 0.0f, 1.0f);
-		ImGui::DragFloat3(std::format("{} Diffuse", name).c_str(),  &material.Diffuse.x, 0.05f, 0.0f, 1.0f);
-		ImGui::DragFloat3(std::format("{} Specular", name).c_str(), &material.Specular.x, 0.05f, 0.0f, 1.0f);
-		ImGui::DragFloat(std::format("{} Specular", name).c_str(),  &material.Shininess, 1.0f, 0.0f, 1024.0f);
+		ImGui::Text("%s", name);
+		ImGui::DragFloat(std::format("{} Specular", name).c_str(),  &materialData.Shininess, 1.0f, 0.0f, 1024.0f);
 
 		ImGui::Separator();
 	}
-
 
 }

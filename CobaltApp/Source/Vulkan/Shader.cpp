@@ -334,6 +334,9 @@ namespace Cobalt
 						.stageFlags = stageFlags
 					};
 
+					if (descriptorSetLayoutBinding.descriptorCount == 0)
+						descriptorSetLayoutBinding.descriptorCount = CO_BINDLESS_DESCRIPTOR_COUNT;
+
 					descriptorSetLayoutBindings[descriptorBinding->set][descriptorBinding->binding] = descriptorSetLayoutBinding;
 				}
 			}

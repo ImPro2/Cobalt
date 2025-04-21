@@ -15,6 +15,9 @@
 namespace Cobalt
 {
 
+	using TextureHandle = uint32_t;
+	using MaterialHandle = uint32_t;
+
 	struct Transform
 	{
 		glm::vec3 Translation;
@@ -29,13 +32,7 @@ namespace Cobalt
 		}
 	};
 
-	struct MaterialData
-	{
-		alignas(16) glm::vec3 Ambient;
-		alignas(16) glm::vec3 Diffuse;
-		alignas(16) glm::vec3 Specular;
-		float Shininess;
-	};
+	
 
 	struct CameraData
 	{
@@ -72,10 +69,17 @@ namespace Cobalt
 		PointLightData PointLight;
 	};
 
+	struct MaterialData
+	{
+		TextureHandle DiffuseMapHandle;
+		TextureHandle SpecularMapHandle;
+		float Shininess;
+	};
+
 	struct ObjectData
 	{
 		glm::mat4 Transform;
-		alignas(16) uint32_t MaterialIndex;
+		alignas(16) MaterialHandle MaterialHandle;
 	};
 
 	class Renderer
@@ -87,13 +91,15 @@ namespace Cobalt
 		static void OnResize();
 
 	public:
-		static uint32_t RegisterMaterial(const MaterialData& materialData);
-		static MaterialData& GetMaterial(uint32_t materialIndex);
+		static TextureHandle RegisterTexture(const Texture* texture);
+
+		static MaterialHandle RegisterMaterial(const MaterialData& materialData);
+		static MaterialData& GetMaterial(MaterialHandle materialHandle);
 
 		static void BeginScene(const SceneData& scene);
 		static void EndScene();
 
-		static void DrawCube(const Transform& transform, uint32_t materialIndex);
+		static void DrawCube(const Transform& transform, MaterialHandle material);
 
 	public:
 		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
@@ -115,21 +121,19 @@ namespace Cobalt
 			std::vector<VkFramebuffer> Framebuffers;
 			std::unique_ptr<VulkanBuffer> VertexBuffer, IndexBuffer;
 
-			std::unique_ptr<Texture> DepthTexture;
-
-			//VkImage DepthTexture;
-			//VkImageView DepthTextureView;
-			//VkDeviceMemory DepthTextureMemory;
-
 			std::unique_ptr<VulkanBuffer> SceneDataUniformBuffer;
 			std::unique_ptr<VulkanBuffer> MaterialDataStorageBuffer;
 			std::unique_ptr<VulkanBuffer> ObjectDataStorageBuffer;
 
-			std::unique_ptr<Texture> DiffuseTexture;
+			std::unique_ptr<Texture> DepthTexture;
 
-			VulkanDescriptorSet* SceneDataDescriptorSet = nullptr;
-			VulkanDescriptorSet* MaterialDataDescriptorSet = nullptr;
-			VulkanDescriptorSet* ObjectDataDescriptorSet = nullptr;
+			static constexpr uint32_t sGlobalDescriptorSetIndex   = 0;
+			static constexpr uint32_t sMaterialDescriptorSetIndex = 1;
+			static constexpr uint32_t sObjectDescriptorSetIndex   = 2;
+
+			VulkanDescriptorSet* GlobalDescriptorSet = nullptr;
+			VulkanDescriptorSet* MaterialDescriptorSet = nullptr;
+			VulkanDescriptorSet* ObjectDescriptorSet = nullptr;
 
 			SceneData* MappedSceneData = nullptr;
 			MaterialData* MappedMaterialData = nullptr;
@@ -139,10 +143,10 @@ namespace Cobalt
 			static constexpr uint32_t MaxMaterialCount = 100;
 
 			std::array<ObjectData, MaxObjectCount> Objects;
-			uint32_t ObjectIndex = 0;
-
 			std::array<MaterialData, MaxMaterialCount> Materials;
+			uint32_t ObjectIndex = 0;
 			uint32_t MaterialIndex = 0;
+			uint32_t BindlessTextureIndex = 0;
 		};
 
 		inline static RendererData* sData = nullptr;

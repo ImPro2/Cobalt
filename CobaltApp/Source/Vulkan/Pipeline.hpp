@@ -27,7 +27,9 @@ namespace Cobalt
 		// Called automatically
 		void Invalidate();
 
-		VulkanDescriptorSet* AllocateDescriptorSet(uint32_t set, VkDescriptorPool descriptorPool);
+	public:
+		std::vector<VulkanDescriptorSet*> AllocateDescriptorSets(VkDescriptorPool descriptorPool);
+		void FreeDescriptorSets(VkDescriptorPool descriptorPool);
 
 	public:
 		VkPipeline GetPipeline() const { return mPipeline; }

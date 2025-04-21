@@ -25,7 +25,7 @@ namespace Cobalt
 
 	private:
 		void RenderUITransform(const char* name, Transform& transform);
-		void RenderUIMaterial(const char* name, uint32_t materialIndex);
+		void RenderUIMaterial(const char* name, MaterialHandle material);
 
 	private:
 		CameraController mCameraController;
@@ -33,7 +33,9 @@ namespace Cobalt
 		Transform mFloorTransform = Transform();
 		Transform mCubeTransform = Transform();
 
-		uint32_t mFloorMatIdx, mCubeMatIdx;
+		std::unique_ptr<Texture> mDiffuseTexture, mSpecularTexture;
+
+		MaterialHandle mFloorMat, mCubeMat;
 
 		SceneData mScene;
 

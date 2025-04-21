@@ -9,21 +9,24 @@ namespace Cobalt
 	class VulkanDescriptorSet
 	{
 	public:
-		VulkanDescriptorSet(uint32_t setIndex, VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool, VkPipelineLayout pipelineLayout);
+		VulkanDescriptorSet(uint32_t setIndex, VkDescriptorSet descriptorSet, VkPipelineLayout pipelineLayout);
 		~VulkanDescriptorSet();
 
 	public:
-		void SetBufferBinding(uint32_t binding, const VulkanBuffer* buffer);
-		void SetImageBinding(uint32_t binding, const Texture* image);
+		void SetBufferBinding(const VulkanBuffer* buffer, uint32_t binding, uint32_t arrayIndex = 0);
+		void SetImageBinding(const Texture* image, uint32_t binding, uint32_t arrayIndex = 0);
 		void Bind(VkCommandBuffer commandBuffer);
 
+	public:
+		VkDescriptorSet GetDescriptorSet() const { return mDescriptorSet; }
+		VkDescriptorSet* GetDescriptorSetPtr() { return &mDescriptorSet; }
+
 	private:
+		uint32_t mSetIndex = 0;
+
 		VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
-		VkDescriptorSetLayout mDescriptorSetLayout = VK_NULL_HANDLE;
-		VkDescriptorPool mDescriptorPool = VK_NULL_HANDLE;
 		VkPipelineLayout mPipelineLayout = VK_NULL_HANDLE;
 
-		uint32_t mSetIndex = 0;
 	};
 
 }

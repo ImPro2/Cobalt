@@ -35,16 +35,15 @@ namespace Cobalt
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
 		{
 			VulkanCommands::CopyBuffer(commandBuffer, stagingBuffer, *buffer);
-#if 0
-			VkBufferCopy bufferCopy = {
-				.srcOffset = 0,
-				.dstOffset = 0,
-				.size = size,
-			};
-
-			vkCmdCopyBuffer(commandBuffer, stagingBuffer.GetBuffer(), buffer->GetBuffer(), 1, &bufferCopy);
-#endif
 		});
+
+		return buffer;
+	}
+
+	std::unique_ptr<VulkanBuffer> VulkanBuffer::CreateMappedBuffer(uint32_t offset, uint32_t size, void** data, VkBufferUsageFlags usage)
+	{
+		std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		buffer->Map(offset, size, data);
 
 		return buffer;
 	}

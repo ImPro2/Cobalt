@@ -155,11 +155,24 @@ namespace Cobalt
 		// Create logical device
 
 		{
-			const char* deviceExtensions[] = { "VK_KHR_swapchain", "VK_KHR_shader_draw_parameters" };
+			const char* deviceExtensions[] = { "VK_KHR_swapchain", "VK_KHR_shader_draw_parameters", "VK_EXT_descriptor_indexing"};
 			const float queuePriority[] = { 1.0f };
+
+			VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = {
+				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
+				.shaderSampledImageArrayNonUniformIndexing = true,
+				.shaderStorageBufferArrayNonUniformIndexing = true,
+				.shaderStorageImageArrayNonUniformIndexing = true,
+				.descriptorBindingSampledImageUpdateAfterBind = true,
+				.descriptorBindingStorageImageUpdateAfterBind = true,
+				.descriptorBindingStorageBufferUpdateAfterBind = true,
+				.descriptorBindingPartiallyBound = true,
+				.runtimeDescriptorArray = true,
+			};
 
 			VkPhysicalDeviceShaderDrawParametersFeatures shaderDrawParametersFeatures = {
 				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
+				.pNext = (void*)&descriptorIndexingFeatures,
 				.shaderDrawParameters = VK_TRUE
 			};
 
@@ -177,7 +190,7 @@ namespace Cobalt
 				.pNext = (void*)&shaderDrawParametersFeatures,
 				.queueCreateInfoCount = 1,
 				.pQueueCreateInfos = queueCreateInfo,
-				.enabledExtensionCount = 1,
+				.enabledExtensionCount = 3,
 				.ppEnabledExtensionNames = deviceExtensions,
 			};
 
@@ -205,7 +218,7 @@ namespace Cobalt
 
 			VkDescriptorPoolCreateInfo createInfo = {
 				.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-				.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
+				.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT | VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
 				.maxSets = 1000 * (sizeof(poolSizes) / sizeof(poolSizes[0])),
 				.poolSizeCount = sizeof(poolSizes) / sizeof(poolSizes[0]),
 				.pPoolSizes = poolSizes

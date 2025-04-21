@@ -10,6 +10,9 @@
 #include <vulkan/vulkan.h>
 #include <memory>
 
+// temporary
+#define CO_BINDLESS_DESCRIPTOR_COUNT 1000
+
 namespace Cobalt
 {
 

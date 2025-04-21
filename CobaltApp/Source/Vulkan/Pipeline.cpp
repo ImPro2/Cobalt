@@ -188,11 +188,44 @@ namespace Cobalt
 		VK_CALL(vkCreateGraphicsPipelines(GraphicsContext::Get().GetDevice(), VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &mPipeline));
 	}
 
-	VulkanDescriptorSet* Pipeline::AllocateDescriptorSet(uint32_t set, VkDescriptorPool descriptorPool)
+	std::vector<VulkanDescriptorSet*> Pipeline::AllocateDescriptorSets(VkDescriptorPool descriptorPool)
 	{
-		mDescriptorSets.emplace_back(std::make_unique<VulkanDescriptorSet>(set, mInfo.Shader->GetDescriptorSetLayouts()[set], descriptorPool, mPipelineLayout));
-		
-		return mDescriptorSets[mDescriptorSets.size() - 1].get();
+		const auto& descriptorSetLayouts = mInfo.Shader->GetDescriptorSetLayouts();
+
+		std::vector<VkDescriptorSet> descriptorSetHandles(descriptorSetLayouts.size());
+
+		VkDescriptorSetAllocateInfo descriptorSetAllocInfo = {
+			.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+			.descriptorPool = descriptorPool,
+			.descriptorSetCount = (uint32_t)descriptorSetLayouts.size(),
+			.pSetLayouts = descriptorSetLayouts.data()
+		};
+
+		VK_CALL(vkAllocateDescriptorSets(GraphicsContext::Get().GetDevice(), &descriptorSetAllocInfo, descriptorSetHandles.data()));
+
+		std::vector<VulkanDescriptorSet*> descriptorSets;
+		descriptorSets.resize(descriptorSetLayouts.size());
+		mDescriptorSets.resize(descriptorSetLayouts.size());
+
+		for (uint32_t i = 0; i < mDescriptorSets.size(); i++)
+		{
+			mDescriptorSets[i] = std::make_unique<VulkanDescriptorSet>(i, descriptorSetHandles[i], mPipelineLayout);
+			descriptorSets[i] = mDescriptorSets[i].get();
+		}
+
+		return descriptorSets;
+	}
+
+	void Pipeline::FreeDescriptorSets(VkDescriptorPool descriptorPool)
+	{
+		for (auto& descriptorSet : mDescriptorSets)
+		{
+			vkFreeDescriptorSets(GraphicsContext::Get().GetDevice(), descriptorPool, 1, descriptorSet->GetDescriptorSetPtr());
+			descriptorSet.reset();
+		}
+
+		mDescriptorSets.clear();
+
 	}
 
 }
