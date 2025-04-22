@@ -3,6 +3,7 @@
 #include "Pipeline.hpp"
 #include "VulkanBuffer.hpp"
 #include "Texture.hpp"
+#include "Material.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,9 +17,6 @@
 
 namespace Cobalt
 {
-
-	using TextureHandle = uint32_t;
-	using MaterialHandle = uint32_t;
 
 	struct Transform
 	{
@@ -72,12 +70,6 @@ namespace Cobalt
 		uint32_t PointLightCount;
 	};
 
-	struct MaterialData
-	{
-		TextureHandle DiffuseMapHandle;
-		TextureHandle SpecularMapHandle;
-		float Shininess;
-	};
 
 	struct ObjectData
 	{

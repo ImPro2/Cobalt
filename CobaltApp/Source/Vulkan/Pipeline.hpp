@@ -8,7 +8,6 @@
 namespace Cobalt
 {
 
-
 	struct PipelineInfo
 	{
 		std::shared_ptr<Shader> Shader;
