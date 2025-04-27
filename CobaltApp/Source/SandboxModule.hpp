@@ -2,6 +2,7 @@
 #include "Module.hpp"
 #include "Vulkan/Renderer.hpp"
 #include "Camera.hpp"
+#include "Model.hpp"
 
 namespace Cobalt
 {
@@ -31,12 +32,14 @@ namespace Cobalt
 	private:
 		CameraController mCameraController;
 
-		Transform mFloorTransform = Transform();
-		Transform mCubeTransform = Transform();
+		//Transform mFloorTransform = Transform();
+		//Transform mCubeTransform = Transform();
 
-		std::unique_ptr<Texture> mDiffuseTexture, mSpecularTexture;
+		//std::unique_ptr<Texture> mDiffuseTexture, mSpecularTexture;
+		//MaterialHandle mFloorMat, mCubeMat;
 
-		MaterialHandle mFloorMat, mCubeMat;
+		Transform mObjectTransform = Transform();
+		std::unique_ptr<Model> mObjectModel;
 
 		SceneData mScene;
 

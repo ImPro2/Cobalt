@@ -8,7 +8,7 @@ project "CobaltApp"
         "ImGui",
         "GLFW",
         "stb_image",
-		"Assimp",
+		"assimp",
         "VkBootstrap",
 		"spv_reflect",
 		"%{Library.Vulkan}",
@@ -30,7 +30,7 @@ project "CobaltApp"
 		"%{IncludeDir.GLM}",
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.ImGui}",
-		"%{IncludeDir.Assimp}",
+		"%{IncludeDir.assimp}",
         "%{IncludeDir.VkBootstrap}",
 		"%{IncludeDir.spv_reflect}"
 	}

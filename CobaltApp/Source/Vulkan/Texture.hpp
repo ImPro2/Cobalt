@@ -5,14 +5,38 @@
 namespace Cobalt
 {
 
+	struct TextureInfo
+	{
+		TextureInfo() = default;
+		TextureInfo(const std::string& filePath)
+			: FilePath(FilePath)
+		{
+		}
+		TextureInfo(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, uint32_t mipLevels = 1)
+			: FilePath(""), Width(width), Height(height), Format(format), Usage(usage), MipLevels(mipLevels)
+		{
+		}
+
+		bool LoadFromFile() const
+		{
+			return !FilePath.empty();
+		}
+
+		std::string FilePath;
+
+		// Fields inferred from FilePath.
+
+		uint32_t Width = 0;
+		uint32_t Height = 0;
+		VkFormat Format = VK_FORMAT_UNDEFINED;
+		VkImageUsageFlags Usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+		uint32_t MipLevels = 1;
+	};
+
 	class Texture
 	{
 	public:
-		static std::unique_ptr<Texture> CreateFromFile(const std::string& filePath);
-
-	public:
-		Texture(const std::string& filePath);
-		Texture(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, uint32_t mipLevels = 1);
+		Texture(const TextureInfo& textureInfo);
 		~Texture();
 
 		void Recreate(uint32_t width, uint32_t height);

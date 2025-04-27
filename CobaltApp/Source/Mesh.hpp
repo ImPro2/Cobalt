@@ -19,7 +19,7 @@ namespace Cobalt
 	class Mesh
 	{
 	public:
-		Mesh(const std::vector<MeshVertex>& vertices, const std::vector<uint32_t>& indices, Material* material);
+		Mesh(const std::vector<MeshVertex>& vertices, const std::vector<uint32_t>& indices, MaterialHandle materialHandle);
 		~Mesh();
 
 	public:
@@ -30,7 +30,7 @@ namespace Cobalt
 		std::vector<MeshVertex> mVertices;
 		std::vector<uint32_t> mIndices;
 
-		Material* mMaterial;
+		MaterialHandle mMaterialHandle;
 
 		std::unique_ptr<VulkanBuffer> mVertexBuffer;
 		std::unique_ptr<VulkanBuffer> mIndexBuffer;

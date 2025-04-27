@@ -8,32 +8,28 @@
 namespace Cobalt
 {
 
-	std::unique_ptr<Texture> Texture::CreateFromFile(const std::string& filePath)
+	Texture::Texture(const TextureInfo& textureInfo)
+		: mWidth(textureInfo.Width), mHeight(textureInfo.Height), mFormat(textureInfo.Format), mUsage(textureInfo.Usage), mMipLevels(textureInfo.MipLevels)
 	{
-		std::unique_ptr<Texture> texture = std::make_unique<Texture>(filePath);
-		return texture;
-	}
-
-	Texture::Texture(const std::string& filePath)
-	{
-		uint8_t* data = LoadDataFromFile(filePath);
-		Recreate(mWidth, mHeight);
-
-		VulkanBuffer stagingBuffer(mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		stagingBuffer.CopyData(0, mImageSize, data);
-
-		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
+		if (textureInfo.LoadFromFile())
 		{
-			VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-			VulkanCommands::CopyBufferToImage(commandBuffer, stagingBuffer, *this);
-			VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		});
-	}
+			uint8_t* data = LoadDataFromFile(textureInfo.FilePath);
+			Recreate(mWidth, mHeight);
 
-	Texture::Texture(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, uint32_t mipLevels /* = 1 */)
-		: mWidth(width), mHeight(height), mFormat(format), mUsage(usage), mMipLevels(mipLevels)
-	{
-		Recreate(mWidth, mHeight);
+			VulkanBuffer stagingBuffer(mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			stagingBuffer.CopyData(0, mImageSize, data);
+
+			GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
+			{
+				VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+				VulkanCommands::CopyBufferToImage(commandBuffer, stagingBuffer, *this);
+				VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+			});
+		}
+		else
+		{
+			Recreate(mWidth, mHeight);
+		}
 	}
 
 	Texture::~Texture()

@@ -7,6 +7,6 @@
 [submodule "Dependencies/ImGui"]
 	path = Dependencies/ImGui
 	url = https://github.com/ImPro2/ImGui
-[submodule "Dependencies/Assimp"]
-	path = Dependencies/Assimp
-	url = https://github.com/ImPro2/assimp
+[submodule "Dependencies/assimp"]
+	path = Dependencies/assimp
+	url = https://github.com/AminAliari/assimp/

@@ -3,7 +3,7 @@
 namespace Cobalt
 {
 
-	Material::Material(const std::string& shaderFilePath, const MaterialData& materialData)
+	Material::Material(const std::string& shaderFilePath, MaterialData* data)
 	{
 		PipelineInfo pipelineInfo = {
 			.Shader = std::make_unique<Shader>(shaderFilePath),
@@ -12,7 +12,7 @@ namespace Cobalt
 		};
 
 		mPipeline = std::make_unique<Pipeline>(pipelineInfo);
-		mMaterialData = materialData;
+		mMaterialData = data;
 	}
 
 	Material::~Material()

@@ -225,26 +225,32 @@ namespace Cobalt
 		CreateOrRecreateFramebuffers();
 	}
 
-	TextureHandle Renderer::RegisterTexture(const Texture* texture)
+	TextureHandle Renderer::CreateTexture(const TextureInfo& textureInfo)
 	{
 		TextureHandle textureHandle = sData->BindlessTextureIndex++;
-		sData->GlobalDescriptorSet->SetImageBinding(texture, 1, textureHandle);
+		sData->Textures[textureHandle] = std::make_unique<Texture>(textureInfo);
 
 		return textureHandle;
 	}
 
-	MaterialHandle Renderer::RegisterMaterial(const MaterialData& materialData)
+	MaterialHandle Renderer::CreateMaterial(const MaterialData& materialData)
 	{
-		MaterialHandle materialIndex = sData->MaterialIndex++;
+		MaterialHandle materialHandle = sData->MaterialIndex++;
 
-		sData->Materials[materialIndex] = materialData;
+		sData->MaterialDatas[materialHandle] = materialData;
+		sData->Materials[materialHandle] = std::make_unique<Material>(sData->sShaderFilePath, &sData->MaterialDatas[materialHandle]);
 
-		return materialIndex;
+		return materialHandle;
 	}
 
-	MaterialData& Renderer::GetMaterial(MaterialHandle materialHandle)
+	Texture& Renderer::GetTexture(TextureHandle textureHandle)
 	{
-		return sData->MappedMaterialData[materialHandle];
+		return *sData->Textures[textureHandle];
+	}
+
+	Material& Renderer::GetMaterial(MaterialHandle materialHandle)
+	{
+		return *sData->Materials[materialHandle];
 	}
 
 	void Renderer::BeginScene(const SceneData& scene)
@@ -312,16 +318,18 @@ namespace Cobalt
 		memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
 		sData->ObjectDescriptorSet->Bind(commandBuffer);
 
-		VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
-		VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
-		VkDeviceSize offset = 0;
-
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, sData->CubePipeline->GetPipeline());
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
-		vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
 		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
 		{
+			VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
+			VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
+			VkDeviceSize offset = 0;
+
+			ObjectData object = sData->Objects[i];
+			const auto& material = GetMaterial(object.MaterialHandle);
+			
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.GetPipeline().GetPipeline());
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
+			vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 			vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, i);
 		}
 

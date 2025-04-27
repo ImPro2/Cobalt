@@ -17,8 +17,8 @@ namespace Cobalt
 
 		mCameraController = CameraController(width, height);
 
-		mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
-		mCubeTransform.Translation = glm::vec3(0.0f, 1.0f, 0.0f);
+		//mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
+		//mCubeTransform.Translation = glm::vec3(0.0f, 1.0f, 0.0f);
 
 		mScene.Camera.CameraTranslation = mCameraController.GetTranslation();
 		mScene.Camera.ViewProjectionMatrix = mCameraController.GetViewProjectionMatrix();
@@ -66,10 +66,10 @@ namespace Cobalt
 
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-		mDiffuseTexture  = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_diffuse.png");
-		mSpecularTexture = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_specular.png");
+		//mDiffuseTexture  = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_diffuse.png");
+		//mSpecularTexture = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_specular.png");
 
-		MaterialData cubeMat;
+		/*MaterialData cubeMat;
 		cubeMat.DiffuseMapHandle = Renderer::RegisterTexture(mDiffuseTexture.get());
 		cubeMat.SpecularMapHandle = Renderer::RegisterTexture(mSpecularTexture.get());
 		cubeMat.Shininess = 256.0f;
@@ -80,7 +80,9 @@ namespace Cobalt
 		floorMat.Shininess = 128.0f;
 
 		mCubeMat  = Renderer::RegisterMaterial(cubeMat);
-		mFloorMat = Renderer::RegisterMaterial(floorMat);
+		mFloorMat = Renderer::RegisterMaterial(floorMat);*/
+
+		mObjectModel = std::make_unique<Model>("");
 	}
 
 	void SandboxModule::OnShutdown()

@@ -86,15 +86,18 @@ namespace Cobalt
 		static void OnResize();
 
 	public:
-		static TextureHandle RegisterTexture(const Texture* texture);
+		static TextureHandle CreateTexture(const TextureInfo& textureInfo);
+		static MaterialHandle CreateMaterial(const MaterialData& materialData);
 
-		static MaterialHandle RegisterMaterial(const MaterialData& materialData);
-		static MaterialData& GetMaterial(MaterialHandle materialHandle);
+		static Texture& GetTexture(TextureHandle textureHandle);
+		static Material& GetMaterial(MaterialHandle materialHandle);
 
 		static void BeginScene(const SceneData& scene);
 		static void EndScene();
 
 		static void DrawCube(const Transform& transform, MaterialHandle material);
+
+		static void DrawMesh(const Transform& transform, Mesh mesh);
 
 	public:
 		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
@@ -137,11 +140,16 @@ namespace Cobalt
 			static constexpr uint32_t MaxObjectCount = 10000;
 			static constexpr uint32_t MaxMaterialCount = 100;
 
+			std::vector<std::unique_ptr<Texture>> Textures;
+			std::vector<std::unique_ptr<Material>> Materials;
+
 			std::array<ObjectData, MaxObjectCount> Objects;
-			std::array<MaterialData, MaxMaterialCount> Materials;
+			std::array<MaterialData, MaxMaterialCount> MaterialDatas;
 			uint32_t ObjectIndex = 0;
 			uint32_t MaterialIndex = 0;
 			uint32_t BindlessTextureIndex = 0;
+
+			static constexpr const char* sShaderFilePath = "CobaltApp/Assets/Shaders/CubeShader.glsl";
 		};
 
 		inline static RendererData* sData = nullptr;
