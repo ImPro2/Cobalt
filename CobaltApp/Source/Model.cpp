@@ -48,7 +48,7 @@ namespace Cobalt
 		}
 	}
 
-	Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
+	std::unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	{
 		std::vector<MeshVertex> vertices;
 		std::vector<uint32_t> indices;
@@ -89,12 +89,12 @@ namespace Cobalt
 			aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &materialData.Shininess);
 		}
 
-		return Mesh(vertices, indices, Renderer::CreateMaterial(materialData));
+		return std::make_unique<Mesh>(vertices, indices, Renderer::CreateMaterial(materialData));
 	}
 
 	TextureHandle Model::LoadMaterialTexture(aiMaterial* material, aiTextureType type)
 	{
-		static std::unordered_map<aiString, TextureHandle> loadedTexturePaths;
+		static std::unordered_map<const char*, TextureHandle> loadedTexturePaths;
 
 		if (material->GetTextureCount(type) == 0)
 			return (TextureHandle)-1;
@@ -102,14 +102,21 @@ namespace Cobalt
 		aiString path;
 		material->GetTexture(type, 0, &path);
 
-		if (loadedTexturePaths.find(path) != loadedTexturePaths.end())
+		const char* pathStr = path.C_Str();
+
+		TextureHandle textureHandle;
+
+		if (loadedTexturePaths.find(pathStr) != loadedTexturePaths.end())
 		{
-			return loadedTexturePaths[path];
+			textureHandle = loadedTexturePaths.at(pathStr);
 		}
 		else
 		{
-			return Renderer::CreateTexture(TextureInfo(path.C_Str()));
+			textureHandle = Renderer::CreateTexture(TextureInfo(pathStr));
+			loadedTexturePaths[pathStr] = textureHandle;
 		}
+
+		return textureHandle;
 	}
 
 }

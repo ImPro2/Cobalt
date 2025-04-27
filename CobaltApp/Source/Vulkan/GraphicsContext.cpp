@@ -4,9 +4,9 @@
 #include "Renderer.hpp"
 #include "ImGuiBackend.hpp"
 
+
 #include <cstdlib>
 #include <iostream>
-
 
 namespace Cobalt
 {
@@ -302,6 +302,19 @@ namespace Cobalt
 					VK_CALL(vkCreateSemaphore(mDevice, &semaphoreCreateInfo, nullptr, &fd.RenderFinishedSemaphore));
 				}
 			}
+		}
+
+		// Initialize VMA
+
+		{
+
+			VmaAllocatorCreateInfo allocatorCreateInfo = {
+				.physicalDevice = mPhysicalDevice,
+				.device = mDevice,
+				.instance = mInstance,
+			};
+
+			VK_CALL(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
 		}
 	}
 

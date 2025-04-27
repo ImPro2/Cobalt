@@ -116,8 +116,8 @@ namespace Cobalt
 
 		Renderer::BeginScene(mScene);
 		
-		Renderer::DrawCube(mCubeTransform, mCubeMat);
-		Renderer::DrawCube(mFloorTransform, mFloorMat);
+		//Renderer::DrawCube(mCubeTransform, mCubeMat);
+		//Renderer::DrawCube(mFloorTransform, mFloorMat);
 
 		Renderer::EndScene();
 	}
@@ -140,15 +140,15 @@ namespace Cobalt
 
 			if (ImGui::TreeNode("Transforms"))
 			{
-				RenderUITransform("Cube", mCubeTransform);
-				RenderUITransform("Floor", mFloorTransform);
+				//RenderUITransform("Cube", mCubeTransform);
+				//RenderUITransform("Floor", mFloorTransform);
 				ImGui::TreePop();
 			}
 
 			if (ImGui::TreeNode("Materials"))
 			{
-				RenderUIMaterial("Cube", mCubeMat);
-				RenderUIMaterial("Floor", mFloorMat);
+				//RenderUIMaterial("Cube", mCubeMat);
+				//RenderUIMaterial("Floor", mFloorMat);
 				ImGui::TreePop();
 			}
 		}
@@ -189,12 +189,12 @@ namespace Cobalt
 
 	void SandboxModule::RenderUIMaterial(const char* name, MaterialHandle material)
 	{
-		MaterialData& materialData = Renderer::GetMaterial(material);
+		//MaterialData& materialData = Renderer::GetMaterial(material);
 
-		ImGui::Text("Material: %s", name);
-		ImGui::DragFloat(std::format("{}  Specular", name).c_str(), &materialData.Shininess, 1.0f, 0.0f, 1024.0f);
+		//ImGui::Text("Material: %s", name);
+		//ImGui::DragFloat(std::format("{}  Specular", name).c_str(), &materialData.Shininess, 1.0f, 0.0f, 1024.0f);
 
-		ImGui::Separator();
+		//ImGui::Separator();
 	}
 
 }

@@ -82,8 +82,8 @@ namespace Cobalt
 				offset += 4;
 			}
 
-			sData->VertexBuffer = VulkanBuffer::CreateGPUBufferFromCPUData(0, sizeof(vertices), vertices.data(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-			sData->IndexBuffer  = VulkanBuffer::CreateGPUBufferFromCPUData(0, sizeof(indices),  indices.data(),  VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+			sData->VertexBuffer = VulkanBuffer::CreateGPUBufferFromCPUData(vertices.data(), sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+			sData->IndexBuffer  = VulkanBuffer::CreateGPUBufferFromCPUData(indices.data(),  sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 		}
 
 		CreateOrRecreateDepthTexture();
@@ -170,13 +170,13 @@ namespace Cobalt
 		{
 			// Uniform buffers
 
-			sData->MappedSceneData = new SceneData();
-			sData->MappedMaterialData = new MaterialData[sData->MaxMaterialCount];
-			sData->MappedObjectData = new ObjectData[sData->MaxObjectCount];
+			//sData->MappedSceneData = new SceneData();
+			//sData->MappedMaterialData = new MaterialData[sData->MaxMaterialCount];
+			//sData->MappedObjectData = new ObjectData[sData->MaxObjectCount];
 
-			sData->SceneDataUniformBuffer    = VulkanBuffer::CreateMappedBuffer(0, sizeof(SceneData), (void**)&sData->MappedSceneData, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-			sData->MaterialDataStorageBuffer = VulkanBuffer::CreateMappedBuffer(0, sizeof(MaterialData) * sData->MaxMaterialCount, (void**)&sData->MappedMaterialData, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-			sData->ObjectDataStorageBuffer   = VulkanBuffer::CreateMappedBuffer(0, sizeof(ObjectData) * sData->MaxObjectCount, (void**)&sData->MappedObjectData, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			sData->SceneDataUniformBuffer    = VulkanBuffer::CreateMappedBuffer(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+			sData->MaterialDataStorageBuffer = VulkanBuffer::CreateMappedBuffer(sizeof(MaterialData) * sData->MaxMaterialCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			sData->ObjectDataStorageBuffer   = VulkanBuffer::CreateMappedBuffer(sizeof(ObjectData) * sData->MaxObjectCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
 
 			// Set descriptor bindings
 
@@ -206,9 +206,9 @@ namespace Cobalt
 		sData->MaterialDataStorageBuffer->Unmap();
 		sData->MaterialDataStorageBuffer.reset();
 
-		sData->MappedSceneData = nullptr;
-		sData->MappedObjectData = nullptr;
-		sData->MappedMaterialData = nullptr;
+		//sData->MappedSceneData = nullptr;
+		//sData->MappedObjectData = nullptr;
+		//sData->MappedMaterialData = nullptr;
 
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->MainRenderPass, nullptr);
 
@@ -262,7 +262,8 @@ namespace Cobalt
 
 		// Upload scene data
 
-		memcpy(sData->MappedSceneData, &scene, sizeof(SceneData));
+		//memcpy(sData->MappedSceneData, &scene, sizeof(SceneData));
+		sData->SceneDataUniformBuffer->CopyData(&scene);
 
 		sData->GlobalDescriptorSet->Bind(commandBuffer);
 	}
@@ -312,10 +313,12 @@ namespace Cobalt
 
 		// Render objects
 
-		memcpy(sData->MappedMaterialData, sData->Materials.data(), sData->MaterialIndex * sizeof(MaterialData));
+		//memcpy(sData->MappedMaterialData, sData->Materials.data(), sData->MaterialIndex * sizeof(MaterialData));
+		sData->MaterialDataStorageBuffer->CopyData(sData->MaterialDatas.data(), sData->MaterialIndex * sizeof(MaterialData));
 		sData->MaterialDescriptorSet->Bind(commandBuffer);
 
-		memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
+		//memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
+		sData->ObjectDataStorageBuffer->CopyData(sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
 		sData->ObjectDescriptorSet->Bind(commandBuffer);
 
 		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
@@ -353,7 +356,8 @@ namespace Cobalt
 		if (sData->DepthTexture)
 			sData->DepthTexture->Recreate(width, height);
 		else
-			sData->DepthTexture = std::make_unique<Texture>(width, height, VK_FORMAT_D16_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			//sData->DepthTexture = std::make_unique<Texture>(width, height, VK_FORMAT_D16_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			sData->DepthTexture = std::make_unique<Texture>(TextureInfo(width, height, VK_FORMAT_D16_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
 	}
 
 	void Renderer::CreateOrRecreateFramebuffers()

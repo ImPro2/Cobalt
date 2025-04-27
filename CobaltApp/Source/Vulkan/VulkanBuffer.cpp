@@ -2,6 +2,7 @@
 #include "GraphicsContext.hpp"
 #include "VulkanCommands.hpp"
 
+
 namespace Cobalt
 {
 
@@ -21,46 +22,60 @@ namespace Cobalt
 		return 0;
 	}
 
-	std::unique_ptr<VulkanBuffer> VulkanBuffer::CreateGPUBufferFromCPUData(uint32_t offset, uint32_t size, const void* data, VkBufferUsageFlags usage)
+	std::unique_ptr<VulkanBuffer> VulkanBuffer::CreateGPUBufferFromCPUData(const void* data, uint32_t size, VkBufferUsageFlags usage)
 	{
-		std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		//std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 		// Upload data to stagingBuffer
 
-		VulkanBuffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		stagingBuffer.CopyData(offset, size, data);
+		//VulkanBuffer stagingBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		//stagingBuffer.CopyData(offset, size, data);
+
+		std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, 0);
+
+		std::unique_ptr<VulkanBuffer> stagingBuffer = CreateMappedBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+		stagingBuffer->CopyData(data);
 
 		// Copy stagingBuffer to buffer
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
 		{
-			VulkanCommands::CopyBuffer(commandBuffer, stagingBuffer, *buffer);
+			VulkanCommands::CopyBuffer(commandBuffer, *stagingBuffer, *buffer);
 		});
 
 		return buffer;
 	}
 
-	std::unique_ptr<VulkanBuffer> VulkanBuffer::CreateMappedBuffer(uint32_t offset, uint32_t size, void** data, VkBufferUsageFlags usage)
+	std::unique_ptr<VulkanBuffer> VulkanBuffer::CreateMappedBuffer(uint32_t size, VkBufferUsageFlags usage)
 	{
-		std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-		buffer->Map(offset, size, data);
+		//std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		//buffer->Map(offset, size, data);
+
+		std::unique_ptr<VulkanBuffer> buffer = std::make_unique<VulkanBuffer>(size, usage, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
 		return buffer;
 	}
 
-	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memoryPropertyFlags)
-		: mSize(size), mUsage(usage)
+	VulkanBuffer::VulkanBuffer(uint32_t size, VkBufferUsageFlags usage, VmaAllocationCreateFlags allocationFlags)
+		: mUsage(usage)
 	{
 		VkBufferCreateInfo bufferCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 			.flags = 0,
-			.size = mSize,
+			.size = size,
 			.usage = mUsage,
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE
 		};
 
-		VK_CALL(vkCreateBuffer(GraphicsContext::Get().GetDevice(), &bufferCreateInfo, nullptr, &mBuffer));
+		VmaAllocationCreateInfo allocCreateInfo = {
+			.flags = allocationFlags,
+			.usage = VMA_MEMORY_USAGE_AUTO,
+		};
 
+		//VK_CALL(vkCreateBuffer(GraphicsContext::Get().GetDevice(), &bufferCreateInfo, nullptr, &mBuffer));
+		VK_CALL(vmaCreateBuffer(GraphicsContext::Get().GetAllocator(), &bufferCreateInfo, &allocCreateInfo, &mBuffer, &mAllocation, &mAllocationInfo));
+
+#if 0
 		vkGetBufferMemoryRequirements(GraphicsContext::Get().GetDevice(), mBuffer, &mMemoryRequirements);
 
 		VkMemoryAllocateInfo memoryAllocateInfo = {
@@ -72,31 +87,31 @@ namespace Cobalt
 		VK_CALL(vkAllocateMemory(GraphicsContext::Get().GetDevice(), &memoryAllocateInfo, nullptr, &mMemory));
 
 		VK_CALL(vkBindBufferMemory(GraphicsContext::Get().GetDevice(), mBuffer, mMemory, 0));
+#endif
 	}
 
 	VulkanBuffer::~VulkanBuffer()
 	{
-		vkFreeMemory(GraphicsContext::Get().GetDevice(), mMemory, nullptr);
-		vkDestroyBuffer(GraphicsContext::Get().GetDevice(), mBuffer, nullptr);
+		//vkFreeMemory(GraphicsContext::Get().GetDevice(), mMemory, nullptr);
+		//vkDestroyBuffer(GraphicsContext::Get().GetDevice(), mBuffer, nullptr);
+		vmaDestroyBuffer(GraphicsContext::Get().GetAllocator(), mBuffer, mAllocation);
 	}
 
-	void VulkanBuffer::Map(VkDeviceSize offset, VkDeviceSize size, void** data)
+	void VulkanBuffer::Map(void** data)
 	{
-		VK_CALL(vkMapMemory(GraphicsContext::Get().GetDevice(), mMemory, offset, size, 0, data));
+		//VK_CALL(vkMapMemory(GraphicsContext::Get().GetDevice(), mMemory, offset, size, 0, data));
+		VK_CALL(vmaMapMemory(GraphicsContext::Get().GetAllocator(), mAllocation, data));
 	}
 
 	void VulkanBuffer::Unmap()
 	{
-		vkUnmapMemory(GraphicsContext::Get().GetDevice(), mMemory);
+		//vkUnmapMemory(GraphicsContext::Get().GetDevice(), mMemory);
+		vmaUnmapMemory(GraphicsContext::Get().GetAllocator(), mAllocation);
 	}
 
-	void VulkanBuffer::CopyData(VkDeviceSize offset, VkDeviceSize size, const void* src)
+	void VulkanBuffer::CopyData(const void* src, uint32_t size)
 	{
-		void* data;
-
-		Map(offset, size, &data);
-		std::memcpy(data, src, size);
-		Unmap();
+		memcpy(mAllocationInfo.pMappedData, src, size == 0 ? mAllocationInfo.size : size);
 	}
 
 }

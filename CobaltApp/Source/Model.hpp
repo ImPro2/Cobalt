@@ -1,6 +1,7 @@
 #pragma once
 #include "Mesh.hpp"
 #include <assimp/scene.h>
+#include <memory>
 
 namespace Cobalt
 {
@@ -14,11 +15,11 @@ namespace Cobalt
 	private:
 		void LoadModel(const std::string& modelPath);
 		void ProcessNode(aiNode* node, const aiScene* scene);
-		Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
+		std::unique_ptr<Mesh> ProcessMesh(aiMesh* mesh, const aiScene* scene);
 		TextureHandle LoadMaterialTexture(aiMaterial* material, aiTextureType type);
 
 	private:
-		std::vector<Mesh> mMeshes;
+		std::vector<std::unique_ptr<Mesh>> mMeshes;
 	};
 
 }

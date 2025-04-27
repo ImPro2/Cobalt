@@ -16,13 +16,14 @@ namespace Cobalt
 			uint8_t* data = LoadDataFromFile(textureInfo.FilePath);
 			Recreate(mWidth, mHeight);
 
-			VulkanBuffer stagingBuffer(mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			stagingBuffer.CopyData(0, mImageSize, data);
+			//VulkanBuffer stagingBuffer(mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			std::unique_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::CreateMappedBuffer(mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+			stagingBuffer->CopyData(data);
 
 			GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
 			{
 				VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-				VulkanCommands::CopyBufferToImage(commandBuffer, stagingBuffer, *this);
+				VulkanCommands::CopyBufferToImage(commandBuffer, *stagingBuffer, *this);
 				VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 			});
 		}
@@ -63,8 +64,14 @@ namespace Cobalt
 			.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED
 		};
 
-		VK_CALL(vkCreateImage(GraphicsContext::Get().GetDevice(), &imageCreateInfo, nullptr, &mImage));
+		VmaAllocationCreateInfo allocCreateInfo = {
+			.usage = VMA_MEMORY_USAGE_AUTO,
+		};
 
+		//VK_CALL(vkCreateImage(GraphicsContext::Get().GetDevice(), &imageCreateInfo, nullptr, &mImage));
+		VK_CALL(vmaCreateImage(GraphicsContext::Get().GetAllocator(), &imageCreateInfo, &allocCreateInfo, &mImage, &mAllocation, &mAllocationInfo));
+
+#if 0
 		// Allocate memory
 
 		VkMemoryRequirements memoryRequirements;
@@ -78,6 +85,7 @@ namespace Cobalt
 
 		VK_CALL(vkAllocateMemory(GraphicsContext::Get().GetDevice(), &memoryAllocateInfo, nullptr, &mMemory));
 		VK_CALL(vkBindImageMemory(GraphicsContext::Get().GetDevice(), mImage, mMemory, 0));
+#endif
 
 		// Create image view
 
@@ -165,14 +173,16 @@ namespace Cobalt
 
 	void Texture::Release()
 	{
-		if (mImage)
-			vkDestroyImage(GraphicsContext::Get().GetDevice(), mImage, nullptr);
+		//if (mImage)
+			//vkDestroyImage(GraphicsContext::Get().GetDevice(), mImage, nullptr);
+
+		vmaDestroyImage(GraphicsContext::Get().GetAllocator(), mImage, mAllocation);
 
 		if (mImageView)
 			vkDestroyImageView(GraphicsContext::Get().GetDevice(), mImageView, nullptr);
 
-		if (mMemory)
-			vkFreeMemory(GraphicsContext::Get().GetDevice(), mMemory, nullptr);
+		//if (mMemory)
+			//vkFreeMemory(GraphicsContext::Get().GetDevice(), mMemory, nullptr);
 	}
 
 }

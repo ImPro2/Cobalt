@@ -4,6 +4,7 @@
 #include "VulkanBuffer.hpp"
 #include "Texture.hpp"
 #include "Material.hpp"
+#include "Mesh.hpp"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -133,9 +134,9 @@ namespace Cobalt
 			VulkanDescriptorSet* MaterialDescriptorSet = nullptr;
 			VulkanDescriptorSet* ObjectDescriptorSet = nullptr;
 
-			SceneData* MappedSceneData = nullptr;
-			MaterialData* MappedMaterialData = nullptr;
-			ObjectData* MappedObjectData = nullptr;
+			//SceneData* MappedSceneData = nullptr;
+			//MaterialData* MappedMaterialData = nullptr;
+			//ObjectData* MappedObjectData = nullptr;
 
 			static constexpr uint32_t MaxObjectCount = 10000;
 			static constexpr uint32_t MaxMaterialCount = 100;

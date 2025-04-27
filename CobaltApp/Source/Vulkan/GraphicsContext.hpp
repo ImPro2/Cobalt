@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 
 #include <vulkan/vulkan.h>
+#include <vma/vk_mem_alloc.h>
 #include <memory>
 
 // temporary
@@ -39,6 +40,8 @@ namespace Cobalt
 		VkDescriptorPool GetDescriptorPool() const { return mDescriptorPool; }
 
 		const Swapchain& GetSwapchain() const { return *mSwapchain; }
+
+		VmaAllocator GetAllocator() const { return mAllocator; }
 
 		bool ShouldRecreateSwapchain() const { return mRecreateSwapchain; }
 
@@ -91,6 +94,8 @@ namespace Cobalt
 
 		bool mRecreateSwapchain = false;
 		bool mEnableValidationLayers = true;
+
+		VmaAllocator mAllocator;
 	};
 
 }

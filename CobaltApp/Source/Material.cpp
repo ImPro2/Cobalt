@@ -1,4 +1,5 @@
 #include "Material.hpp"
+#include "Vulkan/Renderer.hpp"
 
 namespace Cobalt
 {
@@ -11,7 +12,7 @@ namespace Cobalt
 			.EnableDepthTesting = true
 		};
 
-		mPipeline = std::make_unique<Pipeline>(pipelineInfo);
+		mPipeline = std::make_unique<Pipeline>(pipelineInfo, Renderer::GetMainRenderPass());
 		mMaterialData = data;
 	}
 

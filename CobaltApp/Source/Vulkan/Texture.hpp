@@ -1,5 +1,6 @@
 #pragma once
 #include "VulkanUtils.hpp"
+#include <vma/vk_mem_alloc.h>
 #include <string>
 
 namespace Cobalt
@@ -48,7 +49,7 @@ namespace Cobalt
 	public:
 		VkImage GetImage() const { return mImage; }
 		VkImageView GetImageView() const { return mImageView; }
-		VkDeviceMemory GetMemory() const { return mMemory; }
+		//VkDeviceMemory GetMemory() const { return mMemory; }
 		VkSampler GetSampler() const { return mSampler; }
 
 		VkImageLayout GetImageLayout() const { return mImageLayout; }
@@ -66,8 +67,11 @@ namespace Cobalt
 	private:
 		VkImage mImage = VK_NULL_HANDLE;
 		VkImageView mImageView = VK_NULL_HANDLE;
-		VkDeviceMemory mMemory = VK_NULL_HANDLE;
+		//VkDeviceMemory mMemory = VK_NULL_HANDLE;
 		VkSampler mSampler = VK_NULL_HANDLE;
+
+		VmaAllocation mAllocation;
+		VmaAllocationInfo mAllocationInfo;
 
 		VkImageLayout mImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
