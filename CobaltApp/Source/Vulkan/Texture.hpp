@@ -40,6 +40,7 @@ namespace Cobalt
 		Texture(const TextureInfo& textureInfo);
 		~Texture();
 
+		void CopyData(const void* data);
 		void Recreate(uint32_t width, uint32_t height);
 
 	private:

@@ -15,17 +15,7 @@ namespace Cobalt
 		{
 			uint8_t* data = LoadDataFromFile(textureInfo.FilePath);
 			Recreate(mWidth, mHeight);
-
-			//VulkanBuffer stagingBuffer(mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-			std::unique_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::CreateMappedBuffer(mImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-			stagingBuffer->CopyData(data);
-
-			GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
-			{
-				VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-				VulkanCommands::CopyBufferToImage(commandBuffer, *stagingBuffer, *this);
-				VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-			});
+			CopyData(data);
 		}
 		else
 		{
@@ -36,6 +26,19 @@ namespace Cobalt
 	Texture::~Texture()
 	{
 		Release();
+	}
+
+	void Texture::CopyData(const void* data)
+	{
+		std::unique_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::CreateMappedBuffer(mAllocationInfo.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+		stagingBuffer->CopyData(data);
+
+		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
+		{
+			VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			VulkanCommands::CopyBufferToImage(commandBuffer, *stagingBuffer, *this);
+			VulkanCommands::TransitionImageLayout(commandBuffer, *this, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		});
 	}
 
 	void Texture::Recreate(uint32_t width, uint32_t height)
@@ -173,10 +176,9 @@ namespace Cobalt
 
 	void Texture::Release()
 	{
-		//if (mImage)
+		if (mImage)
 			//vkDestroyImage(GraphicsContext::Get().GetDevice(), mImage, nullptr);
-
-		vmaDestroyImage(GraphicsContext::Get().GetAllocator(), mImage, mAllocation);
+			vmaDestroyImage(GraphicsContext::Get().GetAllocator(), mImage, mAllocation);
 
 		if (mImageView)
 			vkDestroyImageView(GraphicsContext::Get().GetDevice(), mImageView, nullptr);

@@ -32,14 +32,11 @@ namespace Cobalt
 	private:
 		CameraController mCameraController;
 
-		//Transform mFloorTransform = Transform();
-		//Transform mCubeTransform = Transform();
+		Transform mFloorTransform = Transform();
+		Transform mSphereTransform = Transform();
 
-		//std::unique_ptr<Texture> mDiffuseTexture, mSpecularTexture;
-		//MaterialHandle mFloorMat, mCubeMat;
-
-		Transform mObjectTransform = Transform();
-		std::unique_ptr<Model> mObjectModel;
+		std::unique_ptr<Model> mSphereModel;
+		std::unique_ptr<Model> mCubeModel;
 
 		SceneData mScene;
 

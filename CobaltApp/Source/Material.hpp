@@ -17,18 +17,17 @@ namespace Cobalt
 	class Material
 	{
 	public:
-		Material(const std::string& shaderFilePath, MaterialData* data);
+		Material(const Pipeline& pipeline, MaterialData* data);
 		~Material();
 
 	public:
-		const Pipeline& GetPipeline() const { return *mPipeline; }
+		const Pipeline& GetPipeline() const { return mPipeline; }
 
 		      MaterialData& GetMaterialData()       { return *mMaterialData; }
 		const MaterialData& GetMaterialData() const { return *mMaterialData; }
 
 	private:
-		std::unique_ptr<Pipeline> mPipeline;
-
+		const Pipeline& mPipeline;
 		MaterialData* mMaterialData;
 	};
 

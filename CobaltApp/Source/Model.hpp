@@ -12,6 +12,9 @@ namespace Cobalt
 		Model(const std::string& modelpath);
 		~Model();
 
+	public:
+		const std::vector<std::unique_ptr<Mesh>>& GetMeshes() const { return mMeshes; }
+
 	private:
 		void LoadModel(const std::string& modelPath);
 		void ProcessNode(aiNode* node, const aiScene* scene);

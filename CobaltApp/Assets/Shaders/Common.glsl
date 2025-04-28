@@ -46,5 +46,6 @@ struct MaterialData
 struct ObjectData
 {
 	mat4 Transform;
+	mat4 NormalMatrix;
 	uint MaterialHandle;
 };

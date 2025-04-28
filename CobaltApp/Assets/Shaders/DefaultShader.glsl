@@ -27,7 +27,7 @@ void main()
 	ObjectData object = uObjectData.Objects[gl_BaseInstance];
 
 	mat4 transform = object.Transform;
-	mat3 normalMatrix = mat3(transpose(inverse(transform)));
+	mat3 normalMatrix = mat3(object.NormalMatrix);
 
 	gl_Position = scene.Camera.ViewProjection * transform * vec4(aPosition, 1.0);
 

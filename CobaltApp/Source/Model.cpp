@@ -65,7 +65,7 @@ namespace Cobalt
 			vertices.push_back(MeshVertex {
 				.Position = { position.x, position.y, position.z },
 				.Normal = { normal.x, normal.y, normal.z },
-				.TexCoords = { texCoords.x, texCoords.y, texCoords.z }
+				.TexCoords = { texCoords.x, texCoords.y }
 			});
 		}
 
@@ -74,7 +74,7 @@ namespace Cobalt
 			aiFace face = mesh->mFaces[i];
 
 			std::vector<uint32_t> faceIndices(face.mIndices, face.mIndices + face.mNumIndices);
-			indices.insert(indices.begin(), faceIndices.begin(), faceIndices.end());
+			indices.insert(indices.end(), faceIndices.begin(), faceIndices.end());
 		}
 
 		MaterialData materialData;
@@ -87,6 +87,8 @@ namespace Cobalt
 			materialData.SpecularMapHandle = LoadMaterialTexture(material, aiTextureType_SPECULAR);
 
 			aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &materialData.Shininess);
+			if (materialData.Shininess == 0.0f)
+				materialData.Shininess = 1.0f;
 		}
 
 		return std::make_unique<Mesh>(vertices, indices, Renderer::CreateMaterial(materialData));
@@ -97,7 +99,7 @@ namespace Cobalt
 		static std::unordered_map<const char*, TextureHandle> loadedTexturePaths;
 
 		if (material->GetTextureCount(type) == 0)
-			return (TextureHandle)-1;
+			return 0;
 
 		aiString path;
 		material->GetTexture(type, 0, &path);

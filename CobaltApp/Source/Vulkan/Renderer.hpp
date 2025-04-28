@@ -71,10 +71,10 @@ namespace Cobalt
 		uint32_t PointLightCount;
 	};
 
-
 	struct ObjectData
 	{
 		glm::mat4 Transform;
+		glm::mat4 NormalMatrix;
 		alignas(16) MaterialHandle MaterialHandle;
 	};
 
@@ -98,7 +98,7 @@ namespace Cobalt
 
 		static void DrawCube(const Transform& transform, MaterialHandle material);
 
-		static void DrawMesh(const Transform& transform, Mesh mesh);
+		static void DrawMesh(const Transform& transform, Mesh* mesh);
 
 	public:
 		static VkRenderPass GetMainRenderPass() { return sData->MainRenderPass; }
@@ -116,7 +116,7 @@ namespace Cobalt
 		struct RendererData
 		{
 			VkRenderPass MainRenderPass;
-			std::shared_ptr<Pipeline> CubePipeline;
+			std::shared_ptr<Pipeline> DefaultPipeline;
 			std::vector<VkFramebuffer> Framebuffers;
 			std::unique_ptr<VulkanBuffer> VertexBuffer, IndexBuffer;
 
@@ -141,8 +141,9 @@ namespace Cobalt
 			static constexpr uint32_t MaxObjectCount = 10000;
 			static constexpr uint32_t MaxMaterialCount = 100;
 
+			// Texture index 0 is white
 			std::vector<std::unique_ptr<Texture>> Textures;
-			std::vector<std::unique_ptr<Material>> Materials;
+			std::array<std::unique_ptr<Material>, MaxMaterialCount> Materials;
 
 			std::array<ObjectData, MaxObjectCount> Objects;
 			std::array<MaterialData, MaxMaterialCount> MaterialDatas;
@@ -150,7 +151,9 @@ namespace Cobalt
 			uint32_t MaterialIndex = 0;
 			uint32_t BindlessTextureIndex = 0;
 
-			static constexpr const char* sShaderFilePath = "CobaltApp/Assets/Shaders/CubeShader.glsl";
+			std::vector<Mesh*> DrawMeshes;
+
+			static constexpr const char* sDefaultShaderFilePath = "CobaltApp/Assets/Shaders/DefaultShader.glsl";
 		};
 
 		inline static RendererData* sData = nullptr;

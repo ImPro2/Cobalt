@@ -54,6 +54,11 @@ namespace Cobalt
 		mScene.PointLights[2].Linear = 0.7f;
 		mScene.PointLights[2].Quadratic = 1.8f;
 
+		mFloorTransform.Translation = glm::vec3(0.0f, -0.5f, 0.0f);
+		mFloorTransform.Rotation = glm::vec3(0.0f);
+		mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
+
+		mSphereTransform.Translation = glm::vec3(0.0f, 1.0f, 0.0f);
 	}
 
 	SandboxModule::~SandboxModule()
@@ -82,7 +87,8 @@ namespace Cobalt
 		mCubeMat  = Renderer::RegisterMaterial(cubeMat);
 		mFloorMat = Renderer::RegisterMaterial(floorMat);*/
 
-		mObjectModel = std::make_unique<Model>("");
+		mSphereModel = std::make_unique<Model>("CobaltApp/Assets/Models/sphere.obj");
+		mCubeModel   = std::make_unique<Model>("CobaltApp/Assets/Models/cube.obj");
 	}
 
 	void SandboxModule::OnShutdown()
@@ -115,9 +121,12 @@ namespace Cobalt
 		mScene.DirectionalLight.Direction = glm::normalize(mScene.DirectionalLight.Direction);
 
 		Renderer::BeginScene(mScene);
-		
-		//Renderer::DrawCube(mCubeTransform, mCubeMat);
-		//Renderer::DrawCube(mFloorTransform, mFloorMat);
+
+		for (const auto& mesh : mSphereModel->GetMeshes())
+			Renderer::DrawMesh(mSphereTransform, mesh.get());
+
+		for (const auto& mesh : mCubeModel->GetMeshes())
+			Renderer::DrawMesh(mFloorTransform, mesh.get());
 
 		Renderer::EndScene();
 	}
@@ -140,17 +149,17 @@ namespace Cobalt
 
 			if (ImGui::TreeNode("Transforms"))
 			{
-				//RenderUITransform("Cube", mCubeTransform);
-				//RenderUITransform("Floor", mFloorTransform);
+				RenderUITransform("Sphere", mSphereTransform);
+				RenderUITransform("Floor", mFloorTransform);
 				ImGui::TreePop();
 			}
 
-			if (ImGui::TreeNode("Materials"))
+			/*if (ImGui::TreeNode("Materials"))
 			{
 				//RenderUIMaterial("Cube", mCubeMat);
 				//RenderUIMaterial("Floor", mFloorMat);
 				ImGui::TreePop();
-			}
+			}*/
 		}
 
 		ImGui::End();

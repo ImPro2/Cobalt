@@ -157,12 +157,12 @@ namespace Cobalt
 
 		{
 			PipelineInfo pipelineInfo = {
-				.Shader = std::make_shared<Shader>("CobaltApp/Assets/Shaders/CubeShader.glsl"),
+				.Shader = std::make_shared<Shader>(sData->sDefaultShaderFilePath),
 				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 				.EnableDepthTesting = true
 			};
 
-			sData->CubePipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
+			sData->DefaultPipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
 		}
 
 		// Create scene & material uniform buffers & descriptors
@@ -180,7 +180,7 @@ namespace Cobalt
 
 			// Set descriptor bindings
 
-			auto descriptorSets = sData->CubePipeline->AllocateDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
+			auto descriptorSets = sData->DefaultPipeline->AllocateDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
 
 			sData->GlobalDescriptorSet = descriptorSets[sData->sGlobalDescriptorSetIndex];
 			sData->GlobalDescriptorSet->SetBufferBinding(sData->SceneDataUniformBuffer.get(), 0);
@@ -191,11 +191,22 @@ namespace Cobalt
 			sData->ObjectDescriptorSet = descriptorSets[sData->sObjectDescriptorSetIndex];
 			sData->ObjectDescriptorSet->SetBufferBinding(sData->ObjectDataStorageBuffer.get(), 0);
 		}
+
+		{
+			sData->Textures.resize(CO_BINDLESS_DESCRIPTOR_COUNT);
+
+			uint8_t data[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+
+			sData->Textures[0] = std::make_unique<Texture>(TextureInfo(1, 1, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT));
+			sData->Textures[0]->CopyData(data);
+
+			sData->GlobalDescriptorSet->SetImageBinding(sData->Textures[0].get(), 1, 0);
+		}
 	}
 
 	void Renderer::Shutdown()
 	{
-		sData->CubePipeline->FreeDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
+		sData->DefaultPipeline->FreeDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
 
 		sData->SceneDataUniformBuffer->Unmap();
 		sData->SceneDataUniformBuffer.reset();
@@ -229,6 +240,7 @@ namespace Cobalt
 	{
 		TextureHandle textureHandle = sData->BindlessTextureIndex++;
 		sData->Textures[textureHandle] = std::make_unique<Texture>(textureInfo);
+		sData->GlobalDescriptorSet->SetImageBinding(sData->Textures[textureHandle].get(), 1, textureHandle);
 
 		return textureHandle;
 	}
@@ -238,7 +250,7 @@ namespace Cobalt
 		MaterialHandle materialHandle = sData->MaterialIndex++;
 
 		sData->MaterialDatas[materialHandle] = materialData;
-		sData->Materials[materialHandle] = std::make_unique<Material>(sData->sShaderFilePath, &sData->MaterialDatas[materialHandle]);
+		sData->Materials[materialHandle] = std::make_unique<Material>(*sData->DefaultPipeline, &sData->MaterialDatas[materialHandle]);
 
 		return materialHandle;
 	}
@@ -255,7 +267,9 @@ namespace Cobalt
 
 	void Renderer::BeginScene(const SceneData& scene)
 	{
+		sData->DrawMeshes.clear();
 		memset(sData->Objects.data(), 0, sizeof(sData->Objects));
+		sData->ObjectDataStorageBuffer->CopyData(sData->Objects.data(), sizeof(sData->Objects));
 		sData->ObjectIndex = 0;
 
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
@@ -323,6 +337,25 @@ namespace Cobalt
 
 		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
 		{
+			Mesh* mesh = sData->DrawMeshes[i];
+
+			const VulkanBuffer& vertexBuffer = mesh->GetVertexBuffer();
+			const VulkanBuffer& indexBuffer  = mesh->GetIndexBuffer();
+			const Material&     material     = GetMaterial(mesh->GetMaterialHandle());
+
+			VkBuffer vertexBufferHandles[] = { vertexBuffer.GetBuffer() };
+			VkBuffer indexBufferHandle  = indexBuffer.GetBuffer();
+			VkDeviceSize offsets[] = { 0 };
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.GetPipeline().GetPipeline());
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBufferHandles, offsets);
+			vkCmdBindIndexBuffer(commandBuffer, indexBufferHandle, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdDrawIndexed(commandBuffer, mesh->GetIndices().size(), 1, 0, 0, i);
+		}
+
+#if 0
+		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
+		{
 			VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
 			VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
 			VkDeviceSize offset = 0;
@@ -335,15 +368,30 @@ namespace Cobalt
 			vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 			vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, i);
 		}
+#endif
 
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
 	void Renderer::DrawCube(const Transform& transform, MaterialHandle material)
 	{
+		// TODO: fix
+
 		ObjectData objectData;
 		objectData.Transform = transform.GetTransform();
 		objectData.MaterialHandle = material;
+
+		sData->Objects[sData->ObjectIndex++] = objectData;
+	}
+
+	void Renderer::DrawMesh(const Transform& transform, Mesh* mesh)
+	{
+		sData->DrawMeshes.push_back(mesh);
+
+		ObjectData objectData;
+		objectData.Transform = transform.GetTransform();
+		objectData.NormalMatrix = glm::transpose(glm::inverse(objectData.Transform));
+		objectData.MaterialHandle = mesh->GetMaterialHandle();
 
 		sData->Objects[sData->ObjectIndex++] = objectData;
 	}

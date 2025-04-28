@@ -13,7 +13,7 @@ namespace Cobalt
 	{
 		glm::vec3 Position;
 		glm::vec3 Normal;
-		glm::vec3 TexCoords;
+		glm::vec2 TexCoords;
 	};
 
 	class Mesh
@@ -23,8 +23,13 @@ namespace Cobalt
 		~Mesh();
 
 	public:
+		const std::vector<MeshVertex>& GetVertices() const { return mVertices; }
+		const std::vector<uint32_t>& GetIndices() const { return mIndices; }
+
 		const VulkanBuffer& GetVertexBuffer() const { return *mVertexBuffer; }
 		const VulkanBuffer& GetIndexBuffer()  const { return *mIndexBuffer;  }
+
+		MaterialHandle GetMaterialHandle() const { return mMaterialHandle; }
 
 	private:
 		std::vector<MeshVertex> mVertices;
