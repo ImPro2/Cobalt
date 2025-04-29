@@ -36,6 +36,14 @@ struct SceneData
 	uint PointLightCount;
 };
 
+struct MeshVertex
+{
+	vec3 Position;
+	float TexCoordU;
+	vec3 Normal;
+	float TexCoordV;
+};
+
 struct MaterialData
 {
 	uint  DiffuseMapHandle;
@@ -43,9 +51,18 @@ struct MaterialData
 	float Shininess;
 };
 
+#extension GL_EXT_buffer_reference : require
+
+layout(buffer_reference, std430) readonly buffer VertexBuffer
+{
+	MeshVertex Vertices[];
+};
+
 struct ObjectData
 {
 	mat4 Transform;
 	mat4 NormalMatrix;
+	VertexBuffer VertexBufferRef;
 	uint MaterialHandle;
 };
+

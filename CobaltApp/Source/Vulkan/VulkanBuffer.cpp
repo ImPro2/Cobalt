@@ -114,4 +114,14 @@ namespace Cobalt
 		memcpy(mAllocationInfo.pMappedData, src, size == 0 ? mAllocationInfo.size : size);
 	}
 
+	VkDeviceAddress VulkanBuffer::GetDeviceAddress() const
+	{
+		VkBufferDeviceAddressInfo bufferDeviceAddressInfo = {
+			.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+			.buffer = mBuffer
+		};
+
+		return vkGetBufferDeviceAddress(GraphicsContext::Get().GetDevice(), &bufferDeviceAddressInfo);
+	}
+
 }

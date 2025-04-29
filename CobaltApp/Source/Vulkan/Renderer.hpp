@@ -1,5 +1,6 @@
 #pragma once
 #include "GraphicsContext.hpp"
+#include "ShaderStructs.hpp"
 #include "Pipeline.hpp"
 #include "VulkanBuffer.hpp"
 #include "Texture.hpp"
@@ -13,8 +14,6 @@
 #include <glm/gtc/matrix_inverse.hpp>
 
 #include <array>
-
-#define CO_MAX_POINT_LIGHT_COUNT 16
 
 namespace Cobalt
 {
@@ -33,49 +32,11 @@ namespace Cobalt
 		}
 	};
 
-	struct CameraData
+	struct DrawCall
 	{
-		glm::mat4 ViewProjectionMatrix;
-		alignas(16) glm::vec3 CameraTranslation;
-	};
-
-	struct DirectionalLightData
-	{
-		alignas(16) glm::vec3 Direction;
-
-		alignas(16) glm::vec3 Ambient;
-		alignas(16) glm::vec3 Diffuse;
-		alignas(16) glm::vec3 Specular;
-	};
-
-	struct PointLightData
-	{
-		alignas(16) glm::vec3 Position;
-
-		alignas(16) glm::vec3 Ambient;
-		alignas(16) glm::vec3 Diffuse;
-		alignas(16) glm::vec3 Specular;
-
-		float Constant;
-		float Linear;
-		float Quadratic;
-
-		float __padding0;
-	};
-
-	struct SceneData
-	{
-		CameraData Camera;
-		DirectionalLightData DirectionalLight;
-		PointLightData PointLights[CO_MAX_POINT_LIGHT_COUNT];
-		uint32_t PointLightCount;
-	};
-
-	struct ObjectData
-	{
-		glm::mat4 Transform;
-		glm::mat4 NormalMatrix;
-		alignas(16) MaterialHandle MaterialHandle;
+		VulkanBuffer* IndexBuffer;
+		uint32_t IndexCount;
+		Material* Material;
 	};
 
 	class Renderer
@@ -88,15 +49,12 @@ namespace Cobalt
 
 	public:
 		static TextureHandle CreateTexture(const TextureInfo& textureInfo);
-		static MaterialHandle CreateMaterial(const MaterialData& materialData);
+		static std::unique_ptr<Material> CreateMaterial(const MaterialData& materialData);
 
 		static Texture& GetTexture(TextureHandle textureHandle);
-		static Material& GetMaterial(MaterialHandle materialHandle);
 
 		static void BeginScene(const SceneData& scene);
 		static void EndScene();
-
-		static void DrawCube(const Transform& transform, MaterialHandle material);
 
 		static void DrawMesh(const Transform& transform, Mesh* mesh);
 
@@ -116,13 +74,7 @@ namespace Cobalt
 		struct RendererData
 		{
 			VkRenderPass MainRenderPass;
-			std::shared_ptr<Pipeline> DefaultPipeline;
 			std::vector<VkFramebuffer> Framebuffers;
-			std::unique_ptr<VulkanBuffer> VertexBuffer, IndexBuffer;
-
-			std::unique_ptr<VulkanBuffer> SceneDataUniformBuffer;
-			std::unique_ptr<VulkanBuffer> MaterialDataStorageBuffer;
-			std::unique_ptr<VulkanBuffer> ObjectDataStorageBuffer;
 
 			std::unique_ptr<Texture> DepthTexture;
 
@@ -130,28 +82,22 @@ namespace Cobalt
 			static constexpr uint32_t sMaterialDescriptorSetIndex = 1;
 			static constexpr uint32_t sObjectDescriptorSetIndex   = 2;
 
-			VulkanDescriptorSet* GlobalDescriptorSet = nullptr;
-			VulkanDescriptorSet* MaterialDescriptorSet = nullptr;
-			VulkanDescriptorSet* ObjectDescriptorSet = nullptr;
+			SceneData ActiveScene;
 
-			//SceneData* MappedSceneData = nullptr;
-			//MaterialData* MappedMaterialData = nullptr;
-			//ObjectData* MappedObjectData = nullptr;
+			// per frame-in-flight
+			std::vector<std::unique_ptr<VulkanBuffer>> SceneDataUniformBuffers;
+			std::vector<std::unique_ptr<VulkanBuffer>> ObjectStorageBuffers;
+			std::vector<std::unique_ptr<VulkanBuffer>> MaterialDataStorageBuffers;
 
-			static constexpr uint32_t MaxObjectCount = 10000;
-			static constexpr uint32_t MaxMaterialCount = 100;
-
-			// Texture index 0 is white
 			std::vector<std::unique_ptr<Texture>> Textures;
-			std::array<std::unique_ptr<Material>, MaxMaterialCount> Materials;
 
-			std::array<ObjectData, MaxObjectCount> Objects;
-			std::array<MaterialData, MaxMaterialCount> MaterialDatas;
-			uint32_t ObjectIndex = 0;
-			uint32_t MaterialIndex = 0;
-			uint32_t BindlessTextureIndex = 0;
+			static constexpr uint32_t MaxMaterialCount = 100;
+			static constexpr uint32_t MaxObjectCount = 10000;
 
-			std::vector<Mesh*> DrawMeshes;
+			std::vector<MaterialData> Materials;
+			std::vector<ObjectData> Objects;
+
+			std::vector<DrawCall> DrawCalls;
 
 			static constexpr const char* sDefaultShaderFilePath = "CobaltApp/Assets/Shaders/DefaultShader.glsl";
 		};

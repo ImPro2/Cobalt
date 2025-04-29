@@ -21,6 +21,8 @@ namespace Cobalt
 			.range = VK_WHOLE_SIZE
 		};
 
+		mDescriptorBufferInfos.push_back(descriptorBufferInfo);
+
 		VkDescriptorType descriptorType;
 
 		switch (buffer->GetUsageFlags())
@@ -36,10 +38,10 @@ namespace Cobalt
 			.dstArrayElement = arrayIndex,
 			.descriptorCount = 1,
 			.descriptorType = descriptorType,
-			.pBufferInfo = &descriptorBufferInfo,
+			.pBufferInfo = &mDescriptorBufferInfos[mDescriptorBufferInfos.size() - 1],
 		};
 
-		vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), 1, &writeDescSet, 0, nullptr);
+		mDescriptorWrites.push_back(writeDescSet);
 	}
 
 	void VulkanDescriptorSet::SetImageBinding(const Texture* image, uint32_t binding, uint32_t arrayIndex)
@@ -50,6 +52,8 @@ namespace Cobalt
 			.imageLayout = image->GetImageLayout()
 		};
 
+		mDescriptorImageInfos.push_back(descImageInfo);
+
 		VkWriteDescriptorSet writeDescSet = {
 			.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
 			.dstSet = mDescriptorSet,
@@ -57,10 +61,15 @@ namespace Cobalt
 			.dstArrayElement = arrayIndex,
 			.descriptorCount = 1,
 			.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-			.pImageInfo = &descImageInfo
+			.pImageInfo = &mDescriptorImageInfos[mDescriptorImageInfos.size() - 1]
 		};
 
-		vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), 1, &writeDescSet, 0, nullptr);
+		mDescriptorWrites.push_back(writeDescSet);
+	}
+
+	void VulkanDescriptorSet::Update()
+	{
+		vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), (uint32_t)mDescriptorWrites.size(), mDescriptorWrites.data(), 0, nullptr);
 	}
 
 	void VulkanDescriptorSet::Bind(VkCommandBuffer commandBuffer)

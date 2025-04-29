@@ -1,34 +1,34 @@
 #pragma once
+#include "Vulkan/ShaderStructs.hpp"
 #include "Vulkan/Pipeline.hpp"
 
 namespace Cobalt
 {
 
-	using TextureHandle = uint32_t;
-	using MaterialHandle = uint32_t;
-
-	struct MaterialData
-	{
-		TextureHandle DiffuseMapHandle;
-		TextureHandle SpecularMapHandle;
-		float Shininess;
-	};
-
 	class Material
 	{
 	public:
-		Material(const Pipeline& pipeline, MaterialData* data);
+		Material(MaterialHandle handle, MaterialData* data);
 		~Material();
 
 	public:
-		const Pipeline& GetPipeline() const { return mPipeline; }
+		VulkanDescriptorSet* GetGlobalDescriptorSet(uint32_t frameIndex) const { return mGlobalDescriptorSets[frameIndex]; }
+		VulkanDescriptorSet* GetMaterialDescriptorSet(uint32_t frameIndex) const { return mMaterialDescriptorSets[frameIndex]; }
+
+	public:
+		MaterialHandle GetMaterialHandle() const { return mMaterialHandle; }
+		const Pipeline& GetPipeline() const { return *mPipeline; }
 
 		      MaterialData& GetMaterialData()       { return *mMaterialData; }
 		const MaterialData& GetMaterialData() const { return *mMaterialData; }
 
 	private:
-		const Pipeline& mPipeline;
+		MaterialHandle mMaterialHandle;
+		std::unique_ptr<Pipeline> mPipeline;
 		MaterialData* mMaterialData;
+
+		std::vector<VulkanDescriptorSet*> mGlobalDescriptorSets;
+		std::vector<VulkanDescriptorSet*> mMaterialDescriptorSets;
 	};
 
 }

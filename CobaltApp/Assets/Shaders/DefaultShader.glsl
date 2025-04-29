@@ -1,22 +1,19 @@
 #shader vertex
 #version 460
 #include "Common.glsl"
+#extension GL_EXT_scalar_block_layout : require
 
-layout(location = 0) out      vec3 vNormal;
-layout(location = 1) out      vec2 vTexCoord;
-layout(location = 2) out      vec3 vFragPosition;
-layout(location = 3) out flat uint vMaterialHandle;
+//layout(location = 0) out      vec3 vNormal;
+//layout(location = 1) out      vec2 vTexCoord;
+//layout(location = 2) out      vec3 vFragPosition;
+//layout(location = 3) out flat uint vMaterialHandle;
 
-layout(location = 0) in vec3 aPosition;
-layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec2 aTexCoord;
-
-layout(set = 0, binding = 0) uniform SceneDataBlock
+layout(set = 0, binding = 0, std430) uniform SceneBlock
 {
 	SceneData Scene;
 } uSceneData;
 
-layout(set = 2, binding = 0) readonly buffer ObjectDataBlock
+layout(set = 0, binding = 1, std430) readonly buffer ObjectDataBlock
 {
 	ObjectData Objects[];
 } uObjectData;
@@ -24,44 +21,48 @@ layout(set = 2, binding = 0) readonly buffer ObjectDataBlock
 void main()
 {
 	SceneData scene = uSceneData.Scene;
-	ObjectData object = uObjectData.Objects[gl_BaseInstance];
+	ObjectData object = uObjectData.Objects[0];
+	MeshVertex vertex = object.VertexBufferRef.Vertices[gl_VertexIndex];
 
-	mat4 transform = object.Transform;
-	mat3 normalMatrix = mat3(object.NormalMatrix);
+	vec4 positionLocal = vec4(vertex.Position, 1.0);
+	vec4 positionWorld = object.Transform * positionLocal;
 
-	gl_Position = scene.Camera.ViewProjection * transform * vec4(aPosition, 1.0);
+	gl_Position = scene.Camera.ViewProjection * positionWorld;
 
-	vNormal = normalMatrix * aNormal;
-	vTexCoord = aTexCoord;
-	vFragPosition = vec3(transform * vec4(aPosition, 1.0));
-	vMaterialHandle = object.MaterialHandle;
+	//vNormal = mat3(object.NormalMatrix) * vertex.Normal;
+	//vTexCoord = vec2(vertex.TexCoordU, vertex.TexCoordV);
+	//vFragPosition = vec3(positionWorld);
+	//vMaterialHandle = object.MaterialHandle;
 }
 
 #shader fragment
 #version 460
 #extension GL_EXT_nonuniform_qualifier : require
+#extension GL_EXT_scalar_block_layout : require
 #line 44
 
 #include "Common.glsl"
 
 layout(location = 0) out vec4 oColor;
 
-layout(location = 0) in      vec3 vNormal;
-layout(location = 1) in      vec2 vTexCoord;
-layout(location = 2) in      vec3 vFragPosition;
-layout(location = 3) in flat uint vMaterialHandle;
+//layout(location = 0) in      vec3 vNormal;
+//layout(location = 1) in      vec2 vTexCoord;
+//layout(location = 2) in      vec3 vFragPosition;
+//layout(location = 3) in flat uint vMaterialHandle;
 
-layout(set = 0, binding = 0) uniform SceneDataBlock
+layout(set = 0, binding = 0, std430) uniform SceneDataBlock
 {
 	SceneData Scene;
 } uSceneData;
-
-layout(set = 0, binding = 1) uniform sampler2D uTextures[];
+#if 0
+layout(set = 0, binding = 2) uniform sampler2D uTextures[];
 
 layout(set = 1, binding = 0, std430) readonly buffer MaterialDataBlock
 {
 	MaterialData Materials[];
 } uMaterialData;
+#endif
+
 
 struct UnpackedMaterialData
 {
@@ -104,6 +105,7 @@ vec3 CalculatePointLightRadiance(PointLightData pointLight, UnpackedMaterialData
 
 void main()
 {
+#if 0
 	SceneData scene = uSceneData.Scene;
 	MaterialData material = uMaterialData.Materials[vMaterialHandle];
 
@@ -121,6 +123,8 @@ void main()
 
 	for (uint i = 0; i < scene.PointLightCount; i++)
 		radiance += CalculatePointLightRadiance(scene.PointLights[i], unpackedMaterial, normal, vFragPosition, viewDir);
+#endif
 
-	oColor = vec4(radiance, 1.0);
+	//oColor = vec4(radiance, 1.0);
+	oColor = vec4(1.0);
 }

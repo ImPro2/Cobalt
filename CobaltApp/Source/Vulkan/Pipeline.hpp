@@ -12,9 +12,9 @@ namespace Cobalt
 	{
 		std::shared_ptr<Shader> Shader;
 
-		VkPrimitiveTopology PrimitiveTopology;
+		VkPrimitiveTopology PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-		bool EnableDepthTesting;
+		bool EnableDepthTesting = true;
 	};
 
 	class Pipeline
@@ -27,8 +27,8 @@ namespace Cobalt
 		void Invalidate();
 
 	public:
-		std::vector<VulkanDescriptorSet*> AllocateDescriptorSets(VkDescriptorPool descriptorPool);
-		void FreeDescriptorSets(VkDescriptorPool descriptorPool);
+		// allocate `count` descriptor sets of set `set`
+		std::vector<VulkanDescriptorSet*> AllocateDescriptorSets(VkDescriptorPool descriptorPool, uint32_t set, uint32_t count = 1);
 
 	public:
 		VkPipeline GetPipeline() const { return mPipeline; }

@@ -7,13 +7,6 @@
 namespace Cobalt
 {
 
-	struct Vertex
-	{
-		glm::vec3 aPosition;
-		glm::vec3 aNormal;
-		glm::vec2 aTexCoord;
-	};
-
 	void Renderer::Init()
 	{
 		if (sData)
@@ -24,6 +17,7 @@ namespace Cobalt
 		// Init buffers
 
 		{
+#if 0
 			constexpr uint32_t squareCount = 6;
 			constexpr uint32_t vertexCount = squareCount * 4;
 			constexpr uint32_t indexCount = squareCount * 6;
@@ -84,6 +78,7 @@ namespace Cobalt
 
 			sData->VertexBuffer = VulkanBuffer::CreateGPUBufferFromCPUData(vertices.data(), sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 			sData->IndexBuffer  = VulkanBuffer::CreateGPUBufferFromCPUData(indices.data(),  sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+#endif
 		}
 
 		CreateOrRecreateDepthTexture();
@@ -156,6 +151,7 @@ namespace Cobalt
 		// Create pipeline
 
 		{
+#if 0
 			PipelineInfo pipelineInfo = {
 				.Shader = std::make_shared<Shader>(sData->sDefaultShaderFilePath),
 				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -163,6 +159,7 @@ namespace Cobalt
 			};
 
 			sData->DefaultPipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
+#endif
 		}
 
 		// Create scene & material uniform buffers & descriptors
@@ -170,57 +167,35 @@ namespace Cobalt
 		{
 			// Uniform buffers
 
-			//sData->MappedSceneData = new SceneData();
-			//sData->MappedMaterialData = new MaterialData[sData->MaxMaterialCount];
-			//sData->MappedObjectData = new ObjectData[sData->MaxObjectCount];
+			uint32_t frameCount = GraphicsContext::Get().GetFrameCount();
 
-			sData->SceneDataUniformBuffer    = VulkanBuffer::CreateMappedBuffer(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-			sData->MaterialDataStorageBuffer = VulkanBuffer::CreateMappedBuffer(sizeof(MaterialData) * sData->MaxMaterialCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
-			sData->ObjectDataStorageBuffer   = VulkanBuffer::CreateMappedBuffer(sizeof(ObjectData) * sData->MaxObjectCount, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			sData->SceneDataUniformBuffers.resize(frameCount);
+			sData->ObjectStorageBuffers.resize(frameCount);
+			sData->MaterialDataStorageBuffers.resize(frameCount);
 
-			// Set descriptor bindings
+			for (uint32_t i = 0; i < frameCount; i++)
+			{
+				sData->SceneDataUniformBuffers[i]    = VulkanBuffer::CreateMappedBuffer(sizeof(SceneData), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+				sData->ObjectStorageBuffers[i]       = VulkanBuffer::CreateMappedBuffer(sData->MaxObjectCount * sizeof(ObjectData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+				sData->MaterialDataStorageBuffers[i] = VulkanBuffer::CreateMappedBuffer(sData->MaxMaterialCount * sizeof(MaterialData), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT);
+			}
 
-			auto descriptorSets = sData->DefaultPipeline->AllocateDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
-
-			sData->GlobalDescriptorSet = descriptorSets[sData->sGlobalDescriptorSetIndex];
-			sData->GlobalDescriptorSet->SetBufferBinding(sData->SceneDataUniformBuffer.get(), 0);
-
-			sData->MaterialDescriptorSet = descriptorSets[sData->sMaterialDescriptorSetIndex];
-			sData->MaterialDescriptorSet->SetBufferBinding(sData->MaterialDataStorageBuffer.get(), 0);
-
-			sData->ObjectDescriptorSet = descriptorSets[sData->sObjectDescriptorSetIndex];
-			sData->ObjectDescriptorSet->SetBufferBinding(sData->ObjectDataStorageBuffer.get(), 0);
+			sData->Objects.reserve(sData->MaxObjectCount);
+			sData->Materials.reserve(sData->MaxMaterialCount);
 		}
 
 		{
-			sData->Textures.resize(CO_BINDLESS_DESCRIPTOR_COUNT);
+			sData->Textures.reserve(CO_BINDLESS_DESCRIPTOR_COUNT);
 
 			uint8_t data[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 
-			sData->Textures[0] = std::make_unique<Texture>(TextureInfo(1, 1, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT));
+			sData->Textures.push_back(std::make_unique<Texture>(TextureInfo(1, 1, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT)));
 			sData->Textures[0]->CopyData(data);
-
-			sData->GlobalDescriptorSet->SetImageBinding(sData->Textures[0].get(), 1, 0);
 		}
 	}
 
 	void Renderer::Shutdown()
 	{
-		sData->DefaultPipeline->FreeDescriptorSets(GraphicsContext::Get().GetDescriptorPool());
-
-		sData->SceneDataUniformBuffer->Unmap();
-		sData->SceneDataUniformBuffer.reset();
-
-		sData->ObjectDataStorageBuffer->Unmap();
-		sData->ObjectDataStorageBuffer.reset();
-
-		sData->MaterialDataStorageBuffer->Unmap();
-		sData->MaterialDataStorageBuffer.reset();
-
-		//sData->MappedSceneData = nullptr;
-		//sData->MappedObjectData = nullptr;
-		//sData->MappedMaterialData = nullptr;
-
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->MainRenderPass, nullptr);
 
 		for (VkFramebuffer framebuffer : sData->Framebuffers)
@@ -238,21 +213,42 @@ namespace Cobalt
 
 	TextureHandle Renderer::CreateTexture(const TextureInfo& textureInfo)
 	{
-		TextureHandle textureHandle = sData->BindlessTextureIndex++;
-		sData->Textures[textureHandle] = std::make_unique<Texture>(textureInfo);
-		sData->GlobalDescriptorSet->SetImageBinding(sData->Textures[textureHandle].get(), 1, textureHandle);
+		TextureHandle textureHandle = sData->Textures.size();
+		sData->Textures.push_back(std::make_unique<Texture>(textureInfo));
 
 		return textureHandle;
 	}
 
-	MaterialHandle Renderer::CreateMaterial(const MaterialData& materialData)
+	std::unique_ptr<Material> Renderer::CreateMaterial(const MaterialData& materialData)
 	{
-		MaterialHandle materialHandle = sData->MaterialIndex++;
+		MaterialHandle materialHandle = sData->Materials.size();
+		sData->Materials.push_back(materialData);
 
-		sData->MaterialDatas[materialHandle] = materialData;
-		sData->Materials[materialHandle] = std::make_unique<Material>(*sData->DefaultPipeline, &sData->MaterialDatas[materialHandle]);
+		std::unique_ptr<Material> material = std::make_unique<Material>(materialHandle, &sData->Materials[materialHandle]);
 
-		return materialHandle;
+		for (uint32_t i = 0; i < GraphicsContext::Get().GetFrameCount(); i++)
+		{
+			// Copy material data to ssbo
+
+			sData->MaterialDataStorageBuffers[i]->CopyData(sData->Materials.data(), sData->Materials.size() * sizeof(MaterialData));
+
+			// Update descriptor bindings
+
+			VulkanDescriptorSet* globalDescriptorSet = material->GetGlobalDescriptorSet(i);
+			globalDescriptorSet->SetBufferBinding(sData->SceneDataUniformBuffers[i].get(), 0);
+			globalDescriptorSet->SetBufferBinding(sData->ObjectStorageBuffers[i].get(), 1);
+
+			//for (uint32_t j = 0; j < sData->Textures.size(); j++)
+				//globalDescriptorSet->SetImageBinding(sData->Textures[j].get(), 2, j);
+
+			//VulkanDescriptorSet* materialDescriptorSet = material->GetMaterialDescriptorSet(i);
+			//materialDescriptorSet->SetBufferBinding(sData->MaterialDataStorageBuffers[i].get(), 0);
+
+			globalDescriptorSet->Update();
+			//materialDescriptorSet->Update();
+		}
+
+		return material;
 	}
 
 	Texture& Renderer::GetTexture(TextureHandle textureHandle)
@@ -260,26 +256,12 @@ namespace Cobalt
 		return *sData->Textures[textureHandle];
 	}
 
-	Material& Renderer::GetMaterial(MaterialHandle materialHandle)
-	{
-		return *sData->Materials[materialHandle];
-	}
-
 	void Renderer::BeginScene(const SceneData& scene)
 	{
-		sData->DrawMeshes.clear();
-		memset(sData->Objects.data(), 0, sizeof(sData->Objects));
-		sData->ObjectDataStorageBuffer->CopyData(sData->Objects.data(), sizeof(sData->Objects));
-		sData->ObjectIndex = 0;
+		sData->Objects.clear();
+		sData->DrawCalls.clear();
 
-		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
-
-		// Upload scene data
-
-		//memcpy(sData->MappedSceneData, &scene, sizeof(SceneData));
-		sData->SceneDataUniformBuffer->CopyData(&scene);
-
-		sData->GlobalDescriptorSet->Bind(commandBuffer);
+		sData->ActiveScene = scene;
 	}
 
 	void Renderer::EndScene()
@@ -323,77 +305,49 @@ namespace Cobalt
 			.pClearValues = clearValues,
 		};
 
-		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-
 		// Render objects
 
-		//memcpy(sData->MappedMaterialData, sData->Materials.data(), sData->MaterialIndex * sizeof(MaterialData));
-		sData->MaterialDataStorageBuffer->CopyData(sData->MaterialDatas.data(), sData->MaterialIndex * sizeof(MaterialData));
-		sData->MaterialDescriptorSet->Bind(commandBuffer);
+		uint32_t frameIndex = GraphicsContext::Get().GetFrameIndex();
 
-		//memcpy(sData->MappedObjectData, sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
-		sData->ObjectDataStorageBuffer->CopyData(sData->Objects.data(), sData->ObjectIndex * sizeof(ObjectData));
-		sData->ObjectDescriptorSet->Bind(commandBuffer);
+		sData->SceneDataUniformBuffers[frameIndex]->CopyData(&sData->ActiveScene);
+		sData->ObjectStorageBuffers[frameIndex]->CopyData(sData->Objects.data(), sData->Objects.size() * sizeof(ObjectData));
 
-		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
+		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		for (uint32_t i = 0; i < sData->DrawCalls.size(); i++)
 		{
-			Mesh* mesh = sData->DrawMeshes[i];
+			DrawCall draw = sData->DrawCalls[i];
 
-			const VulkanBuffer& vertexBuffer = mesh->GetVertexBuffer();
-			const VulkanBuffer& indexBuffer  = mesh->GetIndexBuffer();
-			const Material&     material     = GetMaterial(mesh->GetMaterialHandle());
+			VulkanDescriptorSet* globalDescriptorSet = draw.Material->GetGlobalDescriptorSet(frameIndex);
+			//VulkanDescriptorSet* materialDescriptorSet = draw.Material->GetMaterialDescriptorSet(frameIndex);
 
-			VkBuffer vertexBufferHandles[] = { vertexBuffer.GetBuffer() };
-			VkBuffer indexBufferHandle  = indexBuffer.GetBuffer();
-			VkDeviceSize offsets[] = { 0 };
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.Material->GetPipeline().GetPipeline());
+			globalDescriptorSet->Bind(commandBuffer);
+			//materialDescriptorSet->Bind(commandBuffer);
 
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.GetPipeline().GetPipeline());
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBufferHandles, offsets);
-			vkCmdBindIndexBuffer(commandBuffer, indexBufferHandle, 0, VK_INDEX_TYPE_UINT32);
-			vkCmdDrawIndexed(commandBuffer, mesh->GetIndices().size(), 1, 0, 0, i);
+			vkCmdBindIndexBuffer(commandBuffer, draw.IndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+			vkCmdDrawIndexed(commandBuffer, draw.IndexCount, 1, 0, 0, i);
 		}
-
-#if 0
-		for (uint32_t i = 0; i < sData->ObjectIndex; i++)
-		{
-			VkBuffer vertexBuffer = sData->VertexBuffer->GetBuffer();
-			VkBuffer indexBuffer  = sData->IndexBuffer->GetBuffer();
-			VkDeviceSize offset = 0;
-
-			ObjectData object = sData->Objects[i];
-			const auto& material = GetMaterial(object.MaterialHandle);
-			
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, material.GetPipeline().GetPipeline());
-			vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
-			vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-			vkCmdDrawIndexed(commandBuffer, 36, 1, 0, 0, i);
-		}
-#endif
 
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	void Renderer::DrawCube(const Transform& transform, MaterialHandle material)
-	{
-		// TODO: fix
-
-		ObjectData objectData;
-		objectData.Transform = transform.GetTransform();
-		objectData.MaterialHandle = material;
-
-		sData->Objects[sData->ObjectIndex++] = objectData;
-	}
-
 	void Renderer::DrawMesh(const Transform& transform, Mesh* mesh)
 	{
-		sData->DrawMeshes.push_back(mesh);
+		DrawCall draw;
+		draw.IndexBuffer = mesh->GetIndexBuffer();
+		draw.IndexCount = mesh->GetIndices().size();
+		draw.Material = mesh->GetMaterial();
 
-		ObjectData objectData;
-		objectData.Transform = transform.GetTransform();
-		objectData.NormalMatrix = glm::transpose(glm::inverse(objectData.Transform));
-		objectData.MaterialHandle = mesh->GetMaterialHandle();
+		sData->DrawCalls.push_back(draw);
 
-		sData->Objects[sData->ObjectIndex++] = objectData;
+		ObjectData object;
+		object.Transform = transform.GetTransform();
+		object.NormalMatrix = glm::transpose(glm::inverse(object.Transform));
+		object.VertexBufferRef = mesh->GetVertexBufferReference();
+		object.MaterialHandle = draw.Material->GetMaterialHandle();
+
+		sData->Objects.push_back(object);
 	}
 
 	void Renderer::CreateOrRecreateDepthTexture()

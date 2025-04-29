@@ -25,6 +25,8 @@ namespace Cobalt
 
 		void CopyData(const void* src, uint32_t size = 0);
 
+		VkDeviceAddress GetDeviceAddress() const;
+
 	public:
 		VkBuffer GetBuffer() const { return mBuffer; }
 		//const VkMemoryRequirements& GetMemoryRequirements() const { return mMemoryRequirements; }

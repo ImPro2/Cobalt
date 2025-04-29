@@ -12,33 +12,39 @@ namespace Cobalt
 	struct MeshVertex
 	{
 		glm::vec3 Position;
+		float TexCoordU;
 		glm::vec3 Normal;
-		glm::vec2 TexCoords;
+		float TexCoordV;
 	};
 
 	class Mesh
 	{
 	public:
-		Mesh(const std::vector<MeshVertex>& vertices, const std::vector<uint32_t>& indices, MaterialHandle materialHandle);
+		Mesh(const std::vector<MeshVertex>& vertices, const std::vector<uint32_t>& indices, const MaterialData& materialData);
 		~Mesh();
 
 	public:
 		const std::vector<MeshVertex>& GetVertices() const { return mVertices; }
 		const std::vector<uint32_t>& GetIndices() const { return mIndices; }
 
-		const VulkanBuffer& GetVertexBuffer() const { return *mVertexBuffer; }
-		const VulkanBuffer& GetIndexBuffer()  const { return *mIndexBuffer;  }
+		VulkanBuffer* GetVertexBuffer() const { return mVertexBuffer.get(); }
+		VulkanBuffer* GetIndexBuffer()  const { return mIndexBuffer.get();  }
 
-		MaterialHandle GetMaterialHandle() const { return mMaterialHandle; }
+		VkDeviceAddress GetVertexBufferReference() const { return mVertexBufferReference; }
+
+		Material* GetMaterial() const { return mMaterial.get(); }
 
 	private:
 		std::vector<MeshVertex> mVertices;
 		std::vector<uint32_t> mIndices;
 
-		MaterialHandle mMaterialHandle;
-
 		std::unique_ptr<VulkanBuffer> mVertexBuffer;
 		std::unique_ptr<VulkanBuffer> mIndexBuffer;
+
+		VkDeviceAddress mVertexBufferReference;
+
+		std::unique_ptr<Material> mMaterial;
+
 	};
 
 }

@@ -15,6 +15,8 @@ namespace Cobalt
 	public:
 		void SetBufferBinding(const VulkanBuffer* buffer, uint32_t binding, uint32_t arrayIndex = 0);
 		void SetImageBinding(const Texture* image, uint32_t binding, uint32_t arrayIndex = 0);
+		void Update();
+
 		void Bind(VkCommandBuffer commandBuffer);
 
 	public:
@@ -27,6 +29,9 @@ namespace Cobalt
 		VkDescriptorSet mDescriptorSet = VK_NULL_HANDLE;
 		VkPipelineLayout mPipelineLayout = VK_NULL_HANDLE;
 
+		std::vector<VkDescriptorBufferInfo> mDescriptorBufferInfos;
+		std::vector<VkDescriptorImageInfo> mDescriptorImageInfos;
+		std::vector<VkWriteDescriptorSet> mDescriptorWrites;
 	};
 
 }

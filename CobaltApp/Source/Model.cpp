@@ -64,8 +64,9 @@ namespace Cobalt
 
 			vertices.push_back(MeshVertex {
 				.Position = { position.x, position.y, position.z },
+				.TexCoordU = texCoords.x,
 				.Normal = { normal.x, normal.y, normal.z },
-				.TexCoords = { texCoords.x, texCoords.y }
+				.TexCoordV = texCoords.y
 			});
 		}
 
@@ -91,7 +92,7 @@ namespace Cobalt
 				materialData.Shininess = 1.0f;
 		}
 
-		return std::make_unique<Mesh>(vertices, indices, Renderer::CreateMaterial(materialData));
+		return std::make_unique<Mesh>(vertices, indices, materialData);
 	}
 
 	TextureHandle Model::LoadMaterialTexture(aiMaterial* material, aiTextureType type)

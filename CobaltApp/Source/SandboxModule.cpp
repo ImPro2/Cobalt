@@ -87,7 +87,7 @@ namespace Cobalt
 		mCubeMat  = Renderer::RegisterMaterial(cubeMat);
 		mFloorMat = Renderer::RegisterMaterial(floorMat);*/
 
-		mSphereModel = std::make_unique<Model>("CobaltApp/Assets/Models/sphere.obj");
+		//mSphereModel = std::make_unique<Model>("CobaltApp/Assets/Models/sphere.obj");
 		mCubeModel   = std::make_unique<Model>("CobaltApp/Assets/Models/cube.obj");
 	}
 
@@ -122,8 +122,8 @@ namespace Cobalt
 
 		Renderer::BeginScene(mScene);
 
-		for (const auto& mesh : mSphereModel->GetMeshes())
-			Renderer::DrawMesh(mSphereTransform, mesh.get());
+		//for (const auto& mesh : mSphereModel->GetMeshes())
+			//Renderer::DrawMesh(mSphereTransform, mesh.get());
 
 		for (const auto& mesh : mCubeModel->GetMeshes())
 			Renderer::DrawMesh(mFloorTransform, mesh.get());

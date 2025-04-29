@@ -59,7 +59,7 @@ namespace Cobalt
 				.applicationVersion = VK_MAKE_VERSION(1, 0, 0),
 				.pEngineName = "Cobalt",
 				.engineVersion = VK_MAKE_VERSION(1, 0, 0),
-				.apiVersion = VK_API_VERSION_1_0
+				.apiVersion = VK_API_VERSION_1_3
 			};
 
 			VkInstanceCreateInfo instanceCreateInfo = {
@@ -155,11 +155,17 @@ namespace Cobalt
 		// Create logical device
 
 		{
-			const char* deviceExtensions[] = { "VK_KHR_swapchain", "VK_KHR_shader_draw_parameters", "VK_EXT_descriptor_indexing"};
+			const char* deviceExtensions[] = { "VK_KHR_swapchain", "VK_KHR_shader_draw_parameters", "VK_EXT_descriptor_indexing", VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME };
 			const float queuePriority[] = { 1.0f };
+
+			VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures = {
+				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+				.bufferDeviceAddress = VK_TRUE,
+			};
 
 			VkPhysicalDeviceDescriptorIndexingFeatures descriptorIndexingFeatures = {
 				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
+				.pNext = (void*)&bufferDeviceAddressFeatures,
 				.shaderSampledImageArrayNonUniformIndexing = true,
 				.shaderStorageBufferArrayNonUniformIndexing = true,
 				.shaderStorageImageArrayNonUniformIndexing = true,
@@ -190,7 +196,7 @@ namespace Cobalt
 				.pNext = (void*)&shaderDrawParametersFeatures,
 				.queueCreateInfoCount = 1,
 				.pQueueCreateInfos = queueCreateInfo,
-				.enabledExtensionCount = 3,
+				.enabledExtensionCount = 4,
 				.ppEnabledExtensionNames = deviceExtensions,
 			};
 
@@ -309,6 +315,7 @@ namespace Cobalt
 		{
 
 			VmaAllocatorCreateInfo allocatorCreateInfo = {
+				.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
 				.physicalDevice = mPhysicalDevice,
 				.device = mDevice,
 				.instance = mInstance,
