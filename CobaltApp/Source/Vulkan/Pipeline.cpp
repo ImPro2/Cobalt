@@ -24,24 +24,15 @@ namespace Cobalt
 	{
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
 
-		if (mInfo.Shader->HasStage(VK_SHADER_STAGE_VERTEX_BIT))
-		{
-			shaderStageCreateInfos.push_back({
-				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-				.flags = 0,
-				.stage = VK_SHADER_STAGE_VERTEX_BIT,
-				.module = mInfo.Shader->GetShaderModule(),
-				.pName = "main"
-			});
-		}
+		auto shaderModuleMap = mInfo.Shader->GetShaderModules();
 
-		if (mInfo.Shader->HasStage(VK_SHADER_STAGE_FRAGMENT_BIT))
+		for (auto [stage, module] : shaderModuleMap)
 		{
 			shaderStageCreateInfos.push_back({
 				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 				.flags = 0,
-				.stage = VK_SHADER_STAGE_FRAGMENT_BIT,
-				.module = mInfo.Shader->GetShaderModule(),
+				.stage = (VkShaderStageFlagBits)stage,
+				.module = module,
 				.pName = "main"
 			});
 		}

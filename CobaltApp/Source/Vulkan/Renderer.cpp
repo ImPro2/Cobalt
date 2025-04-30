@@ -236,7 +236,7 @@ namespace Cobalt
 
 			VulkanDescriptorSet* globalDescriptorSet = material->GetGlobalDescriptorSet(i);
 			globalDescriptorSet->SetBufferBinding(sData->SceneDataUniformBuffers[i].get(), 0);
-			globalDescriptorSet->SetBufferBinding(sData->ObjectStorageBuffers[i].get(), 1);
+			//globalDescriptorSet->SetBufferBinding(sData->ObjectStorageBuffers[i].get(), 1);
 
 			//for (uint32_t j = 0; j < sData->Textures.size(); j++)
 				//globalDescriptorSet->SetImageBinding(sData->Textures[j].get(), 2, j);
@@ -321,8 +321,13 @@ namespace Cobalt
 			VulkanDescriptorSet* globalDescriptorSet = draw.Material->GetGlobalDescriptorSet(frameIndex);
 			//VulkanDescriptorSet* materialDescriptorSet = draw.Material->GetMaterialDescriptorSet(frameIndex);
 
+			PushConstants pushConstants;
+			pushConstants.TransformMatrix = sData->Objects[0].Transform;
+			pushConstants.VertexBufferRef = sData->Objects[0].VertexBufferRef;
+
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.Material->GetPipeline().GetPipeline());
 			globalDescriptorSet->Bind(commandBuffer);
+			vkCmdPushConstants(commandBuffer, draw.Material->GetPipeline().GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
 			//materialDescriptorSet->Bind(commandBuffer);
 
 			vkCmdBindIndexBuffer(commandBuffer, draw.IndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);

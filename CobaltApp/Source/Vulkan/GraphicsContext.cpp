@@ -191,6 +191,9 @@ namespace Cobalt
 				}
 			};
 
+			VkPhysicalDeviceFeatures physicalDeviceFeatures = {};
+			physicalDeviceFeatures.shaderInt64 = VK_TRUE;
+
 			VkDeviceCreateInfo createInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 				.pNext = (void*)&shaderDrawParametersFeatures,
@@ -198,6 +201,7 @@ namespace Cobalt
 				.pQueueCreateInfos = queueCreateInfo,
 				.enabledExtensionCount = 4,
 				.ppEnabledExtensionNames = deviceExtensions,
+				.pEnabledFeatures = &physicalDeviceFeatures
 			};
 
 			VK_CALL(vkCreateDevice(mPhysicalDevice, &createInfo, nullptr, &mDevice));

@@ -10,7 +10,7 @@ namespace Cobalt
 	{
 		mPipeline = std::make_unique<Pipeline>(
 			PipelineInfo {
-				.Shader = std::make_unique<Shader>("CobaltApp/Assets/Shaders/DefaultShader.glsl"),
+				.Shader = std::make_unique<Shader>("CobaltApp/Assets/Shaders/Test.glsl"),
 				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 				.EnableDepthTesting = true
 			},

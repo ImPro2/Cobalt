@@ -22,8 +22,7 @@ namespace Cobalt
 			return mShaderStageFlags & stage;
 		}
 
-		VkShaderStageFlags GetStages() const { return mShaderStageFlags; }
-		VkShaderModule GetShaderModule() const { return mShaderModule; }
+		std::unordered_map<VkShaderStageFlags, VkShaderModule> GetShaderModules() const { return mShaderModules; }
 
 		const VkVertexInputBindingDescription& GetVertexInputBindingDescription() const { return mVertexInputBindingDescription; }
 
@@ -35,26 +34,28 @@ namespace Cobalt
 	private:
 		std::unordered_map<VkShaderStageFlags, std::string> ParseFile(const std::string& filePath);
 		std::vector<uint32_t> CompileShader(VkShaderStageFlags stage, const std::string& source);
-		std::vector<uint32_t> LinkSpirvs(const std::vector<std::vector<uint32_t>>& spirvs);
+		//std::vector<uint32_t> LinkSpirvs(const std::vector<std::vector<uint32_t>>& spirvs);
 
-		void ReadSpirv(const std::string& spvFilePath);
+		void CreateShaderModules();
+		void CreateReflectionShaderModules();
+
+		//void ReadSpirv(const std::string& spvFilePath);
 		void ReflectVertexInputLayout();
 		void ReflectDescriptorSetLayouts();
 		void ReflectPushConstants();
 
-		void CreateShaderModule();
 
 	public:
-		void DestroyShaderModule();
+		void DestroyShaderModules();
 
 	private:
 		std::string mFileName;
 
 		VkShaderStageFlags mShaderStageFlags;
-		std::vector<uint32_t> mSpirvBinary;
+		std::unordered_map<VkShaderStageFlags, std::vector<uint32_t>> mSpirvBinaries;
 
-		VkShaderModule mShaderModule;
-		SpvReflectShaderModule mReflectShaderModule;
+		std::unordered_map<VkShaderStageFlags, VkShaderModule> mShaderModules;
+		std::unordered_map<VkShaderStageFlags, SpvReflectShaderModule> mReflectShaderModules;
 
 		VkVertexInputBindingDescription mVertexInputBindingDescription;
 		std::vector<VkVertexInputAttributeDescription> mVertexInputAttributeDescriptions;

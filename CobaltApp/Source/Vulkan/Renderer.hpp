@@ -68,7 +68,8 @@ namespace Cobalt
 	private:
 		struct PushConstants
 		{
-			//glm::mat4 CubeTransform;
+			glm::mat4 TransformMatrix;
+			alignas(16) VkDeviceAddress VertexBufferRef;
 		};
 
 		struct RendererData

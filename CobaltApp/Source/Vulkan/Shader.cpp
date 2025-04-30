@@ -89,36 +89,22 @@ namespace Cobalt
 	{
 		auto stageSrcMap = ParseFile(glslFilePath);
 
-		std::vector<std::vector<uint32_t>> spirvs;
-		spirvs.reserve(stageSrcMap.size());
+		mSpirvBinaries.reserve(stageSrcMap.size());
 
 		for (auto& [stage, src] : stageSrcMap)
 		{
-			spirvs.push_back(CompileShader(stage, src));
+			mSpirvBinaries[stage] = CompileShader(stage, src);
 		}
 
-		mSpirvBinary = LinkSpirvs(spirvs);
-
-		CreateShaderModule();
-
-		SpvReflectResult result = spvReflectCreateShaderModule(4 * mSpirvBinary.size(), mSpirvBinary.data(), &mReflectShaderModule);
-
-		if (result != SPV_REFLECT_RESULT_SUCCESS)
-		{
-			std::cerr << "SPIRV Reflection Error";
-			return;
-		}
+		CreateShaderModules();
+		CreateReflectionShaderModules();
 
 		ReflectVertexInputLayout();
 		ReflectDescriptorSetLayouts();
 		ReflectPushConstants();
-
-		for (uint32_t i = 0; i < mReflectShaderModule.entry_point_count; i++)
-		{
-			mShaderStageFlags |= mReflectShaderModule.entry_points[i].shader_stage;
-		}
 	}
 
+#if 0
 	Shader::Shader(const std::string& spvFilePath, VkShaderStageFlags stage)
 		: mShaderStageFlags(stage)
 	{
@@ -137,15 +123,17 @@ namespace Cobalt
 		ReflectDescriptorSetLayouts();
 		ReflectPushConstants();
 	}
+#endif
 
 	Shader::~Shader()
 	{
-		DestroyShaderModule();
+		DestroyShaderModules();
 
 		for (VkDescriptorSetLayout descriptorSetLayout : mDescriptorSetLayouts)
 			vkDestroyDescriptorSetLayout(GraphicsContext::Get().GetDevice(), descriptorSetLayout, nullptr);
 
-		spvReflectDestroyShaderModule(&mReflectShaderModule);
+		for (auto [stage, reflectModule] : mReflectShaderModules)
+			spvReflectDestroyShaderModule(&reflectModule);
 	}
 
 	std::unordered_map<VkShaderStageFlags, std::string> Shader::ParseFile(const std::string& filePath)
@@ -194,6 +182,7 @@ namespace Cobalt
 		shaderc::CompileOptions options;
 		options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_3);
 		options.SetIncluder(std::make_unique<ShadercIncluder>());
+		options.SetTargetSpirv(shaderc_spirv_version_1_6);
 
 		shaderc::PreprocessedSourceCompilationResult preprocessedResult = compiler.PreprocessGlsl(source, shaderKind, mFileName.c_str(), options);
 
@@ -204,7 +193,7 @@ namespace Cobalt
 
 		std::string preprocessedSrc = std::string(preprocessedResult.begin(), preprocessedResult.end());
 
-		shaderc::CompilationResult compileResult = compiler.CompileGlslToSpv(preprocessedSrc, shaderKind, mFileName.data());
+		shaderc::CompilationResult compileResult = compiler.CompileGlslToSpv(preprocessedSrc, shaderKind, mFileName.data(), options);
 
 		if (compileResult.GetCompilationStatus() != shaderc_compilation_status_success)
 		{
@@ -214,61 +203,40 @@ namespace Cobalt
 		return std::vector<uint32_t>(compileResult.begin(), compileResult.end());
 	}
 
+#if 0
 	std::vector<uint32_t> Shader::LinkSpirvs(const std::vector<std::vector<uint32_t>>& spirvs)
 	{
 		spvtools::Context context(SPV_ENV_VULKAN_1_3);
+		spvtools::LinkerOptions linkerOptions;
+		linkerOptions.SetAllowPtrTypeMismatch(true);
+		linkerOptions.SetUseHighestVersion(true);
 
 		context.SetMessageConsumer([](spv_message_level_t messageLevel, const char*, const spv_position_t& pos, const char* msg)
 		{
-			if (messageLevel == SPV_MSG_ERROR || messageLevel == SPV_MSG_FATAL)
-			{
+			//if (messageLevel == SPV_MSG_ERROR || messageLevel == SPV_MSG_FATAL)
+			//{
 				std::cerr << "SPIRV Linking Error: " << msg << std::endl;
-			}
+			//}
 		});
 
 		std::vector<uint32_t> linkedSpirv;
-		spv_result_t result = spvtools::Link(context, spirvs, &linkedSpirv);
+		spv_result_t result = spvtools::Link(context, spirvs, &linkedSpirv, linkerOptions);
 
 		return linkedSpirv;
 	}
-
-	void Shader::ReadSpirv(const std::string& spvFilePath)
-	{
-		std::ifstream stream(spvFilePath, std::ios::binary);
-
-		stream.seekg(0, std::ios_base::end);
-		std::streampos size = stream.tellg();
-		stream.seekg(0, std::ios_base::beg);
-
-		std::vector<char> buffer(size);
-		stream.read(buffer.data(), size);
-		stream.close();
-
-		mSpirvBinary = std::vector<uint32_t>(buffer.begin(), buffer.end());
-	}
+#endif
 
 	void Shader::ReflectVertexInputLayout()
 	{
-		SpvReflectEntryPoint* entryPoint = nullptr;
-
-		for (uint32_t i = 0; i < mReflectShaderModule.entry_point_count; i++)
-		{
-			if (mReflectShaderModule.entry_points[i].shader_stage & SPV_REFLECT_SHADER_STAGE_VERTEX_BIT)
-			{
-				entryPoint = &mReflectShaderModule.entry_points[i];
-				break;
-			}
-		}
-
-		if (!entryPoint)
+		if (mReflectShaderModules.find(VK_SHADER_STAGE_VERTEX_BIT) == mReflectShaderModules.end())
 			return;
 
 		uint32_t offset = 0;
 		uint32_t stride = 0;
 
-		for (uint32_t i = 0; i < entryPoint->input_variable_count; i++)
+		for (uint32_t i = 0; i < mReflectShaderModules[VK_SHADER_STAGE_VERTEX_BIT].input_variable_count; i++)
 		{
-			const SpvReflectInterfaceVariable* inputVariable = entryPoint->input_variables[i];
+			const SpvReflectInterfaceVariable* inputVariable = mReflectShaderModules[VK_SHADER_STAGE_VERTEX_BIT].input_variables[i];
 
 			if (std::string(inputVariable->name).find("gl_") != std::string::npos)
 				continue;
@@ -295,24 +263,20 @@ namespace Cobalt
 
 	void Shader::ReflectDescriptorSetLayouts()
 	{
-		mDescriptorSetLayouts.reserve(mReflectShaderModule.descriptor_set_count);
-		
 		std::vector<std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
-		descriptorSetLayoutBindings.resize(mReflectShaderModule.descriptor_set_count);
+		descriptorSetLayoutBindings.resize(mReflectShaderModules[VK_SHADER_STAGE_VERTEX_BIT].descriptor_set_count);
 
-		for (uint32_t i = 0; i < mReflectShaderModule.entry_point_count; i++)
+		for (const auto& [stage, reflectModule] : mReflectShaderModules)
 		{
-			const SpvReflectEntryPoint& entryPoint = mReflectShaderModule.entry_points[i];
-
-			for (uint32_t j = 0; j < entryPoint.descriptor_set_count; j++)
+			for (uint32_t j = 0; j < reflectModule.descriptor_set_count; j++)
 			{
-				const SpvReflectDescriptorSet& descriptorSet = entryPoint.descriptor_sets[j];
+				const SpvReflectDescriptorSet& descriptorSet = reflectModule.descriptor_sets[j];
 
 				for (uint32_t k = 0; k < descriptorSet.binding_count; k++)
 				{
 					const SpvReflectDescriptorBinding* descriptorBinding = descriptorSet.bindings[k];
 
-					VkShaderStageFlags stageFlags = (VkShaderStageFlags)entryPoint.shader_stage;
+					VkShaderStageFlags stageFlags = (VkShaderStageFlags)reflectModule.shader_stage;
 
 					// Add shader stage flag if the binding already exists
 
@@ -365,29 +329,29 @@ namespace Cobalt
 	{
 		std::vector<VkPushConstantRange> pushConstantRanges;
 
-		for (uint32_t i = 0; i < mReflectShaderModule.entry_point_count; i++)
+		for (const auto& [stage, reflectModule] : mReflectShaderModules)
 		{
-			const SpvReflectEntryPoint& entryPoint = mReflectShaderModule.entry_points[i];
-
-			for (uint32_t j = 0; j < entryPoint.used_push_constant_count; j++)
+			for (uint32_t i = 0; i < reflectModule.push_constant_block_count; i++)
 			{
-				const SpvReflectBlockVariable& pushConstantBlock = mReflectShaderModule.push_constant_blocks[entryPoint.used_push_constants[j]];
+				const SpvReflectBlockVariable& pushConstantBlock = reflectModule.push_constant_blocks[i];
 
 				VkPushConstantRange pushConstantRange = {
-					.stageFlags = (VkShaderStageFlags)entryPoint.shader_stage,
+					.stageFlags = stage,
 					.offset = pushConstantBlock.offset,
 					.size = pushConstantBlock.size,
 				};
-
 
 				pushConstantRanges.push_back(pushConstantRange);
 			}
 		}
 
-		if (pushConstantRanges.size() < 2)
+		if (pushConstantRanges.size() == 1)
+		{
+			mPushConstantRanges = pushConstantRanges;
 			return;
+		}
 
-		for (uint32_t i = 1; i < pushConstantRanges.size() - 1; i++)
+		for (uint32_t i = 1; i < pushConstantRanges.size(); i++)
 		{
 			if (pushConstantRanges[i].offset == pushConstantRanges[i - 1].offset)
 			{
@@ -403,21 +367,41 @@ namespace Cobalt
 		}
 	}
 
-	void Shader::CreateShaderModule()
+	void Shader::CreateShaderModules()
 	{
-		VkShaderModuleCreateInfo createInfo = {
-			.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-			.codeSize = 4 * mSpirvBinary.size(),
-			.pCode = reinterpret_cast<const uint32_t*>(mSpirvBinary.data())
-		};
+		for (auto [stage, spirv] : mSpirvBinaries)
+		{
+			VkShaderModuleCreateInfo createInfo = {
+				.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+				.codeSize = 4 * spirv.size(),
+				.pCode = reinterpret_cast<const uint32_t*>(spirv.data())
+			};
 
-		VK_CALL(vkCreateShaderModule(GraphicsContext::Get().GetDevice(), &createInfo, nullptr, &mShaderModule));
+			VK_CALL(vkCreateShaderModule(GraphicsContext::Get().GetDevice(), &createInfo, nullptr, &mShaderModules[stage]));
+		}
 	}
 
-	void Shader::DestroyShaderModule()
+	void Shader::CreateReflectionShaderModules()
 	{
-		if (mShaderModule)
-			vkDestroyShaderModule(GraphicsContext::Get().GetDevice(), mShaderModule, nullptr);
+		for (auto [stage, spirv] : mSpirvBinaries)
+		{
+			SpvReflectResult result = spvReflectCreateShaderModule(4 * spirv.size(), spirv.data(), &mReflectShaderModules[stage]);
+
+			if (result != SPV_REFLECT_RESULT_SUCCESS)
+			{
+				std::cerr << "SPIRV Reflection Error";
+				return;
+			}
+		}
+
+	}
+
+	void Shader::DestroyShaderModules()
+	{
+		for (auto& [stage, module] : mShaderModules)
+		{
+			vkDestroyShaderModule(GraphicsContext::Get().GetDevice(), module, nullptr);
+		}
 	}
 
 }
