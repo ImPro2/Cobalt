@@ -13,7 +13,6 @@ namespace Cobalt
 
 	public:
 		VulkanDescriptorSet* GetGlobalDescriptorSet(uint32_t frameIndex) const { return mGlobalDescriptorSets[frameIndex]; }
-		VulkanDescriptorSet* GetMaterialDescriptorSet(uint32_t frameIndex) const { return mMaterialDescriptorSets[frameIndex]; }
 
 	public:
 		MaterialHandle GetMaterialHandle() const { return mMaterialHandle; }
@@ -28,7 +27,6 @@ namespace Cobalt
 		MaterialData* mMaterialData;
 
 		std::vector<VulkanDescriptorSet*> mGlobalDescriptorSets;
-		std::vector<VulkanDescriptorSet*> mMaterialDescriptorSets;
 	};
 
 }

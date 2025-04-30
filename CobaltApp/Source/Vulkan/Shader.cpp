@@ -280,7 +280,7 @@ namespace Cobalt
 
 					// Add shader stage flag if the binding already exists
 
-					if (descriptorBinding->set < descriptorSetLayoutBindings.size() - 1)
+					if (descriptorBinding->set < descriptorSetLayoutBindings.size())
 					{
 						auto bindingsMap = descriptorSetLayoutBindings[descriptorBinding->set];
 

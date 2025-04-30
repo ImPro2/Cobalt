@@ -58,7 +58,7 @@ namespace Cobalt
 		mFloorTransform.Rotation = glm::vec3(0.0f);
 		mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
 
-		mSphereTransform.Translation = glm::vec3(0.0f, 1.0f, 0.0f);
+		mSphereTransform.Translation = glm::vec3(0.0f, 2.0f, 0.0f);
 	}
 
 	SandboxModule::~SandboxModule()
@@ -71,23 +71,7 @@ namespace Cobalt
 
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-		//mDiffuseTexture  = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_diffuse.png");
-		//mSpecularTexture = Texture::CreateFromFile("CobaltApp/Assets/Textures/container_specular.png");
-
-		/*MaterialData cubeMat;
-		cubeMat.DiffuseMapHandle = Renderer::RegisterTexture(mDiffuseTexture.get());
-		cubeMat.SpecularMapHandle = Renderer::RegisterTexture(mSpecularTexture.get());
-		cubeMat.Shininess = 256.0f;
-
-		MaterialData floorMat;
-		floorMat.DiffuseMapHandle  = cubeMat.DiffuseMapHandle;
-		floorMat.SpecularMapHandle = cubeMat.SpecularMapHandle;
-		floorMat.Shininess = 128.0f;
-
-		mCubeMat  = Renderer::RegisterMaterial(cubeMat);
-		mFloorMat = Renderer::RegisterMaterial(floorMat);*/
-
-		//mSphereModel = std::make_unique<Model>("CobaltApp/Assets/Models/sphere.obj");
+		mSphereModel = std::make_unique<Model>("CobaltApp/Assets/Models/sphere.obj");
 		mCubeModel   = std::make_unique<Model>("CobaltApp/Assets/Models/cube.obj");
 	}
 
@@ -122,8 +106,8 @@ namespace Cobalt
 
 		Renderer::BeginScene(mScene);
 
-		//for (const auto& mesh : mSphereModel->GetMeshes())
-			//Renderer::DrawMesh(mSphereTransform, mesh.get());
+		for (const auto& mesh : mSphereModel->GetMeshes())
+			Renderer::DrawMesh(mSphereTransform, mesh.get());
 
 		for (const auto& mesh : mCubeModel->GetMeshes())
 			Renderer::DrawMesh(mFloorTransform, mesh.get());

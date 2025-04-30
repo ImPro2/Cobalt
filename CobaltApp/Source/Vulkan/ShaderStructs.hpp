@@ -53,16 +53,16 @@ namespace Cobalt
 		TextureHandle DiffuseMapHandle;
 		TextureHandle SpecularMapHandle;
 		float Shininess;
-
-		float __padding0;
 	};
 
 	struct ObjectData
 	{
 		glm::mat4 Transform;
 		glm::mat4 NormalMatrix;
-		alignas(16) VkDeviceAddress VertexBufferRef;
-		alignas(16) MaterialHandle MaterialHandle;
+		VkDeviceAddress VertexBufferRef;
+		MaterialHandle MaterialHandle;
 	};
+
+	static_assert(sizeof(ObjectData) == 144);
 
 }

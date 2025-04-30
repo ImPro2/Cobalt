@@ -2,8 +2,7 @@
 #version 460
 #include "Common.glsl"
 #extension GL_EXT_scalar_block_layout : require
-#extension GL_EXT_buffer_reference : require
-#extension SPV_EXT_physical_storage_buffer : require
+#extension GL_EXT_buffer_reference_uvec2 : require
 
 layout(location = 0) out      vec3 vNormal;
 layout(location = 1) out      vec2 vTexCoord;
@@ -25,21 +24,15 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer
 	MeshVertex Vertices[];
 };
 
-layout(push_constant) uniform PushConstants
-{
-	mat4 Transform;
-	VertexBuffer VertexBufferRef;
-} uPushConstants;
-
 void main()
 {
 	SceneData scene = uSceneData.Scene;
 	ObjectData object = uObjectData.Objects[gl_BaseInstance];
 
-	MeshVertex vertex = uPushConstants.VertexBufferRef.Vertices[gl_VertexIndex];
+	MeshVertex vertex = VertexBuffer(object.VertexBufferRef).Vertices[gl_VertexIndex];
 
 	vec4 positionLocal = vec4(vertex.Position, 1.0);
-	vec4 positionWorld = uPushConstants.Transform * positionLocal;
+	vec4 positionWorld = object.Transform * positionLocal;
 
 	gl_Position = scene.Camera.ViewProjection * positionWorld;
 
@@ -69,12 +62,12 @@ layout(set = 0, binding = 0, std430) uniform SceneDataBlock
 	SceneData Scene;
 } uSceneData;
 
-layout(set = 0, binding = 2) uniform sampler2D uTextures[];
-
-layout(set = 1, binding = 0, std430) readonly buffer MaterialDataBlock
+layout(set = 0, binding = 2, std430) readonly buffer MaterialDataBlock
 {
 	MaterialData Materials[];
 } uMaterialData;
+
+layout(set = 0, binding = 3) uniform sampler2D uTextures[];
 
 struct UnpackedMaterialData
 {
@@ -121,8 +114,8 @@ void main()
 	MaterialData material = uMaterialData.Materials[vMaterialHandle];
 
 	UnpackedMaterialData unpackedMaterial;
-	unpackedMaterial.Diffuse  = vec3(texture(uTextures[material.DiffuseMapHandle],  vTexCoord));
-	unpackedMaterial.Specular = vec3(texture(uTextures[material.SpecularMapHandle], vTexCoord));
+	unpackedMaterial.Diffuse  = vec3(texture(uTextures[0],  vTexCoord));
+	unpackedMaterial.Specular = vec3(texture(uTextures[0], vTexCoord));
 	unpackedMaterial.Shininess = material.Shininess;
 
 	vec3 radiance = vec3(0.0);
@@ -135,6 +128,6 @@ void main()
 	for (uint i = 0; i < scene.PointLightCount; i++)
 		radiance += CalculatePointLightRadiance(scene.PointLights[i], unpackedMaterial, normal, vFragPosition, viewDir);
 
-	//oColor = vec4(radiance, 1.0);
-	oColor = vec4(1.0);
+	oColor = vec4(radiance, 1.0);
+	//oColor = vec4(normal, 1.0);
 }

@@ -10,7 +10,7 @@ namespace Cobalt
 	{
 		mPipeline = std::make_unique<Pipeline>(
 			PipelineInfo {
-				.Shader = std::make_unique<Shader>("CobaltApp/Assets/Shaders/Test.glsl"),
+				.Shader = std::make_unique<Shader>("CobaltApp/Assets/Shaders/DefaultShader.glsl"),
 				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 				.EnableDepthTesting = true
 			},
@@ -20,7 +20,6 @@ namespace Cobalt
 		uint32_t frameCount = GraphicsContext::Get().GetFrameCount();
 
 		mGlobalDescriptorSets   = mPipeline->AllocateDescriptorSets(GraphicsContext::Get().GetDescriptorPool(), 0, frameCount);
-		//mMaterialDescriptorSets = mPipeline->AllocateDescriptorSets(GraphicsContext::Get().GetDescriptorPool(), 1, frameCount);
 	}
 
 	Material::~Material()

@@ -14,73 +14,6 @@ namespace Cobalt
 
 		sData = new RendererData();
 
-		// Init buffers
-
-		{
-#if 0
-			constexpr uint32_t squareCount = 6;
-			constexpr uint32_t vertexCount = squareCount * 4;
-			constexpr uint32_t indexCount = squareCount * 6;
-
-			std::array<Vertex, vertexCount> vertices;
-
-			// front
-			vertices[0] = { .aPosition = {-0.5f,  0.5f, 0.5f },  .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 0.0f, 0.0f } };
-			vertices[1] = { .aPosition = {-0.5f, -0.5f, 0.5f },  .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 0.0f, 1.0f } };
-			vertices[2] = { .aPosition = {  0.5f, -0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 1.0f, 1.0f } };
-			vertices[3] = { .aPosition = {  0.5f,  0.5f, 0.5f }, .aNormal = { 0.0f, 0.0f, 1.0f }, .aTexCoord = { 1.0f, 0.0f } };
-
-			// back 
-			vertices[4] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 0.0f, 0.0f } };
-			vertices[5] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 0.0f, 1.0f } };
-			vertices[6] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 1.0f, 1.0f } };
-			vertices[7] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 0.0f, -1.0f }, .aTexCoord = { 1.0f, 0.0f } };
-
-			// right 
-			vertices[8] = { .aPosition  = {  0.5f,  0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
-			vertices[9] = { .aPosition  = {  0.5f, -0.5f,  0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
-			vertices[10] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
-			vertices[11] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
-
-			// left
-			vertices[12] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
-			vertices[13] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
-			vertices[14] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
-			vertices[15] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { -1.0f, 0.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
-
-			// top
-			vertices[16] = { .aPosition = { -0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
-			vertices[17] = { .aPosition = { -0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
-			vertices[18] = { .aPosition = {  0.5f,  0.5f,  0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
-			vertices[19] = { .aPosition = {  0.5f,  0.5f, -0.5f }, .aNormal = { 0.0f, 1.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
-
-			// bottom
-			vertices[20] = { .aPosition = { -0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 0.0f, 0.0f } };
-			vertices[21] = { .aPosition = { -0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 0.0f, 1.0f } };
-			vertices[22] = { .aPosition = {  0.5f, -0.5f, -0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 1.0f, 1.0f } };
-			vertices[23] = { .aPosition = {  0.5f, -0.5f,  0.5f }, .aNormal = { 0.0f, -1.0f, 0.0f }, .aTexCoord = { 1.0f, 0.0f } };
-
-			std::array<uint32_t, indexCount> indices;
-
-			uint32_t offset = 0;
-			for (uint32_t i = 0; i < indices.size(); i += 6)
-			{
-				indices[i + 0] = offset + 0;
-				indices[i + 1] = offset + 1;
-				indices[i + 2] = offset + 2;
-
-				indices[i + 3] = offset + 2;
-				indices[i + 4] = offset + 3;
-				indices[i + 5] = offset + 0;
-
-				offset += 4;
-			}
-
-			sData->VertexBuffer = VulkanBuffer::CreateGPUBufferFromCPUData(vertices.data(), sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-			sData->IndexBuffer  = VulkanBuffer::CreateGPUBufferFromCPUData(indices.data(),  sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-#endif
-		}
-
 		CreateOrRecreateDepthTexture();
 
 		// Create the Render Pass
@@ -148,20 +81,6 @@ namespace Cobalt
 
 		CreateOrRecreateFramebuffers();
 
-		// Create pipeline
-
-		{
-#if 0
-			PipelineInfo pipelineInfo = {
-				.Shader = std::make_shared<Shader>(sData->sDefaultShaderFilePath),
-				.PrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-				.EnableDepthTesting = true
-			};
-
-			sData->DefaultPipeline = std::make_shared<Pipeline>(pipelineInfo, sData->MainRenderPass);
-#endif
-		}
-
 		// Create scene & material uniform buffers & descriptors
 
 		{
@@ -183,6 +102,8 @@ namespace Cobalt
 			sData->Objects.reserve(sData->MaxObjectCount);
 			sData->Materials.reserve(sData->MaxMaterialCount);
 		}
+
+		// Create default textures
 
 		{
 			sData->Textures.reserve(CO_BINDLESS_DESCRIPTOR_COUNT);
@@ -236,16 +157,13 @@ namespace Cobalt
 
 			VulkanDescriptorSet* globalDescriptorSet = material->GetGlobalDescriptorSet(i);
 			globalDescriptorSet->SetBufferBinding(sData->SceneDataUniformBuffers[i].get(), 0);
-			//globalDescriptorSet->SetBufferBinding(sData->ObjectStorageBuffers[i].get(), 1);
+			globalDescriptorSet->SetBufferBinding(sData->ObjectStorageBuffers[i].get(), 1);
+			globalDescriptorSet->SetBufferBinding(sData->MaterialDataStorageBuffers[i].get(), 2);
 
-			//for (uint32_t j = 0; j < sData->Textures.size(); j++)
-				//globalDescriptorSet->SetImageBinding(sData->Textures[j].get(), 2, j);
-
-			//VulkanDescriptorSet* materialDescriptorSet = material->GetMaterialDescriptorSet(i);
-			//materialDescriptorSet->SetBufferBinding(sData->MaterialDataStorageBuffers[i].get(), 0);
+			for (uint32_t j = 0; j < sData->Textures.size(); j++)
+				globalDescriptorSet->SetImageBinding(sData->Textures[j].get(), 3, j);
 
 			globalDescriptorSet->Update();
-			//materialDescriptorSet->Update();
 		}
 
 		return material;
@@ -319,17 +237,9 @@ namespace Cobalt
 			DrawCall draw = sData->DrawCalls[i];
 
 			VulkanDescriptorSet* globalDescriptorSet = draw.Material->GetGlobalDescriptorSet(frameIndex);
-			//VulkanDescriptorSet* materialDescriptorSet = draw.Material->GetMaterialDescriptorSet(frameIndex);
-
-			PushConstants pushConstants;
-			pushConstants.TransformMatrix = sData->Objects[0].Transform;
-			pushConstants.VertexBufferRef = sData->Objects[0].VertexBufferRef;
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.Material->GetPipeline().GetPipeline());
 			globalDescriptorSet->Bind(commandBuffer);
-			vkCmdPushConstants(commandBuffer, draw.Material->GetPipeline().GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(PushConstants), &pushConstants);
-			//materialDescriptorSet->Bind(commandBuffer);
-
 			vkCmdBindIndexBuffer(commandBuffer, draw.IndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 			vkCmdDrawIndexed(commandBuffer, draw.IndexCount, 1, 0, 0, i);
 		}
@@ -363,7 +273,6 @@ namespace Cobalt
 		if (sData->DepthTexture)
 			sData->DepthTexture->Recreate(width, height);
 		else
-			//sData->DepthTexture = std::make_unique<Texture>(width, height, VK_FORMAT_D16_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 			sData->DepthTexture = std::make_unique<Texture>(TextureInfo(width, height, VK_FORMAT_D16_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
 	}
 
