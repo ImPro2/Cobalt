@@ -91,6 +91,7 @@ namespace Cobalt
 
 		// Create debug utils messenger
 
+		if (mEnableValidationLayers)
 		{
 			VkDebugUtilsMessengerCreateInfoEXT createInfo = {
 					.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
@@ -106,7 +107,7 @@ namespace Cobalt
 		// Select physical device
 
 		{
-			uint32_t count;
+			uint32_t count = 0;
 			VK_CALL(vkEnumeratePhysicalDevices(mInstance, &count, nullptr));
 
 			VkPhysicalDevice* physicalDevices = (VkPhysicalDevice*)malloc(count * sizeof(VkPhysicalDevice));
@@ -134,7 +135,7 @@ namespace Cobalt
 		// Select graphics queue family
 
 		{
-			uint32_t count;
+			uint32_t count = 0;
 			vkGetPhysicalDeviceQueueFamilyProperties(mPhysicalDevice, &count, nullptr);
 
 			VkQueueFamilyProperties* queues = (VkQueueFamilyProperties*)malloc(count * sizeof(VkQueueFamilyProperties));

@@ -41,6 +41,8 @@ namespace Cobalt
 		SceneData mScene;
 
 		bool mCaptureMouse = true;
+
+		float mDeltaTime = 0.0f;
 	};
 
 }

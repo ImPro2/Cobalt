@@ -93,7 +93,12 @@ namespace Cobalt
 		std::unique_ptr<Swapchain> mSwapchain;
 
 		bool mRecreateSwapchain = false;
+
+#ifdef CO_DEBUG
 		bool mEnableValidationLayers = true;
+#else
+		bool mEnableValidationLayers = false;
+#endif
 
 		VmaAllocator mAllocator;
 	};

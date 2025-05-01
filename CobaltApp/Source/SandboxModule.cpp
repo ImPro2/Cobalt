@@ -28,7 +28,7 @@ namespace Cobalt
 		mScene.DirectionalLight.Diffuse = glm::vec3(0.5f);
 		mScene.DirectionalLight.Specular = glm::vec3(1.0f);
 
-		mScene.PointLightCount = 3;
+		mScene.PointLightCount = 0;
 
 		mScene.PointLights[0].Position = glm::vec3(0.0f, 3.0f, 0.0f);
 		mScene.PointLights[0].Ambient = glm::vec3(0.1f);
@@ -81,6 +81,15 @@ namespace Cobalt
 
 	void SandboxModule::OnUpdate(float deltaTime)
 	{
+		static float lastTime = glfwGetTime();
+		float currentTime = glfwGetTime();
+
+		if (currentTime - lastTime > 1.0f)
+		{
+			mDeltaTime = deltaTime;
+			lastTime = currentTime;
+		}
+
 		GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -119,6 +128,9 @@ namespace Cobalt
 	{
 		if (ImGui::Begin("SandboxModule"))
 		{
+			ImGui::Text("Frame Time: %fms", mDeltaTime * 1000.0f);
+			ImGui::Text("FPS: %f", 1.0f / mDeltaTime);
+			
 			if (ImGui::TreeNode("Scene Settings"))
 			{
 				for (uint32_t i = 0; i < mScene.PointLightCount; i++)

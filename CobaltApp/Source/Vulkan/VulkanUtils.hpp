@@ -5,11 +5,7 @@
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* callbackData, void* userData);
 
-#ifdef CO_DEBUG
 #define VK_CALL(fn) CheckVkResult(fn, __FILE__, __LINE__, __FUNCTION__)
-#else
-#define VK_CALL(fn)
-#endif
 
 namespace Cobalt
 {
