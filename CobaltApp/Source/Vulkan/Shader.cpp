@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "Shader.hpp"
 #include "GraphicsContext.hpp"
 #include <algorithm>
@@ -29,6 +30,8 @@ namespace Cobalt
 
 	shaderc_include_result* ShadercIncluder::GetInclude(const char* requested_source, shaderc_include_type type, const char* requesting_source, size_t include_depth)
 	{
+		CO_PROFILE_FN();
+
 		shaderc_include_result* result = new shaderc_include_result;
 
 		std::string name = (std::filesystem::path(requesting_source).parent_path() / std::filesystem::path(requested_source)).string();
@@ -47,12 +50,16 @@ namespace Cobalt
 
 	void ShadercIncluder::ReleaseInclude(shaderc_include_result* data)
 	{
+		CO_PROFILE_FN();
+
 		delete static_cast<std::pair<std::string, std::string>*>(data->user_data);
 		delete data;
 	}
 
 	std::string ShadercIncluder::ReadFile(const std::string& filePath)
 	{
+		CO_PROFILE_FN();
+
 		std::ifstream stream(filePath, std::ios::binary);
 		std::string src;
 
@@ -73,6 +80,8 @@ namespace Cobalt
 
 	static uint32_t SizeOfVkFormat(VkFormat type)
 	{
+		CO_PROFILE_FN();
+
 		switch (type)
 		{
 			case VK_FORMAT_R32_SFLOAT:          return 1 * sizeof(float);
@@ -87,6 +96,8 @@ namespace Cobalt
 	Shader::Shader(const std::string& glslFilePath)
 		: mFileName(glslFilePath)
 	{
+		CO_PROFILE_FN();
+
 		auto stageSrcMap = ParseFile(glslFilePath);
 
 		mSpirvBinaries.reserve(stageSrcMap.size());
@@ -127,6 +138,8 @@ namespace Cobalt
 
 	Shader::~Shader()
 	{
+		CO_PROFILE_FN();
+
 		DestroyShaderModules();
 
 		for (VkDescriptorSetLayout descriptorSetLayout : mDescriptorSetLayouts)
@@ -138,6 +151,8 @@ namespace Cobalt
 
 	std::unordered_map<VkShaderStageFlags, std::string> Shader::ParseFile(const std::string& filePath)
 	{
+		CO_PROFILE_FN();
+
 		std::unordered_map<VkShaderStageFlags, std::string> stageSrcMap;
 		VkShaderStageFlags currentStage = (VkShaderStageFlags)0;
 
@@ -169,6 +184,8 @@ namespace Cobalt
 
 	std::vector<uint32_t> Shader::CompileShader(VkShaderStageFlags stage, const std::string& source)
 	{
+		CO_PROFILE_FN();
+
 		shaderc::Compiler compiler;
 
 		shaderc_shader_kind shaderKind;
@@ -228,6 +245,8 @@ namespace Cobalt
 
 	void Shader::ReflectVertexInputLayout()
 	{
+		CO_PROFILE_FN();
+
 		if (mReflectShaderModules.find(VK_SHADER_STAGE_VERTEX_BIT) == mReflectShaderModules.end())
 			return;
 
@@ -263,6 +282,8 @@ namespace Cobalt
 
 	void Shader::ReflectDescriptorSetLayouts()
 	{
+		CO_PROFILE_FN();
+
 		std::vector<std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
 		descriptorSetLayoutBindings.resize(mReflectShaderModules[VK_SHADER_STAGE_VERTEX_BIT].descriptor_set_count);
 
@@ -327,6 +348,8 @@ namespace Cobalt
 
 	void Shader::ReflectPushConstants()
 	{
+		CO_PROFILE_FN();
+
 		std::vector<VkPushConstantRange> pushConstantRanges;
 
 		for (const auto& [stage, reflectModule] : mReflectShaderModules)
@@ -369,6 +392,8 @@ namespace Cobalt
 
 	void Shader::CreateShaderModules()
 	{
+		CO_PROFILE_FN();
+
 		for (auto [stage, spirv] : mSpirvBinaries)
 		{
 			VkShaderModuleCreateInfo createInfo = {
@@ -383,6 +408,8 @@ namespace Cobalt
 
 	void Shader::CreateReflectionShaderModules()
 	{
+		CO_PROFILE_FN();
+
 		for (auto [stage, spirv] : mSpirvBinaries)
 		{
 			SpvReflectResult result = spvReflectCreateShaderModule(4 * spirv.size(), spirv.data(), &mReflectShaderModules[stage]);
@@ -398,6 +425,8 @@ namespace Cobalt
 
 	void Shader::DestroyShaderModules()
 	{
+		CO_PROFILE_FN();
+
 		for (auto& [stage, module] : mShaderModules)
 		{
 			vkDestroyShaderModule(GraphicsContext::Get().GetDevice(), module, nullptr);

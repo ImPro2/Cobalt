@@ -1,7 +1,5 @@
 project "CobaltApp"
 	kind "ConsoleApp"
-
-	flags { "MultiProcessorCompile" }
 	
 	links
 	{
@@ -13,7 +11,8 @@ project "CobaltApp"
 		"spv_reflect",
 		"%{Library.Vulkan}",
 		"%{Library.shaderc}",
-		"%{Library.SPIRVTools}"
+		"%{Library.SPIRVTools}",
+		"%{Library.Optick}"
 	}
 
 	files
@@ -32,5 +31,11 @@ project "CobaltApp"
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.assimp}",
         "%{IncludeDir.VkBootstrap}",
-		"%{IncludeDir.spv_reflect}"
+		"%{IncludeDir.spv_reflect}",
+		"%{IncludeDir.Optick}"
+	}
+
+	postbuildcommands
+	{
+		"{COPY} %{LibraryDir.Optick}/OptickCore.dll %{wks.location}/bin/" .. outputdir .. "/%{prj.name}"
 	}

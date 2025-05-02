@@ -1,6 +1,6 @@
+#include "copch.hpp"
 #include "Renderer.hpp"
 #include "Application.hpp"
-
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -9,6 +9,8 @@ namespace Cobalt
 
 	void Renderer::Init()
 	{
+		CO_PROFILE_FN();
+
 		if (sData)
 			return;
 
@@ -117,6 +119,8 @@ namespace Cobalt
 
 	void Renderer::Shutdown()
 	{
+		CO_PROFILE_FN();
+
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->MainRenderPass, nullptr);
 
 		for (VkFramebuffer framebuffer : sData->Framebuffers)
@@ -128,12 +132,16 @@ namespace Cobalt
 
 	void Renderer::OnResize()
 	{
+		CO_PROFILE_FN();
+
 		CreateOrRecreateDepthTexture();
 		CreateOrRecreateFramebuffers();
 	}
 
 	TextureHandle Renderer::CreateTexture(const TextureInfo& textureInfo)
 	{
+		CO_PROFILE_FN();
+
 		TextureHandle textureHandle = sData->Textures.size();
 		sData->Textures.push_back(std::make_unique<Texture>(textureInfo));
 
@@ -142,6 +150,8 @@ namespace Cobalt
 
 	std::unique_ptr<Material> Renderer::CreateMaterial(const MaterialData& materialData)
 	{
+		CO_PROFILE_FN();
+
 		MaterialHandle materialHandle = sData->Materials.size();
 		sData->Materials.push_back(materialData);
 
@@ -171,11 +181,15 @@ namespace Cobalt
 
 	Texture& Renderer::GetTexture(TextureHandle textureHandle)
 	{
+		CO_PROFILE_FN();
+
 		return *sData->Textures[textureHandle];
 	}
 
 	void Renderer::BeginScene(const SceneData& scene)
 	{
+		CO_PROFILE_FN();
+
 		sData->Objects.clear();
 		sData->DrawCalls.clear();
 
@@ -184,6 +198,8 @@ namespace Cobalt
 
 	void Renderer::EndScene()
 	{
+		CO_PROFILE_FN();
+
 		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
 
 		VkCommandBuffer commandBuffer = GraphicsContext::Get().GetActiveCommandBuffer();
@@ -230,6 +246,8 @@ namespace Cobalt
 		sData->SceneDataUniformBuffers[frameIndex]->CopyData(&sData->ActiveScene);
 		sData->ObjectStorageBuffers[frameIndex]->CopyData(sData->Objects.data(), sData->Objects.size() * sizeof(ObjectData));
 
+		CO_PROFILE_GPU_EVENT("Main Render Pass");
+
 		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		for (uint32_t i = 0; i < sData->DrawCalls.size(); i++)
@@ -249,6 +267,8 @@ namespace Cobalt
 
 	void Renderer::DrawMesh(const Transform& transform, Mesh* mesh)
 	{
+		CO_PROFILE_FN();
+
 		DrawCall draw;
 		draw.IndexBuffer = mesh->GetIndexBuffer();
 		draw.IndexCount = mesh->GetIndices().size();
@@ -267,6 +287,8 @@ namespace Cobalt
 
 	void Renderer::CreateOrRecreateDepthTexture()
 	{
+		CO_PROFILE_FN();
+
 		uint32_t width  = GraphicsContext::Get().GetSwapchain().GetExtent().width;
 		uint32_t height = GraphicsContext::Get().GetSwapchain().GetExtent().height;
 
@@ -278,6 +300,8 @@ namespace Cobalt
 
 	void Renderer::CreateOrRecreateFramebuffers()
 	{
+		CO_PROFILE_FN();
+
 		if (sData->Framebuffers.size() > 0)
 		{
 			for (VkFramebuffer framebuffer : sData->Framebuffers)

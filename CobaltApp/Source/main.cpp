@@ -3,8 +3,9 @@
 
 int main()
 {
-	Cobalt::Application app = Cobalt::Application({
-		.EnableImGui = false
+	Cobalt::Application app({
+		.EnableImGui = true,
+		.EnableOptickCapture = true
 	});
 
 	app.AddModule<Cobalt::SandboxModule>();

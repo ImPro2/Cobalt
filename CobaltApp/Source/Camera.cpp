@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "Camera.hpp"
 #include "Application.hpp"
 
@@ -10,12 +11,16 @@ namespace Cobalt
 		: mViewportWidth(viewportWidth), mViewportHeight(viewportHeight),
 		  mAspectRatio(viewportWidth / viewportHeight), mFOV(fov), mNearClip(nearClip), mFarClip(farClip)
 	{
+		CO_PROFILE_FN();
+
 		RecalculateViewMatrix();
 		RecalculateProjectionMatrix();
 	}
 
 	void CameraController::OnUpdate(float deltaTime)
 	{
+		CO_PROFILE_FN();
+
 		GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
 
 		glm::vec3 velocityDir = glm::vec3(0.0f);
@@ -43,6 +48,8 @@ namespace Cobalt
 
 	void CameraController::OnResize(float viewportWidth, float viewportHeight)
 	{
+		CO_PROFILE_FN();
+
 		mViewportWidth = viewportWidth;
 		mViewportHeight = viewportHeight;
 
@@ -51,6 +58,8 @@ namespace Cobalt
 
 	void CameraController::OnMouseMove(float x, float y)
 	{
+		CO_PROFILE_FN();
+
 		static bool firstTime = true;
 
 		if (firstTime)
@@ -77,12 +86,16 @@ namespace Cobalt
 
 	void CameraController::RecalculateViewMatrix()
 	{
+		CO_PROFILE_FN();
+
 		mViewMatrix = glm::lookAt(mTranslation, mTranslation + mForwardDir, mUpDir);
 		mViewProjectionMatrix = mProjectionMatrix * mViewMatrix;
 	}
 
 	void CameraController::RecalculateProjectionMatrix()
 	{
+		CO_PROFILE_FN();
+
 		mProjectionMatrix = glm::perspective(mFOV, mAspectRatio, mNearClip, mFarClip);
 		mViewProjectionMatrix = mProjectionMatrix * mViewMatrix;
 	}

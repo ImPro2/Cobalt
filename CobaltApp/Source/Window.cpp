@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "Window.hpp"
 #include <iostream>
 
@@ -7,14 +8,18 @@ namespace Cobalt
 	Window::Window(uint32_t width, uint32_t height, const char* title)
 		: mWidth(width), mHeight(height), mTitle(title)
 	{
+		CO_PROFILE_FN();
 	}
 
 	Window::~Window()
 	{
+		CO_PROFILE_FN();
 	}
 
 	void Window::Create()
 	{
+		CO_PROFILE_FN();
+
 		int32_t status = glfwInit();
 
 		if (status != GLFW_TRUE)
@@ -59,12 +64,16 @@ namespace Cobalt
 
 	void Window::Close()
 	{
+		CO_PROFILE_FN();
+
 		glfwDestroyWindow(mWindow);
 		glfwTerminate();
 	}
 
 	void Window::Update()
 	{
+		CO_PROFILE_FN();
+
 		glfwPollEvents();
 	}
 

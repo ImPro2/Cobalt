@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "VulkanDescriptorSet.hpp"
 #include "GraphicsContext.hpp"
 
@@ -7,6 +8,8 @@ namespace Cobalt
 	VulkanDescriptorSet::VulkanDescriptorSet(uint32_t setIndex, VkDescriptorSet descriptorSet, VkPipelineLayout pipelineLayout)
 		: mSetIndex(setIndex), mDescriptorSet(descriptorSet), mPipelineLayout(pipelineLayout)
 	{
+		CO_PROFILE_FN();
+
 		mDescriptorBufferInfos.reserve(10);
 		mDescriptorImageInfos.reserve(100);
 		mDescriptorWrites.reserve(100);
@@ -14,10 +17,13 @@ namespace Cobalt
 
 	VulkanDescriptorSet::~VulkanDescriptorSet()
 	{
+		CO_PROFILE_FN();
 	}
 
 	void VulkanDescriptorSet::SetBufferBinding(const VulkanBuffer* buffer, uint32_t binding, uint32_t arrayIndex)
 	{
+		CO_PROFILE_FN();
+
 		VkDescriptorBufferInfo descriptorBufferInfo = {
 			.buffer = buffer->GetBuffer(),
 			.offset = 0,
@@ -49,6 +55,8 @@ namespace Cobalt
 
 	void VulkanDescriptorSet::SetImageBinding(const Texture* image, uint32_t binding, uint32_t arrayIndex)
 	{
+		CO_PROFILE_FN();
+
 		VkDescriptorImageInfo descImageInfo = {
 			.sampler = image->GetSampler(),
 			.imageView = image->GetImageView(),
@@ -72,11 +80,15 @@ namespace Cobalt
 
 	void VulkanDescriptorSet::Update()
 	{
+		CO_PROFILE_FN();
+
 		vkUpdateDescriptorSets(GraphicsContext::Get().GetDevice(), (uint32_t)mDescriptorWrites.size(), mDescriptorWrites.data(), 0, nullptr);
 	}
 
 	void VulkanDescriptorSet::Bind(VkCommandBuffer commandBuffer)
 	{
+		CO_PROFILE_FN();
+
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, mSetIndex, 1, &mDescriptorSet, 0, nullptr);
 	}
 

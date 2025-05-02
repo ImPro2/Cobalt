@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "Model.hpp"
 #include "Vulkan/Renderer.hpp"
 
@@ -9,16 +10,20 @@ namespace Cobalt
 
 	Model::Model(const std::string& modelpath)
 	{
+		CO_PROFILE_FN();
+
 		LoadModel(modelpath);
 	}
 
 	Model::~Model()
 	{
-
+		CO_PROFILE_FN();
 	}
 
 	void Model::LoadModel(const std::string& modelPath)
 	{
+		CO_PROFILE_FN();
+
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(modelPath, aiProcess_Triangulate);
 
@@ -32,6 +37,8 @@ namespace Cobalt
 
 	void Model::ProcessNode(aiNode* node, const aiScene* scene)
 	{
+		CO_PROFILE_FN();
+
 		// Store meshes
 
 		for (uint32_t i = 0; i < node->mNumMeshes; i++)
@@ -50,6 +57,8 @@ namespace Cobalt
 
 	std::unique_ptr<Mesh> Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
 	{
+		CO_PROFILE_FN();
+
 		std::vector<MeshVertex> vertices;
 		std::vector<uint32_t> indices;
 
@@ -97,6 +106,8 @@ namespace Cobalt
 
 	TextureHandle Model::LoadMaterialTexture(aiMaterial* material, aiTextureType type)
 	{
+		CO_PROFILE_FN();
+
 		static std::unordered_map<const char*, TextureHandle> loadedTexturePaths;
 
 		if (material->GetTextureCount(type) == 0)

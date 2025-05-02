@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "Swapchain.hpp"
 
 #include <cstdlib>
@@ -93,12 +94,16 @@ namespace Cobalt
 	Swapchain::Swapchain(const Window& window, VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
 		: mWindow(window), mDevice(device), mPhysicalDevice(physicalDevice), mSurface(surface)
 	{
+		CO_PROFILE_FN();
+
 		CreateOrRecreateSwapchain();
 		CreateOrRecreateBackbuffers();
 	}
 
 	Swapchain::~Swapchain()
 	{
+		CO_PROFILE_FN();
+
 		vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
 
 		for (uint32_t i = 0; i < mBackBufferCount; i++)
@@ -112,12 +117,16 @@ namespace Cobalt
 
 	void Swapchain::Recreate()
 	{
+		CO_PROFILE_FN();
+
 		CreateOrRecreateSwapchain();
 		CreateOrRecreateBackbuffers();
 	}
 
 	void Swapchain::CreateOrRecreateSwapchain()
 	{
+		CO_PROFILE_FN();
+
 		VkSwapchainKHR oldSwapchain = mSwapchain;
 
 		// Choose swapchain details
@@ -161,6 +170,8 @@ namespace Cobalt
 
 	void Swapchain::CreateOrRecreateBackbuffers()
 	{
+		CO_PROFILE_FN();
+
 		if (mBackBuffers)
 			free(mBackBuffers);
 

@@ -1,4 +1,6 @@
 #pragma once
+#include "OptickMacros.hpp"
+
 #include <vulkan/vulkan.h>
 #include <iostream>
 #include <functional>
@@ -12,6 +14,8 @@ namespace Cobalt
 
 	inline void CheckVkResult(VkResult result, const char* file, int32_t line, const char* functionStr)
 	{
+		CO_PROFILE_FN();
+
 		if (result != VK_SUCCESS)
 		{
 			std::cerr << "Vulkan Error (" << result << ") in " << file << ":" << line << ":" << functionStr << '\n';

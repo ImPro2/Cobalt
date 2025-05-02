@@ -10,3 +10,6 @@
 [submodule "Dependencies/assimp"]
 	path = Dependencies/assimp
 	url = https://github.com/AminAliari/assimp/
+[submodule "Dependencies/Optick"]
+	path = Dependencies/Optick
+	url = https://github.com/bombomby/optick

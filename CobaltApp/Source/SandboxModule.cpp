@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "SandboxModule.hpp"
 #include "Application.hpp"
 #include <imgui.h>
@@ -8,6 +9,7 @@ namespace Cobalt
 	SandboxModule::SandboxModule()
 		: Module("SandboxModule")
 	{
+		CO_PROFILE_FN();
 
 		uint32_t a = sizeof(glm::mat4);
 		uint32_t b = sizeof(MaterialData);
@@ -63,10 +65,13 @@ namespace Cobalt
 
 	SandboxModule::~SandboxModule()
 	{
+		CO_PROFILE_FN();
 	}
 
 	void SandboxModule::OnInit()
 	{
+		CO_PROFILE_FN();
+
 		GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
 
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -77,10 +82,13 @@ namespace Cobalt
 
 	void SandboxModule::OnShutdown()
 	{
+		CO_PROFILE_FN();
 	}
 
 	void SandboxModule::OnUpdate(float deltaTime)
 	{
+		CO_PROFILE_FN();
+		
 		static float lastTime = glfwGetTime();
 		float currentTime = glfwGetTime();
 
@@ -111,6 +119,8 @@ namespace Cobalt
 
 	void SandboxModule::OnRender()
 	{
+		CO_PROFILE_FN();
+
 		mScene.Camera.CameraTranslation = mCameraController.GetTranslation();
 		mScene.Camera.ViewProjectionMatrix = mCameraController.GetViewProjectionMatrix();
 
@@ -129,6 +139,8 @@ namespace Cobalt
 
 	void SandboxModule::OnUIRender()
 	{
+		CO_PROFILE_FN();
+
 		if (ImGui::Begin("SandboxModule"))
 		{
 			ImGui::Text("Frame Time: %fms", mDeltaTime * 1000.0f);
@@ -166,12 +178,16 @@ namespace Cobalt
 
 	void SandboxModule::OnMouseMove(float x, float y)
 	{
+		CO_PROFILE_FN();
+
 		if (mCaptureMouse)
 			mCameraController.OnMouseMove(x, y);
 	}
 
 	void SandboxModule::RenderPointLight(const char* name, PointLightData& pointLight)
 	{
+		CO_PROFILE_FN();
+
 		ImGui::Text("Pointlight: %s", name);
 		
 		ImGui::DragFloat3(std::format("{} Position", name).c_str(), &pointLight.Position.x, 0.2f, -10.0f, 10.0f);
@@ -187,6 +203,8 @@ namespace Cobalt
 
 	void SandboxModule::RenderUITransform(const char* name, Transform& transform)
 	{
+		CO_PROFILE_FN();
+
 		ImGui::Text("Transform: %s", name);
 		ImGui::DragFloat3(std::format("{} Translation", name).c_str(), &transform.Translation.x, 0.2f, -10.0f, 10.0f);
 		ImGui::DragFloat3(std::format("{} Rotation", name).c_str(),    &transform.Rotation.x, 1.0f, 0.0f, 360.0f);
@@ -197,6 +215,8 @@ namespace Cobalt
 
 	void SandboxModule::RenderUIMaterial(const char* name, MaterialHandle material)
 	{
+		CO_PROFILE_FN();
+
 		//MaterialData& materialData = Renderer::GetMaterial(material);
 
 		//ImGui::Text("Material: %s", name);

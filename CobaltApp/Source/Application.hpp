@@ -11,6 +11,7 @@ namespace Cobalt
 	struct ApplicationInfo
 	{
 		bool EnableImGui = true;
+		bool EnableOptickCapture = false;
 	};
 
 	class Application

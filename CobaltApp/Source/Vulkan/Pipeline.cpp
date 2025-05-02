@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "Pipeline.hpp"
 #include "GraphicsContext.hpp"
 #include "Application.hpp"
@@ -8,11 +9,15 @@ namespace Cobalt
 	Pipeline::Pipeline(const PipelineInfo& info, VkRenderPass renderPass)
 		: mInfo(info), mRenderPass(renderPass)
 	{
+		CO_PROFILE_FN();
+
 		Invalidate();
 	}
 
 	Pipeline::~Pipeline()
 	{
+		CO_PROFILE_FN();
+
 		if (mPipelineLayout)
 			vkDestroyPipelineLayout(GraphicsContext::Get().GetDevice(), mPipelineLayout, nullptr);
 
@@ -22,6 +27,8 @@ namespace Cobalt
 	
 	void Pipeline::Invalidate()
 	{
+		CO_PROFILE_FN();
+
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
 
 		auto shaderModuleMap = mInfo.Shader->GetShaderModules();
@@ -185,6 +192,8 @@ namespace Cobalt
 
 	std::vector<VulkanDescriptorSet*> Pipeline::AllocateDescriptorSets(VkDescriptorPool descriptorPool, uint32_t set, uint32_t count)
 	{
+		CO_PROFILE_FN();
+
 		std::vector<VkDescriptorSetLayout> descriptorSetLayouts(count);
 
 		for (uint32_t i = 0; i < count; i++)

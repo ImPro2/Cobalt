@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "ImGuiBackend.hpp"
 #include "Application.hpp"
 #include "Renderer.hpp"
@@ -9,6 +10,8 @@ namespace Cobalt
 
 	void ImGuiBackend::Init()
 	{
+		CO_PROFILE_FN();
+
 		sData = new ImGuiBackendData();
 
 		// Init ImGui
@@ -145,6 +148,8 @@ namespace Cobalt
 
 	void ImGuiBackend::Shutdown()
 	{
+		CO_PROFILE_FN();
+
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->ImGuiRenderPass, nullptr);
 
 		for (uint32_t i = 0; i < sData->CommandPools.size(); i++)
@@ -166,6 +171,8 @@ namespace Cobalt
 
 	void ImGuiBackend::BeginFrame()
 	{
+		CO_PROFILE_FN();
+
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
@@ -173,6 +180,8 @@ namespace Cobalt
 
 	void ImGuiBackend::EndFrame()
 	{
+		CO_PROFILE_FN();
+
 		ImGui::Render();
 
 		// Render viewports
@@ -185,6 +194,8 @@ namespace Cobalt
 
 	void ImGuiBackend::RenderFrame()
 	{
+		CO_PROFILE_FN();
+
 		uint32_t backBufferIndex = GraphicsContext::Get().GetSwapchain().GetBackBufferIndex();
 		uint32_t frameIndex = GraphicsContext::Get().GetFrameIndex();
 
@@ -195,6 +206,9 @@ namespace Cobalt
 
 		VK_CALL(vkResetCommandPool(GraphicsContext::Get().GetDevice(), commandPool, 0));
 		sData->CommandBuffer = GraphicsContext::Get().AllocateCommandBuffer(commandPool);
+
+		CO_PROFILE_COMMAND_BUFFER(sData->CommandBuffer);
+		CO_PROFILE_GPU_EVENT("ImGui Rendering");
 
 		VkCommandBufferBeginInfo beginInfo = {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -232,11 +246,15 @@ namespace Cobalt
 
 	void ImGuiBackend::OnResize()
 	{
+		CO_PROFILE_FN();
+
 		CreateOrRecreateFramebuffers();
 	}
 
 	void ImGuiBackend::CreateOrRecreateFramebuffers()
 	{
+		CO_PROFILE_FN();
+
 		if (sData->Framebuffers.size() > 0)
 		{
 			for (VkFramebuffer framebuffer : sData->Framebuffers)

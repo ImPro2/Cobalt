@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "Texture.hpp"
 #include "GraphicsContext.hpp"
 #include "VulkanBuffer.hpp"
@@ -11,6 +12,8 @@ namespace Cobalt
 	Texture::Texture(const TextureInfo& textureInfo)
 		: mWidth(textureInfo.Width), mHeight(textureInfo.Height), mFormat(textureInfo.Format), mUsage(textureInfo.Usage), mMipLevels(textureInfo.MipLevels)
 	{
+		CO_PROFILE_FN();
+
 		if (textureInfo.LoadFromFile())
 		{
 			uint8_t* data = LoadDataFromFile(textureInfo.FilePath);
@@ -25,11 +28,15 @@ namespace Cobalt
 
 	Texture::~Texture()
 	{
+		CO_PROFILE_FN();
+
 		Release();
 	}
 
 	void Texture::CopyData(const void* data)
 	{
+		CO_PROFILE_FN();
+
 		std::unique_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::CreateMappedBuffer(mAllocationInfo.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 		stagingBuffer->CopyData(data);
 
@@ -43,6 +50,8 @@ namespace Cobalt
 
 	void Texture::Recreate(uint32_t width, uint32_t height)
 	{
+		CO_PROFILE_FN();
+
 		mWidth = width;
 		mHeight = height;
 
@@ -153,6 +162,8 @@ namespace Cobalt
 
 	uint8_t* Texture::LoadDataFromFile(const std::string& filePath)
 	{
+		CO_PROFILE_FN();
+
 		int32_t width, height, channels;
 		stbi_uc* data = stbi_load(filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
@@ -176,6 +187,8 @@ namespace Cobalt
 
 	void Texture::Release()
 	{
+		CO_PROFILE_FN();
+
 		if (mImage)
 			//vkDestroyImage(GraphicsContext::Get().GetDevice(), mImage, nullptr);
 			vmaDestroyImage(GraphicsContext::Get().GetAllocator(), mImage, mAllocation);

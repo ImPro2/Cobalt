@@ -1,3 +1,4 @@
+#include "copch.hpp"
 #include "GraphicsContext.hpp"
 #include "Application.hpp"
 #include "VulkanUtils.hpp"
@@ -11,15 +12,11 @@
 namespace Cobalt
 {
 
-	namespace Utils
-	{
-
-
-	}
-
 	GraphicsContext::GraphicsContext(const Window& window)
 		: mWindow(window)
 	{
+		CO_PROFILE_FN();
+
 		if (sGraphicsContextInstance)
 			return;
 
@@ -28,10 +25,13 @@ namespace Cobalt
 
 	GraphicsContext::~GraphicsContext()
 	{
+		CO_PROFILE_FN();
 	}
 
 	void GraphicsContext::Init()
 	{
+		CO_PROFILE_FN();
+
 		// Setup Vulkan Instance
 
 		{
@@ -198,7 +198,7 @@ namespace Cobalt
 
 			VkDeviceCreateInfo createInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-				.pNext = &shaderDrawParametersFeatures,
+//				.pNext = &shaderDrawParametersFeatures,
 				.queueCreateInfoCount = 1,
 				.pQueueCreateInfos = queueCreateInfo,
 				.enabledExtensionCount = 1,
@@ -318,10 +318,14 @@ namespace Cobalt
 
 			VK_CALL(vmaCreateAllocator(&allocatorCreateInfo, &mAllocator));
 		}
+
+		OPTICK_GPU_INIT_VULKAN(&mDevice, &mPhysicalDevice, &mQueue, (uint32_t*)&mQueueFamily, 2, nullptr);
 	}
 
 	void GraphicsContext::Shutdown()
 	{
+		CO_PROFILE_FN();
+
 		for (auto& fd : mFrames)
 		{
 			vkDestroyCommandPool(mDevice, fd.CommandPool, nullptr);
@@ -343,11 +347,13 @@ namespace Cobalt
 
 		auto pfn_vkDestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(mInstance, "vkDestroyDebugUtilsMessengerEXT");
 		pfn_vkDestroyDebugUtilsMessengerEXT(mInstance, mDebugUtilsMessenger, nullptr);
-		vkDestroyInstance(mInstance, nullptr);
+		//vkDestroyInstance(mInstance, nullptr);
 	}
 
 	VkCommandBuffer GraphicsContext::AllocateCommandBuffer(VkCommandPool commandPool)
 	{
+		CO_PROFILE_FN();
+
 		VkCommandBuffer commandBuffer;
 
 		VkCommandBufferAllocateInfo allocInfo = {
@@ -364,6 +370,8 @@ namespace Cobalt
 
 	void GraphicsContext::SubmitSingleTimeCommands(VkQueue queue, std::function<void(VkCommandBuffer)> fn)
 	{
+		CO_PROFILE_FN();
+
 		VkFenceCreateInfo fenceCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
 			.flags = 0
@@ -397,16 +405,26 @@ namespace Cobalt
 
 	void GraphicsContext::RenderFrame(const std::vector<Module*> modules)
 	{
+		CO_PROFILE_CATEGORY(OPTICK_FUNC, Optick::Category::Rendering);
+
 		VkResult result;
 
 		const FrameData& fd = mFrames[mFrameIndex];
 
 		bool enableImGui = Application::Get()->GetInfo().EnableImGui;
 
+		// Wait for previous frame to finish
+
+		{
+			CO_PROFILE_CATEGORY("vkWaitForFences", Optick::Category::Wait);
+
+			VK_CALL(vkWaitForFences(mDevice, 1, &fd.AcquireNextImageFence, VK_TRUE, UINT64_MAX));
+		}
+
 		// Acquire next image
 
 		{
-			VK_CALL(vkWaitForFences(mDevice, 1, &fd.AcquireNextImageFence, VK_TRUE, UINT64_MAX));
+			CO_PROFILE_CATEGORY("vkAcquireNextImageKHR", Optick::Category::Wait);
 
 			result = vkAcquireNextImageKHR(mDevice, mSwapchain->GetHandle(), UINT64_MAX, fd.ImageAcquiredSemaphore, VK_NULL_HANDLE, mSwapchain->GetBackBufferIndexPtr());
 
@@ -428,6 +446,8 @@ namespace Cobalt
 
 			mActiveCommandBuffer = AllocateCommandBuffer();
 
+			CO_PROFILE_COMMAND_BUFFER(mActiveCommandBuffer);
+
 			VkCommandBufferBeginInfo beginInfo = {
 				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 				.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
@@ -439,16 +459,22 @@ namespace Cobalt
 		// Do rendering
 
 		{
+			CO_PROFILE_SCOPE("Rendering");
+
 			for (Module* module : modules)
 				module->OnRender();
+		}
 
-			if (enableImGui)
-				ImGuiBackend::RenderFrame();
+		if (enableImGui)
+		{
+			ImGuiBackend::RenderFrame();
 		}
 		
 		// Submit command buffers
 
 		{
+			CO_PROFILE_GPU_EVENT("Queue Submission");
+
 			VK_CALL(vkEndCommandBuffer(mActiveCommandBuffer));
 
 			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -478,6 +504,9 @@ namespace Cobalt
 
 	void GraphicsContext::PresentFrame()
 	{
+		CO_PROFILE_SET_SWAPCHAIN(mSwapchain->GetHandle());
+		CO_PROFILE_CATEGORY("Swapchain Presentation", Optick::Category::Wait);
+		
 		if (mRecreateSwapchain)
 			return;
 
@@ -507,6 +536,8 @@ namespace Cobalt
 
 	void GraphicsContext::OnResize()
 	{
+		CO_PROFILE_FN();
+
 		if (mRecreateSwapchain)
 		{
 			mSwapchain->Recreate();
