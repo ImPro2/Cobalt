@@ -27,7 +27,8 @@ layout(buffer_reference, std430) readonly buffer VertexBuffer
 void main()
 {
 	SceneData scene = uSceneData.Scene;
-	ObjectData object = uObjectData.Objects[gl_BaseInstance];
+	//ObjectData object = uObjectData.Objects[gl_BaseInstance];
+	ObjectData object = uObjectData.Objects[gl_InstanceIndex];
 
 	MeshVertex vertex = VertexBuffer(object.VertexBufferRef).Vertices[gl_VertexIndex];
 
@@ -79,6 +80,7 @@ struct UnpackedMaterialData
 vec3 CalculateDirectionalLightRadiance(DirectionalLightData directionalLight, UnpackedMaterialData material, vec3 normal, vec3 viewDir)
 {
 	vec3 lightDir = normalize(-directionalLight.Direction);
+
 	vec3 reflectDir = reflect(-lightDir, normal);
 
 	float diff = max(0.0, dot(lightDir, normal));
@@ -114,8 +116,8 @@ void main()
 	MaterialData material = uMaterialData.Materials[vMaterialHandle];
 
 	UnpackedMaterialData unpackedMaterial;
-	unpackedMaterial.Diffuse  = vec3(texture(uTextures[0],  vTexCoord));
-	unpackedMaterial.Specular = vec3(texture(uTextures[0], vTexCoord));
+	unpackedMaterial.Diffuse  = vec3(texture(uTextures[material.DiffuseMapHandle],  vTexCoord));
+	unpackedMaterial.Specular = vec3(texture(uTextures[material.SpecularMapHandle], vTexCoord));
 	unpackedMaterial.Shininess = material.Shininess;
 
 	vec3 radiance = vec3(0.0);
@@ -129,5 +131,4 @@ void main()
 		radiance += CalculatePointLightRadiance(scene.PointLights[i], unpackedMaterial, normal, vFragPosition, viewDir);
 
 	oColor = vec4(radiance, 1.0);
-	//oColor = vec4(normal, 1.0);
 }

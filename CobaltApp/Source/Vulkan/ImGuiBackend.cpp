@@ -38,26 +38,16 @@ namespace Cobalt
 
 		{
 			sData->CommandPools.resize(graphicsContext.GetFrameCount());
-			sData->CommandBuffers.resize(graphicsContext.GetFrameCount());
 
 			for (uint32_t i = 0; i < graphicsContext.GetFrameCount(); i++)
 			{
 				VkCommandPoolCreateInfo commandPoolCreateInfo = {
 					.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-					.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+					.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
 					.queueFamilyIndex = (uint32_t)graphicsContext.GetQueueFamily()
 				};
 
 				VK_CALL(vkCreateCommandPool(graphicsContext.GetDevice(), &commandPoolCreateInfo, nullptr, &sData->CommandPools[i]));
-
-				VkCommandBufferAllocateInfo commandBufferAllocInfo = {
-					.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-					.commandPool = sData->CommandPools[i],
-					.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-					.commandBufferCount = 1,
-				};
-
-				VK_CALL(vkAllocateCommandBuffers(graphicsContext.GetDevice(), &commandBufferAllocInfo, &sData->CommandBuffers[i]));
 			}
 		}
 
@@ -145,9 +135,9 @@ namespace Cobalt
 			// Upload fonts
 
 			graphicsContext.SubmitSingleTimeCommands(graphicsContext.GetQueue(), [](VkCommandBuffer commandBuffer)
-				{
-					ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
-				});
+			{
+				ImGui_ImplVulkan_CreateFontsTexture(commandBuffer);
+			});
 
 			ImGui_ImplVulkan_DestroyFontUploadObjects();
 		}
@@ -157,17 +147,14 @@ namespace Cobalt
 	{
 		vkDestroyRenderPass(GraphicsContext::Get().GetDevice(), sData->ImGuiRenderPass, nullptr);
 
-		for (uint32_t i = 0; i < sData->CommandBuffers.size(); i++)
-		{
-			vkFreeCommandBuffers(GraphicsContext::Get().GetDevice(), sData->CommandPools[i], 1, &sData->CommandBuffers[i]);
+		for (uint32_t i = 0; i < sData->CommandPools.size(); i++)
 			vkDestroyCommandPool(GraphicsContext::Get().GetDevice(), sData->CommandPools[i], nullptr);
-		}
 
 		for (VkFramebuffer framebuffer : sData->Framebuffers)
 			vkDestroyFramebuffer(GraphicsContext::Get().GetDevice(), framebuffer, nullptr);
 
-		sData->CommandPools.clear();
-		sData->CommandBuffers.clear();
+		//sData->CommandPools.clear();
+		//sData->CommandBuffers.clear();
 		sData->Framebuffers.clear();
 
 		ImGui_ImplVulkan_Shutdown();
@@ -198,23 +185,23 @@ namespace Cobalt
 
 	void ImGuiBackend::RenderFrame()
 	{
-		uint32_t frameIndex = GraphicsContext::Get().GetFrameIndex();
 		uint32_t backBufferIndex = GraphicsContext::Get().GetSwapchain().GetBackBufferIndex();
+		uint32_t frameIndex = GraphicsContext::Get().GetFrameIndex();
 
-		VkCommandPool commandPool = sData->CommandPools[frameIndex];
-		VkCommandBuffer commandBuffer = sData->CommandBuffers[frameIndex];
 		VkFramebuffer framebuffer = sData->Framebuffers[backBufferIndex];
+		VkCommandPool commandPool = sData->CommandPools[frameIndex];
 
-		// Start command buffer
+		// Restart command buffer
 
 		VK_CALL(vkResetCommandPool(GraphicsContext::Get().GetDevice(), commandPool, 0));
+		sData->CommandBuffer = GraphicsContext::Get().AllocateCommandBuffer(commandPool);
 
 		VkCommandBufferBeginInfo beginInfo = {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 			.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
 		};
 
-		VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+		VK_CALL(vkBeginCommandBuffer(sData->CommandBuffer, &beginInfo));
 
 		// Submit render pass
 
@@ -227,13 +214,13 @@ namespace Cobalt
 			.pClearValues = nullptr,
 		};
 
-		vkCmdBeginRenderPass(commandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
-		vkCmdEndRenderPass(commandBuffer);
+		vkCmdBeginRenderPass(sData->CommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), sData->CommandBuffer);
+		vkCmdEndRenderPass(sData->CommandBuffer);
 
 		// End command buffer
 
-		VK_CALL(vkEndCommandBuffer(commandBuffer));
+		VK_CALL(vkEndCommandBuffer(sData->CommandBuffer));
 
 		// Render viewports
 
@@ -241,11 +228,6 @@ namespace Cobalt
 		{
 			ImGui::RenderPlatformWindowsDefault();
 		}
-	}
-
-	VkCommandBuffer ImGuiBackend::GetActiveCommandBuffer()
-	{
-		return sData->CommandBuffers[GraphicsContext::Get().GetFrameIndex()];
 	}
 
 	void ImGuiBackend::OnResize()

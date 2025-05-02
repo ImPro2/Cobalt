@@ -130,7 +130,7 @@ namespace Cobalt
 		
 		// Choose back buffer count
 
-		mBackBufferCount = supportDetails.Capabilities.minImageCount + 1;
+		mBackBufferCount = 3;
 
 		if (supportDetails.Capabilities.maxImageCount > 0 && mBackBufferCount > supportDetails.Capabilities.maxImageCount)
 			mBackBufferCount = supportDetails.Capabilities.maxImageCount;

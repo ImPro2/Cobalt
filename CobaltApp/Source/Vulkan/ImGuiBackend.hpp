@@ -19,7 +19,7 @@ namespace Cobalt
 		static void OnResize();
 
 	public:
-		static VkCommandBuffer GetActiveCommandBuffer();
+		static VkCommandBuffer GetActiveCommandBuffer() { return sData->CommandBuffer; }
 
 	private:
 		static void CreateOrRecreateFramebuffers();
@@ -27,12 +27,12 @@ namespace Cobalt
 	private:
 		struct ImGuiBackendData
 		{
-			std::vector<VkCommandPool>   CommandPools;   // per frame
-			std::vector<VkCommandBuffer> CommandBuffers; // per frame
+			std::vector<VkCommandPool> CommandPools; // per frame
+			VkCommandBuffer CommandBuffer = VK_NULL_HANDLE;
 
 			std::vector<VkFramebuffer> Framebuffers; // per backbuffer
 
-			VkRenderPass ImGuiRenderPass;
+			VkRenderPass ImGuiRenderPass = VK_NULL_HANDLE;
 		};
 
 		inline static ImGuiBackendData* sData = nullptr;

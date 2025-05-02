@@ -8,15 +8,21 @@
 namespace Cobalt
 {
 
+	struct ApplicationInfo
+	{
+		bool EnableImGui = true;
+	};
+
 	class Application
 	{
 	public:
 		static Application* Get() { return sInstance; }
+		const ApplicationInfo& GetInfo() const { return mInfo; }
 
 		const Window& GetWindow() const { return *mWindow; }
 
 	public:
-		Application();
+		Application(ApplicationInfo&& info);
 		~Application();
 
 	public:
@@ -43,6 +49,8 @@ namespace Cobalt
 
 	private:
 		inline static Application* sInstance;
+
+		ApplicationInfo mInfo;
 
 		bool mRunning = true;
 

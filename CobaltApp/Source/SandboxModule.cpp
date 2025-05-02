@@ -88,6 +88,9 @@ namespace Cobalt
 		{
 			mDeltaTime = deltaTime;
 			lastTime = currentTime;
+
+			if (!Application::Get()->GetInfo().EnableImGui)
+				std::cout << "Frame Time: " << deltaTime * 1000.0f << "ms" << std::endl << "FPS: " << 1.0f / deltaTime << std::endl;
 		}
 
 		GLFWwindow* window = Application::Get()->GetWindow().GetWindow();

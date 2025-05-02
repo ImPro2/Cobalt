@@ -5,7 +5,8 @@
 namespace Cobalt
 {
 
-	Application::Application()
+	Application::Application(ApplicationInfo&& info)
+		: mInfo(std::move(info))
 	{
 		if (sInstance)
 			return;
@@ -30,7 +31,9 @@ namespace Cobalt
 		mGraphicsContext->Init();
 
 		Renderer::Init();
-		ImGuiBackend::Init();
+
+		if (mInfo.EnableImGui)
+			ImGuiBackend::Init();
 
 		for (Module* module : mModules)
 			module->OnInit();
@@ -55,15 +58,20 @@ namespace Cobalt
 			{
 				mGraphicsContext->OnResize();
 				Renderer::OnResize();
-				ImGuiBackend::OnResize();
+
+				if (mInfo.EnableImGui)
+					ImGuiBackend::OnResize();
 			}
 
-			ImGuiBackend::BeginFrame();
+			if (mInfo.EnableImGui)
+			{
+				ImGuiBackend::BeginFrame();
 
-			for (Module* module : mModules)
-				module->OnUIRender();
+				for (Module* module : mModules)
+					module->OnUIRender();
 
-			ImGuiBackend::EndFrame();
+				ImGuiBackend::EndFrame();
+			}
 
 			mGraphicsContext->RenderFrame(mModules);
 			mGraphicsContext->PresentFrame();

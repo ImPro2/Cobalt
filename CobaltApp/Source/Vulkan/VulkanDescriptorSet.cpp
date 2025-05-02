@@ -7,6 +7,9 @@ namespace Cobalt
 	VulkanDescriptorSet::VulkanDescriptorSet(uint32_t setIndex, VkDescriptorSet descriptorSet, VkPipelineLayout pipelineLayout)
 		: mSetIndex(setIndex), mDescriptorSet(descriptorSet), mPipelineLayout(pipelineLayout)
 	{
+		mDescriptorBufferInfos.reserve(10);
+		mDescriptorImageInfos.reserve(100);
+		mDescriptorWrites.reserve(100);
 	}
 
 	VulkanDescriptorSet::~VulkanDescriptorSet()

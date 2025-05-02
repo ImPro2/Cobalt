@@ -156,7 +156,7 @@ namespace Cobalt
 		// Create logical device
 
 		{
-			const char* deviceExtensions[] = { "VK_KHR_swapchain", "VK_KHR_shader_draw_parameters", "VK_EXT_descriptor_indexing", VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME };
+			const char* deviceExtensions[] = { "VK_KHR_swapchain" };
 			const float queuePriority[] = { 1.0f };
 
 			VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures = {
@@ -194,13 +194,14 @@ namespace Cobalt
 
 			VkPhysicalDeviceFeatures physicalDeviceFeatures = {};
 			physicalDeviceFeatures.shaderInt64 = VK_TRUE;
+			physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
 			VkDeviceCreateInfo createInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-				.pNext = (void*)&shaderDrawParametersFeatures,
+				.pNext = &shaderDrawParametersFeatures,
 				.queueCreateInfoCount = 1,
 				.pQueueCreateInfos = queueCreateInfo,
-				.enabledExtensionCount = 4,
+				.enabledExtensionCount = 1,
 				.ppEnabledExtensionNames = deviceExtensions,
 				.pEnabledFeatures = &physicalDeviceFeatures
 			};
@@ -253,6 +254,7 @@ namespace Cobalt
 		// Create transient command pool
 
 		{
+#if 0
 			VkCommandPoolCreateInfo commandPoolCreateInfo = {
 				.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
 				.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
@@ -260,6 +262,7 @@ namespace Cobalt
 			};
 
 			VK_CALL(vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &mTransientCommandPool));
+#endif
 		}
 
 		// Create frames
@@ -274,24 +277,11 @@ namespace Cobalt
 				{
 					VkCommandPoolCreateInfo commandPoolCreateInfo = {
 						.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-						.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+						.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
 						.queueFamilyIndex = (uint32_t)mQueueFamily,
 					};
 
 					VK_CALL(vkCreateCommandPool(mDevice, &commandPoolCreateInfo, nullptr, &fd.CommandPool));
-				}
-
-				// Allocate command buffer
-
-				{
-					VkCommandBufferAllocateInfo commandBufferAllocInfo = {
-						.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-						.commandPool = fd.CommandPool,
-						.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-						.commandBufferCount = 1,
-					};
-
-					VK_CALL(vkAllocateCommandBuffers(mDevice, &commandBufferAllocInfo, &fd.CommandBuffer));
 				}
 
 				// Create synchronisation objects 
@@ -334,8 +324,8 @@ namespace Cobalt
 	{
 		for (auto& fd : mFrames)
 		{
-			vkFreeCommandBuffers(mDevice, fd.CommandPool, 1, &fd.CommandBuffer);
 			vkDestroyCommandPool(mDevice, fd.CommandPool, nullptr);
+
 			vkDestroyFence(mDevice, fd.AcquireNextImageFence, nullptr);
 			vkDestroySemaphore(mDevice, fd.ImageAcquiredSemaphore, nullptr);
 			vkDestroySemaphore(mDevice, fd.RenderFinishedSemaphore, nullptr);
@@ -343,7 +333,7 @@ namespace Cobalt
 
 		mFrames.clear();
 
-		vkDestroyCommandPool(mDevice, mTransientCommandPool, nullptr);
+		//vkDestroyCommandPool(mDevice, mTransientCommandPool, nullptr);
 
 		mSwapchain.reset();
 
@@ -356,18 +346,18 @@ namespace Cobalt
 		vkDestroyInstance(mInstance, nullptr);
 	}
 
-	VkCommandBuffer GraphicsContext::AllocateTransientCommandBuffer()
+	VkCommandBuffer GraphicsContext::AllocateCommandBuffer(VkCommandPool commandPool)
 	{
 		VkCommandBuffer commandBuffer;
 
 		VkCommandBufferAllocateInfo allocInfo = {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool = mTransientCommandPool,
+			.commandPool = commandPool == VK_NULL_HANDLE ? mFrames[mFrameIndex].CommandPool : commandPool,
 			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 			.commandBufferCount = 1,
 		};
 
-		vkAllocateCommandBuffers(mDevice, &allocInfo, &commandBuffer);
+		VK_CALL(vkAllocateCommandBuffers(mDevice, &allocInfo, &commandBuffer));
 
 		return commandBuffer;
 	}
@@ -382,7 +372,7 @@ namespace Cobalt
 		VkFence fence;
 		VK_CALL(vkCreateFence(mDevice, &fenceCreateInfo, nullptr, &fence));
 
-		VkCommandBuffer commandBuffer = AllocateTransientCommandBuffer();
+		VkCommandBuffer commandBuffer = AllocateCommandBuffer();
 
 		VkCommandBufferBeginInfo beginInfo = {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -403,7 +393,6 @@ namespace Cobalt
 		VK_CALL(vkWaitForFences(mDevice, 1, &fence, VK_TRUE, UINT64_MAX));
 
 		vkDestroyFence(mDevice, fence, nullptr);
-		vkFreeCommandBuffers(mDevice, mTransientCommandPool, 1, &commandBuffer);
 	}
 
 	void GraphicsContext::RenderFrame(const std::vector<Module*> modules)
@@ -411,6 +400,8 @@ namespace Cobalt
 		VkResult result;
 
 		const FrameData& fd = mFrames[mFrameIndex];
+
+		bool enableImGui = Application::Get()->GetInfo().EnableImGui;
 
 		// Acquire next image
 
@@ -435,71 +426,50 @@ namespace Cobalt
 		{
 			VK_CALL(vkResetCommandPool(mDevice, fd.CommandPool, 0));
 
+			mActiveCommandBuffer = AllocateCommandBuffer();
+
 			VkCommandBufferBeginInfo beginInfo = {
 				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 				.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
 			};
 
-			VK_CALL(vkBeginCommandBuffer(fd.CommandBuffer, &beginInfo));
-			mActiveCommandBuffer = fd.CommandBuffer;
+			VK_CALL(vkBeginCommandBuffer(mActiveCommandBuffer, &beginInfo));
 		}
 
 		// Do rendering
 
 		{
-#if 0
-			GLFWwindow* window = Application::Get()->GetWindow().GetWindow();
-			float width = mSwapchain->GetExtent().width;
-			float height = mSwapchain->GetExtent().height;
-
-			static Camera camera = { .Translation = { 0, 0, 3 } };
-
-			static Transform transform;
-			//transform.Rotation.y += 0.005f;
-
-			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-				camera.Translation.z -= 0.01f;
-			if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-				camera.Translation.z += 0.01f;
-			if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-				camera.Translation.x += 0.01f;
-			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-				camera.Translation.x -= 0.01f;
-			if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-				camera.Translation.y += 0.01f;
-			if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-				camera.Translation.y -= 0.01f;
-
-			Renderer::BeginScene(camera);
-			Renderer::DrawCube(transform);
-			Renderer::EndScene();
-#endif
-
 			for (Module* module : modules)
 				module->OnRender();
 
-			ImGuiBackend::RenderFrame();
+			if (enableImGui)
+				ImGuiBackend::RenderFrame();
 		}
 		
 		// Submit command buffers
 
 		{
+			VK_CALL(vkEndCommandBuffer(mActiveCommandBuffer));
+
 			VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-			VkCommandBuffer commandBuffers[] = { mActiveCommandBuffer, ImGuiBackend::GetActiveCommandBuffer() };
+			std::vector<VkCommandBuffer> commandBuffers;
+			commandBuffers.push_back(mActiveCommandBuffer);
+
+			if (enableImGui)
+				commandBuffers.push_back(ImGuiBackend::GetActiveCommandBuffer());
 
 			VkSubmitInfo submitInfo = {
 				.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
 				.waitSemaphoreCount = 1,
 				.pWaitSemaphores = &fd.ImageAcquiredSemaphore,
 				.pWaitDstStageMask = &waitStage,
-				.commandBufferCount = sizeof(commandBuffers) / sizeof(commandBuffers[0]),
-				.pCommandBuffers = commandBuffers,
+				.commandBufferCount = (uint32_t)commandBuffers.size(),
+				.pCommandBuffers = commandBuffers.data(),
 				.signalSemaphoreCount = 1,
 				.pSignalSemaphores = &fd.RenderFinishedSemaphore
 			};
 
-			VK_CALL(vkEndCommandBuffer(fd.CommandBuffer));
 			VK_CALL(vkQueueSubmit(mQueue, 1, &submitInfo, fd.AcquireNextImageFence));
 
 			mActiveCommandBuffer = VK_NULL_HANDLE;

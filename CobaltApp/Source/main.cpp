@@ -3,7 +3,10 @@
 
 int main()
 {
-	Cobalt::Application app;
+	Cobalt::Application app = Cobalt::Application({
+		.EnableImGui = false
+	});
+
 	app.AddModule<Cobalt::SandboxModule>();
 
 	app.Init();

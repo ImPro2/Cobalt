@@ -19,7 +19,7 @@ namespace Cobalt
 
 	struct FrameData
 	{
-		VkCommandPool   CommandPool;
+		VkCommandPool CommandPool;
 		VkCommandBuffer CommandBuffer;
 
 		VkFence     AcquireNextImageFence;
@@ -49,7 +49,7 @@ namespace Cobalt
 		uint32_t GetFrameIndex() const { return mFrameIndex; }
 
 	public:
-		VkCommandBuffer AllocateTransientCommandBuffer();
+		VkCommandBuffer AllocateCommandBuffer(VkCommandPool commandPool = VK_NULL_HANDLE);
 		void SubmitSingleTimeCommands(VkQueue queue, std::function<void(VkCommandBuffer)> fn);
 
 	public:
@@ -88,7 +88,7 @@ namespace Cobalt
 		VkDevice                 mDevice;
 		VkDescriptorPool         mDescriptorPool;
 		VkSurfaceKHR             mSurface;
-		VkCommandPool            mTransientCommandPool;
+		//VkCommandPool            mTransientCommandPool;
 
 		std::unique_ptr<Swapchain> mSwapchain;
 
