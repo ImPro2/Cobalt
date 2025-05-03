@@ -127,8 +127,8 @@ void main()
 
 	radiance += CalculateDirectionalLightRadiance(scene.DirectionalLight, unpackedMaterial, normal, viewDir);
 
-	for (uint i = 0; i < scene.PointLightCount; i++)
-		radiance += CalculatePointLightRadiance(scene.PointLights[i], unpackedMaterial, normal, vFragPosition, viewDir);
+	//for (uint i = 0; i < scene.PointLightCount; i++)
+		//radiance += CalculatePointLightRadiance(scene.PointLights[i], unpackedMaterial, normal, vFragPosition, viewDir);
 
 	oColor = vec4(radiance, 1.0);
 }

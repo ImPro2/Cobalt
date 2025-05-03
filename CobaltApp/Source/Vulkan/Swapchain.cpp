@@ -61,9 +61,15 @@ namespace Cobalt
 
 		static VkPresentModeKHR ChooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 		{
+			return VK_PRESENT_MODE_IMMEDIATE_KHR;
+
 			for (const VkPresentModeKHR& availablePresentMode : availablePresentModes)
 			{
 				if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+				{
+					return availablePresentMode;
+				}
+				else if (availablePresentMode == VK_PRESENT_MODE_FIFO_RELAXED_KHR)
 				{
 					return availablePresentMode;
 				}
