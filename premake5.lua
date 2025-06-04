@@ -35,8 +35,7 @@ workspace "Cobalt"
 	startproject "CobaltApp"
 	language "C++"
 	cppdialect "C++latest"
-	staticruntime "Off"
-	runtime "Release"
+	staticruntime "On"
 
 	flags { "MultiProcessorCompile" }
 
@@ -51,14 +50,17 @@ workspace "Cobalt"
 	filter "configurations:Debug"
 		defines "CO_DEBUG"
 		symbols "On"
+		runtime "Debug"
 
 	filter "configurations:Release"
 		defines "CO_RELEASE"
 		optimize "On"
+		runtime "Release"
 
 	filter "configurations:Dist"
 		defines "CO_DIST"
 		optimize "On"
+		runtime "Release"
 
     filter { "system:linux" }
         buildoptions { "-Wno-return-type" }
