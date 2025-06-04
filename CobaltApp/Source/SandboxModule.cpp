@@ -60,7 +60,20 @@ namespace Cobalt
 		mFloorTransform.Rotation = glm::vec3(0.0f);
 		mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
 
-		mSphereTransform.Translation = glm::vec3(0.0f, 2.0f, 0.0f);
+		mSphereTransforms.resize(10 * 10);
+
+		uint32_t i = 0;
+
+		for (float y = 2.0f; y <= 20.0f; y += 2.0f)
+		{
+			for (float x = -8.0f; x <= 10.0f; x += 2.0f)
+			{
+				mSphereTransforms[i] = Transform();
+				mSphereTransforms[i].Translation = { x, y, 5.0f };
+
+				i++;
+			}
+		}
 	}
 
 	SandboxModule::~SandboxModule()
@@ -128,11 +141,12 @@ namespace Cobalt
 
 		Renderer::BeginScene(mScene);
 
-		for (const auto& mesh : mSphereModel->GetMeshes())
-			Renderer::DrawMesh(mSphereTransform, mesh.get());
+		const auto& sphereMesh = mSphereModel->GetMeshes()[0];
 
-		for (const auto& mesh : mCubeModel->GetMeshes())
-			Renderer::DrawMesh(mFloorTransform, mesh.get());
+		for (const Transform& transform : mSphereTransforms)
+			Renderer::DrawMesh(transform, sphereMesh.get());
+
+		Renderer::DrawMesh(mFloorTransform, mCubeModel->GetMeshes()[0].get());
 
 		Renderer::EndScene();
 	}
@@ -160,7 +174,7 @@ namespace Cobalt
 
 			if (ImGui::TreeNode("Transforms"))
 			{
-				RenderUITransform("Sphere", mSphereTransform);
+				//RenderUITransform("Sphere", mSphereTransform);
 				RenderUITransform("Floor", mFloorTransform);
 				ImGui::TreePop();
 			}
