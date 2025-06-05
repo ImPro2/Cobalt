@@ -16,8 +16,6 @@ IncludeDir["stb_image"]     = "%{wks.location}/Dependencies/stb_image/include"
 IncludeDir["ImGui"]         = "%{wks.location}/Dependencies/ImGui"
 IncludeDir["assimp"]        = "%{wks.location}/Dependencies/assimp/include"
 IncludeDir["VulkanSDK"]     = "%{VULKAN_SDK}/Include"
-IncludeDir["VkBootstrap"]   = "%{wks.location}/Dependencies/VkBootstrap/src"
-IncludeDir["spv_reflect"]   = "%{wks.location}/Dependencies/spv_reflect"
 IncludeDir["Optick"]        = "%{wks.location}/Dependencies/Optick/src"
 
 LibraryDir = {}
@@ -26,9 +24,8 @@ LibraryDir["Optick"] = "%{wks.location}/Dependencies/Optick/bin/vs2022/x64/Relea
 
 Library = {}
 Library["Vulkan"] = "%{LibraryDir.VulkanSDK}/vulkan-1.lib"
-Library["shaderc"] = "%{LibraryDir.VulkanSDK}/shaderc_combined.lib"
-Library["SPIRVTools"] = "%{LibraryDir.VulkanSDK}/SPIRV-Tools-link.lib"
 Library["Optick"] = "%{LibraryDir.Optick}/OptickCore.lib"
+Library["slang"] = "%{LibraryDir.VulkanSDK}/slang.lib"
 
 workspace "Cobalt"
 	architecture "x64"
@@ -69,9 +66,7 @@ group "Dependencies"
     include "Dependencies/GLFW"
     include "Dependencies/ImGui"
     include "Dependencies/stb_image"
-	include "Dependencies/VkBootstrap"
 	include "Dependencies/assimp"
-	include "Dependencies/spv_reflect"
 group ""
 
 include "CobaltApp"

@@ -1,6 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
-#include "spirv_reflect.h"
+//#include "spirv_reflect.h"
 
 #include <string>
 #include <vector>
@@ -55,7 +55,7 @@ namespace Cobalt
 		std::unordered_map<VkShaderStageFlags, std::vector<uint32_t>> mSpirvBinaries;
 
 		std::unordered_map<VkShaderStageFlags, VkShaderModule> mShaderModules;
-		std::unordered_map<VkShaderStageFlags, SpvReflectShaderModule> mReflectShaderModules;
+		//std::unordered_map<VkShaderStageFlags, SpvReflectShaderModule> mReflectShaderModules;
 
 		VkVertexInputBindingDescription mVertexInputBindingDescription;
 		std::vector<VkVertexInputAttributeDescription> mVertexInputAttributeDescriptions;

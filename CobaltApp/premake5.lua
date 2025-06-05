@@ -7,11 +7,8 @@ project "CobaltApp"
         "GLFW",
         "stb_image",
 		"assimp",
-        "VkBootstrap",
-		"spv_reflect",
+		"%{Library.slang}",
 		"%{Library.Vulkan}",
-		"%{Library.shaderc}",
-		"%{Library.SPIRVTools}",
 		"%{Library.Optick}"
 	}
 
@@ -30,8 +27,6 @@ project "CobaltApp"
 		"%{IncludeDir.stb_image}",
 		"%{IncludeDir.ImGui}",
 		"%{IncludeDir.assimp}",
-        "%{IncludeDir.VkBootstrap}",
-		"%{IncludeDir.spv_reflect}",
 		"%{IncludeDir.Optick}"
 	}
 
