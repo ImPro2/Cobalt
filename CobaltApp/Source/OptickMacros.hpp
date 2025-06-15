@@ -1,7 +1,7 @@
 #pragma once
 #include <optick.h>
 
-#define CO_ENABLE_PROFILING
+//#define CO_ENABLE_PROFILING
 
 #ifdef CO_ENABLE_PROFILING
 	#define CO_PROFILE_FRAME(name) OPTICK_FRAME(name)
@@ -22,4 +22,7 @@
 	#define CO_PROFILE_COMMAND_BUFFER(commandBuffer)
 	#define CO_PROFILE_GPU_EVENT(name)
 	#define CO_PROFILE_SET_SWAPCHAIN(swapchain)
+	#define CO_PROFILE_START_CAPTURE(...)
+	#define CO_PROFILE_STOP_CAPTURE(...) 
+	#define CO_PROFILE_SAVE_CAPTURE(...) 
 #endif

@@ -37,6 +37,16 @@ namespace Cobalt
 		VulkanBuffer* IndexBuffer;
 		uint32_t IndexCount;
 		Material* Material;
+		uint32_t FirstInstance;
+	};
+
+	struct DrawBatch
+	{
+		VulkanBuffer* IndexBuffer;
+		uint32_t IndexCount;
+		Material* Material;
+		uint32_t FirstInstance;
+		uint32_t InstanceCount;
 	};
 
 	class Renderer
@@ -64,6 +74,9 @@ namespace Cobalt
 	private:
 		static void CreateOrRecreateDepthTexture();
 		static void CreateOrRecreateFramebuffers();
+
+		static std::vector<DrawCall> CullDrawCalls(const std::vector<DrawCall>& draws);
+		static std::vector<DrawBatch> BatchDrawCalls();
 
 	private:
 		struct PushConstants

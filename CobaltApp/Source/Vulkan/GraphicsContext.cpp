@@ -159,8 +159,15 @@ namespace Cobalt
 			const char* deviceExtensions[] = { "VK_KHR_swapchain" };
 			const float queuePriority[] = { 1.0f };
 
+			VkPhysicalDeviceVariablePointerFeatures variablePointerFeatures = {
+				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES,
+				.variablePointersStorageBuffer = VK_TRUE,
+				.variablePointers = VK_TRUE,
+			};
+
 			VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures = {
 				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES,
+				.pNext = (void*)&variablePointerFeatures,
 				.bufferDeviceAddress = VK_TRUE,
 			};
 
@@ -196,9 +203,12 @@ namespace Cobalt
 			physicalDeviceFeatures.shaderInt64 = VK_TRUE;
 			physicalDeviceFeatures.samplerAnisotropy = VK_TRUE;
 
+			//VkPhysicalDeviceVulkan11Features physicalDeviceVulkan11Features = {};
+			//physicalDeviceVulkan11Features.variablePointers = VK_TRUE;
+
 			VkDeviceCreateInfo createInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-//				.pNext = &shaderDrawParametersFeatures,
+				.pNext = &shaderDrawParametersFeatures,
 				.queueCreateInfoCount = 1,
 				.pQueueCreateInfos = queueCreateInfo,
 				.enabledExtensionCount = 1,

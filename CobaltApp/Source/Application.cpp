@@ -2,6 +2,7 @@
 #include "Application.hpp"
 #include "Vulkan/Renderer.hpp"
 #include "Vulkan/ImGuiBackend.hpp"
+#include "Vulkan/ShaderCompiler.hpp"
 
 namespace Cobalt
 {
@@ -42,6 +43,7 @@ namespace Cobalt
 		mWindow->Create();
 		mGraphicsContext->Init();
 
+		ShaderCompiler::Init();
 		Renderer::Init();
 
 		if (mInfo.EnableImGui)
@@ -135,6 +137,7 @@ namespace Cobalt
 		vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
 
 		ImGuiBackend::Shutdown();
+		ShaderCompiler::Shutdown();
 		Renderer::Shutdown();
 
 		mGraphicsContext->Shutdown();

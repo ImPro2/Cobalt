@@ -33,7 +33,8 @@ namespace Cobalt
 		CameraController mCameraController;
 
 		Transform mFloorTransform = Transform();
-		Transform mSphereTransform = Transform();
+
+		std::vector<Transform> mSphereTransforms;
 
 		std::unique_ptr<Model> mSphereModel;
 		std::unique_ptr<Model> mCubeModel;

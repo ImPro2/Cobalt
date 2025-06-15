@@ -250,16 +250,28 @@ namespace Cobalt
 
 		vkCmdBeginRenderPass(commandBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-		for (uint32_t i = 0; i < sData->DrawCalls.size(); i++)
+		VkBuffer lastIndexBuffer = VK_NULL_HANDLE;
+		VkPipeline lastPipeline = VK_NULL_HANDLE;
+
+		for (const DrawBatch& batch : BatchDrawCalls())
 		{
-			DrawCall draw = sData->DrawCalls[i];
+			VkBuffer indexBuffer = batch.IndexBuffer->GetBuffer();
+			VkPipeline pipeline = batch.Material->GetPipeline().GetPipeline();
 
-			VulkanDescriptorSet* globalDescriptorSet = draw.Material->GetGlobalDescriptorSet(frameIndex);
+			if (indexBuffer != lastIndexBuffer)
+			{
+				lastIndexBuffer = indexBuffer;
+				vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			}
 
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, draw.Material->GetPipeline().GetPipeline());
-			globalDescriptorSet->Bind(commandBuffer);
-			vkCmdBindIndexBuffer(commandBuffer, draw.IndexBuffer->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-			vkCmdDrawIndexed(commandBuffer, draw.IndexCount, 1, 0, 0, i);
+			if (pipeline != lastPipeline)
+			{
+				lastPipeline = pipeline;
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+				batch.Material->GetGlobalDescriptorSet(frameIndex)->Bind(commandBuffer);
+			}
+
+			vkCmdDrawIndexed(commandBuffer, batch.IndexCount, batch.InstanceCount, 0, 0, batch.FirstInstance);
 		}
 
 		vkCmdEndRenderPass(commandBuffer);
@@ -273,6 +285,7 @@ namespace Cobalt
 		draw.IndexBuffer = mesh->GetIndexBuffer();
 		draw.IndexCount = mesh->GetIndices().size();
 		draw.Material = mesh->GetMaterial();
+		draw.FirstInstance = sData->DrawCalls.size();
 
 		sData->DrawCalls.push_back(draw);
 
@@ -331,6 +344,64 @@ namespace Cobalt
 
 			VK_CALL(vkCreateFramebuffer(GraphicsContext::Get().GetDevice(), &createInfo, nullptr, &sData->Framebuffers[i]));
 		}
+	}
+
+	std::vector<DrawCall> Renderer::CullDrawCalls(const std::vector<DrawCall>& draws)
+	{
+		// TODO
+		std::vector<DrawCall> culledDraws;
+
+		for (const DrawCall& draw : draws)
+		{
+			const ObjectData& object = sData->Objects[draw.FirstInstance];
+
+			auto result = sData->ActiveScene.Camera.ViewProjectionMatrix * object.Transform;
+
+		}
+
+		return culledDraws;
+	}
+
+	std::vector<DrawBatch> Renderer::BatchDrawCalls()
+	{
+		std::vector<DrawBatch> batches;
+		batches.reserve(sData->DrawCalls.size());
+
+		DrawBatch firstBatch;
+		firstBatch.IndexBuffer = sData->DrawCalls[0].IndexBuffer;
+		firstBatch.IndexCount = sData->DrawCalls[0].IndexCount;
+		firstBatch.Material = sData->DrawCalls[0].Material;
+		firstBatch.FirstInstance = 0;
+		firstBatch.InstanceCount = 1;
+
+		batches.push_back(firstBatch);
+
+		for (uint32_t i = 1; i < sData->DrawCalls.size(); i++)
+		{
+			DrawBatch& lastBatch = batches.back();
+
+			bool sameIndexBuffer = sData->DrawCalls[i].IndexBuffer == lastBatch.IndexBuffer;
+			bool sameIndexCount  = sData->DrawCalls[i].IndexCount  == lastBatch.IndexCount;
+			bool sameMaterial    = sData->DrawCalls[i].Material    == lastBatch.Material;
+
+			if (sameIndexBuffer && sameIndexCount && sameMaterial)
+			{
+				lastBatch.InstanceCount++;
+			}
+			else
+			{
+				DrawBatch newBatch;
+				newBatch.IndexBuffer = sData->DrawCalls[i].IndexBuffer;
+				newBatch.IndexCount = sData->DrawCalls[i].IndexCount;
+				newBatch.Material = sData->DrawCalls[i].Material;
+				newBatch.FirstInstance = i;
+				newBatch.InstanceCount = 1;
+
+				batches.push_back(newBatch);
+			}
+		}
+
+		return batches;
 	}
 
 }
