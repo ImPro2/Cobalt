@@ -29,29 +29,41 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos;
+		const std::vector<ShaderStage> shaderStages = mInfo.Shader->GetShaderStages();
 
-		auto shaderModuleMap = mInfo.Shader->GetShaderModules();
+		std::vector<VkShaderModule> shaderModuleHandles(shaderStages.size());
+		std::vector<VkPipelineShaderStageCreateInfo> shaderStageCreateInfos(shaderStages.size());
 
-		for (auto [stage, module] : shaderModuleMap)
+		for (int32_t i = 0; i < shaderStages.size(); i++)
 		{
-			shaderStageCreateInfos.push_back({
-				.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-				.flags = 0,
-				.stage = (VkShaderStageFlagBits)stage,
-				.module = module,
-				.pName = "main"
-			});
+			const ShaderStage& stage = shaderStages[i];
+
+			VkShaderModuleCreateInfo shaderModuleCreateInfo = {
+				.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+				.codeSize = stage.SPIRV.size(),
+				.pCode = (uint32_t*)stage.SPIRV.data()
+			};
+
+			VK_CALL(vkCreateShaderModule(GraphicsContext::Get().GetDevice(), &shaderModuleCreateInfo, nullptr, &shaderModuleHandles[i]));
+
+			shaderStageCreateInfos[i] = VkPipelineShaderStageCreateInfo {
+				.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+				.flags  = 0,
+				.stage  = stage.Stage,
+				.module = shaderModuleHandles[i],
+				.pName  = stage.EntryPointName.c_str()
+			};
 		}
 
-		const auto& vertexInputBindingDescription = mInfo.Shader->GetVertexInputBindingDescription();
-		const auto& vertexInputAttributeDescriptions = mInfo.Shader->GetVertexInputAttributeDescriptions();
+		//const auto& vertexInputBindingDescription = mInfo.Shader->GetVertexInputBindingDescription();
+		//const auto& vertexInputAttributeDescriptions = mInfo.Shader->GetVertexInputAttributeDescriptions();
 
 		VkPipelineVertexInputStateCreateInfo vertexInputStateCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 			.flags = 0
 		};
 
+#if 0
 		if (!vertexInputAttributeDescriptions.empty())
 		{
 			vertexInputStateCreateInfo.vertexBindingDescriptionCount = 1;
@@ -59,6 +71,7 @@ namespace Cobalt
 			vertexInputStateCreateInfo.vertexAttributeDescriptionCount = (uint32_t)vertexInputAttributeDescriptions.size();
 			vertexInputStateCreateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
 		}
+#endif
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -154,15 +167,15 @@ namespace Cobalt
 		};
 
 		const auto& descriptorSetLayouts = mInfo.Shader->GetDescriptorSetLayouts();
-		const auto& pushConstantRanges   = mInfo.Shader->GetPushConstantRanges();
+		//const auto& pushConstantRanges   = mInfo.Shader->GetPushConstantRanges();
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.flags = 0,
 			.setLayoutCount = (uint32_t)descriptorSetLayouts.size(),
 			.pSetLayouts = descriptorSetLayouts.data(),
-			.pushConstantRangeCount = (uint32_t)pushConstantRanges.size(),
-			.pPushConstantRanges = pushConstantRanges.data()
+//			.pushConstantRangeCount = (uint32_t)pushConstantRanges.size(),
+//			.pPushConstantRanges = pushConstantRanges.data()
 		};
 
 		VK_CALL(vkCreatePipelineLayout(GraphicsContext::Get().GetDevice(), &pipelineLayoutCreateInfo, nullptr, &mPipelineLayout));
