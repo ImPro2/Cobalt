@@ -18,7 +18,12 @@ namespace Cobalt
 			{
 				.name  = slang::CompilerOptionName::EmitSpirvViaGLSL,
 				.value = slang::CompilerOptionValue { .kind = slang::CompilerOptionValueKind::Int, .intValue0 = 1, .intValue1 = 1 }
+			},
+			{
+				.name  = slang::CompilerOptionName::FloatingPointMode,
+				.value = slang::CompilerOptionValue { .kind = slang::CompilerOptionValueKind::String, .stringValue0 = "precise" }
 			}
+
 		};
 
 		slang::TargetDesc targetDescs[] = {
@@ -40,7 +45,7 @@ namespace Cobalt
 			.searchPaths = searchPaths,
 			.searchPathCount = 1,
 			.compilerOptionEntries = compilerOptions,
-			.compilerOptionEntryCount = 2,
+			.compilerOptionEntryCount = 3,
 		};
 
 		SlangUtils::CheckError(sGlobalSession->createSession(sessionDesc, sDefaultSession.writeRef()));
@@ -66,6 +71,10 @@ namespace Cobalt
 			{
 				.name  = slang::CompilerOptionName::EmitSpirvViaGLSL,
 				.value = slang::CompilerOptionValue { .kind = slang::CompilerOptionValueKind::Int, .intValue0 = 1, .intValue1 = 1 }
+			},
+			{
+				.name  = slang::CompilerOptionName::FloatingPointMode,
+				.value = slang::CompilerOptionValue { .kind = slang::CompilerOptionValueKind::String, .stringValue0 = "precise" }
 			}
 		};
 

@@ -80,14 +80,18 @@ namespace Cobalt
 			.primitiveRestartEnable = VK_FALSE,
 		};
 
-		VkViewport viewport = {
-			.width  = (float)Application::Get()->GetWindow().GetWidth(),
-			.height = (float)Application::Get()->GetWindow().GetHeight(),
-		};
-
 		VkRect2D scissor = {
 			.offset = {},
-			.extent = { (uint32_t)viewport.width, (uint32_t)viewport.height }
+			.extent = { Application::Get()->GetWindow().GetWidth(), Application::Get()->GetWindow().GetHeight() }
+		};
+
+		VkViewport viewport = {
+			.x = 0,
+			.y = (float)scissor.extent.height,
+			.width  = (float)scissor.extent.width,
+			.height = -(float)scissor.extent.height,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f
 		};
 
 		VkPipelineViewportStateCreateInfo viewportStateCreateInfo = {

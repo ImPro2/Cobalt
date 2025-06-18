@@ -55,6 +55,7 @@ namespace Cobalt
 		float Shininess;
 	};
 
+
 	struct ObjectData
 	{
 		glm::mat4 Transform;
@@ -64,5 +65,22 @@ namespace Cobalt
 	};
 
 	static_assert(sizeof(ObjectData) == 144);
+}
+
+namespace std
+{
+
+	template<>
+	struct hash<Cobalt::MaterialData>
+	{
+		size_t operator()(const Cobalt::MaterialData& materialData)
+		{
+			size_t hash1 = hash<uint32_t>{}(materialData.DiffuseMapHandle);
+			size_t hash2 = hash<uint32_t>{}(materialData.SpecularMapHandle);
+			size_t hash3 = hash<uint32_t>{}(materialData.Shininess);
+
+			return hash1 ^ (hash2 << 1) ^ (hash3 << 2);
+		}
+	};
 
 }

@@ -68,8 +68,8 @@ namespace Cobalt
 			aiVector3D normal = mesh->mNormals[i];
 			aiVector3D texCoords = { 0.0f, 0.0f, 0.0f };
 
-			if (mesh->HasTextureCoords(i))
-				texCoords = mesh->mTextureCoords[i][0];
+			if (mesh->HasTextureCoords(0))
+				texCoords = mesh->mTextureCoords[0][i];
 
 			vertices.push_back(MeshVertex {
 				.Position = { position.x, position.y, position.z },
@@ -93,7 +93,7 @@ namespace Cobalt
 		{
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-			materialData.DiffuseMapHandle  = LoadMaterialTexture(material, aiTextureType_DIFFUSE);
+			materialData.DiffuseMapHandle  = LoadMaterialTexture(material, aiTextureType_AMBIENT);
 			materialData.SpecularMapHandle = LoadMaterialTexture(material, aiTextureType_SPECULAR);
 
 			aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &materialData.Shininess);
@@ -108,7 +108,7 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		static std::unordered_map<const char*, TextureHandle> loadedTexturePaths;
+		static std::unordered_map<std::string, TextureHandle> loadedTexturePaths;
 
 		if (material->GetTextureCount(type) == 0)
 			return 0;
@@ -116,9 +116,9 @@ namespace Cobalt
 		aiString path;
 		material->GetTexture(type, 0, &path);
 
-		const char* pathStr = path.C_Str();
+		std::string pathStr = path.C_Str();
 
-		TextureHandle textureHandle;
+		TextureHandle textureHandle = 0;
 
 		if (loadedTexturePaths.find(pathStr) != loadedTexturePaths.end())
 		{
@@ -126,7 +126,7 @@ namespace Cobalt
 		}
 		else
 		{
-			textureHandle = Renderer::CreateTexture(TextureInfo(pathStr));
+			textureHandle = Renderer::CreateTexture(TextureInfo("CobaltApp/Assets/Sponza/" + std::string(pathStr)));
 			loadedTexturePaths[pathStr] = textureHandle;
 		}
 

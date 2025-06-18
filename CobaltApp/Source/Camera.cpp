@@ -7,9 +7,18 @@
 namespace Cobalt
 {
 
+	CameraController::CameraController(float viewportWidth, float viewportHeight)
+		: mViewportWidth(viewportWidth), mViewportHeight(viewportHeight), mAspectRatio(viewportWidth / viewportHeight)
+	{
+		CO_PROFILE_FN();
+
+		RecalculateViewMatrix();
+		RecalculateProjectionMatrix();
+	}
+
 	CameraController::CameraController(float viewportWidth, float viewportHeight, float fov, float nearClip, float farClip)
-		: mViewportWidth(viewportWidth), mViewportHeight(viewportHeight),
-		  mAspectRatio(viewportWidth / viewportHeight), mFOV(fov), mNearClip(nearClip), mFarClip(farClip)
+		: mViewportWidth(viewportWidth), mViewportHeight(viewportHeight), mAspectRatio(viewportWidth / viewportHeight),
+		  mFOV(fov), mNearClip(nearClip), mFarClip(farClip)
 	{
 		CO_PROFILE_FN();
 

@@ -11,16 +11,10 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		uint32_t a = sizeof(glm::mat4);
-		uint32_t b = sizeof(MaterialData);
-
 		float width  = Application::Get()->GetWindow().GetWidth();
 		float height = Application::Get()->GetWindow().GetHeight();
 
 		mCameraController = CameraController(width, height);
-
-		//mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
-		//mCubeTransform.Translation = glm::vec3(0.0f, 1.0f, 0.0f);
 
 		mScene.Camera.CameraTranslation = mCameraController.GetTranslation();
 		mScene.Camera.ViewProjectionMatrix = mCameraController.GetViewProjectionMatrix();
@@ -29,51 +23,6 @@ namespace Cobalt
 		mScene.DirectionalLight.Ambient = glm::vec3(0.2f);
 		mScene.DirectionalLight.Diffuse = glm::vec3(0.5f);
 		mScene.DirectionalLight.Specular = glm::vec3(1.0f);
-
-		mScene.PointLightCount = 0;
-
-		mScene.PointLights[0].Position = glm::vec3(0.0f, 3.0f, 0.0f);
-		mScene.PointLights[0].Ambient = glm::vec3(0.1f);
-		mScene.PointLights[0].Diffuse = glm::vec3(1.0f, 0.0f, 0.0f);
-		mScene.PointLights[0].Specular = glm::vec3(1.0f);
-		mScene.PointLights[0].Constant = 1.0f;
-		mScene.PointLights[0].Linear = 0.7f;
-		mScene.PointLights[0].Quadratic = 1.8f;
-
-		mScene.PointLights[1].Position = glm::vec3(0.0f, 3.0f, 0.0f);
-		mScene.PointLights[1].Ambient = glm::vec3(0.1f);
-		mScene.PointLights[1].Diffuse = glm::vec3(0.0f, 1.0f, 0.0f);
-		mScene.PointLights[1].Specular = glm::vec3(1.0f);
-		mScene.PointLights[1].Constant = 1.0f;
-		mScene.PointLights[1].Linear = 0.7f;
-		mScene.PointLights[1].Quadratic = 1.8f;
-
-		mScene.PointLights[2].Position = glm::vec3(0.0f, 3.0f, 0.0f);
-		mScene.PointLights[2].Ambient = glm::vec3(0.1f);
-		mScene.PointLights[2].Diffuse = glm::vec3(0.0f, 0.0f, 1.0f);
-		mScene.PointLights[2].Specular = glm::vec3(1.0f);
-		mScene.PointLights[2].Constant = 1.0f;
-		mScene.PointLights[2].Linear = 0.7f;
-		mScene.PointLights[2].Quadratic = 1.8f;
-
-		mFloorTransform.Translation = glm::vec3(0.0f, -0.5f, 0.0f);
-		mFloorTransform.Rotation = glm::vec3(0.0f);
-		mFloorTransform.Scale = glm::vec3(10.0f, 1.0f, 10.0f);
-
-		mSphereTransforms.resize(10 * 10);
-
-		uint32_t i = 0;
-
-		for (float y = 2.0f; y <= 20.0f; y += 2.0f)
-		{
-			for (float x = -8.0f; x <= 10.0f; x += 2.0f)
-			{
-				mSphereTransforms[i] = Transform();
-				mSphereTransforms[i].Translation = { x, y, 5.0f };
-
-				i++;
-			}
-		}
 	}
 
 	SandboxModule::~SandboxModule()
@@ -89,8 +38,8 @@ namespace Cobalt
 
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-		mSphereModel = std::make_unique<Model>("CobaltApp/Assets/Models/sphere.obj");
-		mCubeModel   = std::make_unique<Model>("CobaltApp/Assets/Models/cube.obj");
+		mSponzaModel = std::make_unique<Model>("CobaltApp/Assets/Sponza/sponza.obj");
+		mRenderMeshCount = mSponzaModel->GetMeshes().size();
 	}
 
 	void SandboxModule::OnShutdown()
@@ -141,12 +90,14 @@ namespace Cobalt
 
 		Renderer::BeginScene(mScene);
 
-		const auto& sphereMesh = mSphereModel->GetMeshes()[0];
+		Transform transform;
 
-		for (const Transform& transform : mSphereTransforms)
-			Renderer::DrawMesh(transform, sphereMesh.get());
+		const std::vector<std::unique_ptr<Mesh>>& meshes = mSponzaModel->GetMeshes();
 
-		Renderer::DrawMesh(mFloorTransform, mCubeModel->GetMeshes()[0].get());
+		for (int32_t i = 0; i < mRenderMeshCount; i++)
+		{
+			Renderer::DrawMesh(transform, meshes[i].get());
+		}
 
 		Renderer::EndScene();
 	}
@@ -162,20 +113,23 @@ namespace Cobalt
 			
 			if (ImGui::TreeNode("Scene Settings"))
 			{
-				for (uint32_t i = 0; i < mScene.PointLightCount; i++)
-					RenderPointLight(std::format("Point Light {}", i).c_str(), mScene.PointLights[i]);
+				//for (uint32_t i = 0; i < mScene.PointLightCount; i++)
+				//	RenderPointLight(std::format("Point Light {}", i).c_str(), mScene.PointLights[i]);
 
 				ImGui::DragFloat3("Directional Light Direction", &mScene.DirectionalLight.Direction.x, 0.1f, -10.0f, 10.0f);
 				ImGui::ColorEdit3("Directional Light Ambient", &mScene.DirectionalLight.Ambient.r);
 				ImGui::ColorEdit3("Directional Light Diffuse", &mScene.DirectionalLight.Diffuse.r);
 				ImGui::ColorEdit3("Directional Light Specular", &mScene.DirectionalLight.Specular.r);
+
+				ImGui::DragInt("Render Mesh Count", &mRenderMeshCount, 0, mSponzaModel->GetMeshes().size());
+
 				ImGui::TreePop();
 			}
 
 			if (ImGui::TreeNode("Transforms"))
 			{
 				//RenderUITransform("Sphere", mSphereTransform);
-				RenderUITransform("Floor", mFloorTransform);
+				//RenderUITransform("Floor", mFloorTransform);
 				ImGui::TreePop();
 			}
 

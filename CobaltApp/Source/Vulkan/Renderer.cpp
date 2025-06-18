@@ -36,7 +36,7 @@ namespace Cobalt
 			colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 			VkAttachmentDescription depthAttachment = {};
-			depthAttachment.format = VK_FORMAT_D16_UNORM_S8_UINT;
+			depthAttachment.format = VK_FORMAT_D32_SFLOAT;
 			depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 			depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 			depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -148,14 +148,26 @@ namespace Cobalt
 		return textureHandle;
 	}
 
-	std::unique_ptr<Material> Renderer::CreateMaterial(const MaterialData& materialData)
+	std::shared_ptr<Material> Renderer::CreateMaterial(const MaterialData& materialData)
 	{
 		CO_PROFILE_FN();
 
+		size_t materialHash = std::hash<MaterialData>{}(materialData);
+
+		if (sData->MaterialHandleMap.contains(materialHash))
+		{
+			MaterialHandle materialHandle = sData->MaterialHandleMap.at(materialHash);
+			return sData->MaterialPtrs[materialHandle];
+		}
+
 		MaterialHandle materialHandle = sData->Materials.size();
+
 		sData->Materials.push_back(materialData);
 
-		std::unique_ptr<Material> material = std::make_unique<Material>(materialHandle, &sData->Materials[materialHandle]);
+		std::shared_ptr<Material> material = std::make_shared<Material>(materialHandle, &sData->Materials[materialHandle]);
+
+		sData->MaterialPtrs.push_back(material);
+		sData->MaterialHandleMap[materialHash] = materialHandle;
 
 		for (uint32_t i = 0; i < GraphicsContext::Get().GetFrameCount(); i++)
 		{
@@ -308,7 +320,7 @@ namespace Cobalt
 		if (sData->DepthTexture)
 			sData->DepthTexture->Recreate(width, height);
 		else
-			sData->DepthTexture = std::make_unique<Texture>(TextureInfo(width, height, VK_FORMAT_D16_UNORM_S8_UINT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
+			sData->DepthTexture = std::make_unique<Texture>(TextureInfo(width, height, VK_FORMAT_D32_SFLOAT, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT));
 	}
 
 	void Renderer::CreateOrRecreateFramebuffers()
@@ -355,7 +367,7 @@ namespace Cobalt
 		{
 			const ObjectData& object = sData->Objects[draw.FirstInstance];
 
-			auto result = sData->ActiveScene.Camera.ViewProjectionMatrix * object.Transform;
+			glm::mat4 mvp = sData->ActiveScene.Camera.ViewProjectionMatrix * object.Transform;
 
 		}
 

@@ -10,7 +10,7 @@ namespace Cobalt
 	{
 		TextureInfo() = default;
 		TextureInfo(const std::string& filePath)
-			: FilePath(FilePath)
+			: FilePath(filePath)
 		{
 		}
 		TextureInfo(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage, uint32_t mipLevels = 1)

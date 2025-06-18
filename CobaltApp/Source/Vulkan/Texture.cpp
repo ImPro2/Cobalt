@@ -9,6 +9,19 @@
 namespace Cobalt
 {
 
+	static void UnpackRGBToRGBA(uint8_t* rgba, const uint8_t* rgb, const int32_t count)
+	{
+		for (int32_t i = count; i--; rgba += 4, rgb += 3)
+		{
+			*(uint32_t*)(void*)rgba = *(const uint32_t*)(const void*)rgb;
+		}
+
+		for (int32_t i = 0; i < 3; i++)
+		{
+			rgba[i] = rgb[i];
+		}
+	}
+
 	Texture::Texture(const TextureInfo& textureInfo)
 		: mWidth(textureInfo.Width), mHeight(textureInfo.Height), mFormat(textureInfo.Format), mUsage(textureInfo.Usage), mMipLevels(textureInfo.MipLevels)
 	{
@@ -101,7 +114,7 @@ namespace Cobalt
 
 		// Create image view
 
-		if (mFormat == VK_FORMAT_D16_UNORM_S8_UINT || mFormat == VK_FORMAT_D16_UNORM)
+		if (mFormat == VK_FORMAT_D16_UNORM_S8_UINT || mFormat == VK_FORMAT_D16_UNORM || mFormat == VK_FORMAT_D24_UNORM_S8_UINT || mFormat == VK_FORMAT_D32_SFLOAT)
 			mImageAspect = VK_IMAGE_ASPECT_DEPTH_BIT;
 		else
 			mImageAspect = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -167,9 +180,10 @@ namespace Cobalt
 		int32_t width, height, channels;
 		stbi_uc* data = stbi_load(filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
-		if (!data || channels != 4)
+		if (!data || (channels != 4 && channels != 3))
 		{
 			std::cerr << "Failed to load texture" << filePath << std::endl;
+			return nullptr;
 		}
 
 		mWidth = width;
@@ -177,10 +191,24 @@ namespace Cobalt
 		mImageSize = mWidth * mHeight * channels;
 		mFormat = VK_FORMAT_R8G8B8A8_SRGB;
 		mUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+		// TODO: mipmaps
+
 		//mMipLevels = (uint32_t)std::floor(std::log2(std::max(mWidth, mHeight))) + 1;
 		mMipLevels = 1;
 
-		// TODO: mipmaps
+		//if (channels == 3)
+		if (0)
+		{
+			uint8_t* data_rgba = (uint8_t*)malloc(mImageSize);
+			memset(data_rgba, 0, mImageSize);
+
+			UnpackRGBToRGBA(data_rgba, data, mWidth * mHeight);
+
+			free(data);
+
+			return data_rgba;
+		}
 
 		return data;
 	}

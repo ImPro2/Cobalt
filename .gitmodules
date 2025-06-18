@@ -13,3 +13,6 @@
 [submodule "Dependencies/Optick"]
 	path = Dependencies/Optick
 	url = https://github.com/bombomby/optick
+[submodule "CobaltApp/Assets/Sponza"]
+	path = CobaltApp/Assets/Sponza
+	url = https://github.com/jimmiebergmann/Sponza

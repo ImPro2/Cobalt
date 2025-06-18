@@ -171,7 +171,14 @@ namespace Cobalt
 				}
 				case slang::BindingType::PushConstant:
 				{
-					// TODO
+					slang::VariableLayoutReflection* containerVarLayout = subObjectTypeLayout->getContainerVarLayout();
+					slang::VariableLayoutReflection* elementVarLayout = subObjectTypeLayout->getElementVarLayout();
+
+					BindingOffset containerOffset = subObjectRangeOffset + BindingOffset(containerVarLayout);
+					BindingOffset elementOffset   = subObjectRangeOffset + BindingOffset(elementVarLayout);
+
+					AddPushConstantRange(elementVarLayout->getTypeLayout(), containerOffset, elementOffset);
+
 					break;
 				}
 			}
@@ -214,6 +221,11 @@ namespace Cobalt
 		}
 
 		AddDescriptorBindings(elementTypeLayout, elementOffset);
+	}
+
+	void ShaderLayoutBuilder::AddPushConstantRange(slang::TypeLayoutReflection* elementTypeLayout, BindingOffset containerOffset, BindingOffset elementOffset)
+	{
+		// TODO
 	}
 
 	int32_t ShaderLayoutBuilder::FindOrAddDescriptorSet(int32_t space)

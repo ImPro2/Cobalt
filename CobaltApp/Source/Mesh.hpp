@@ -43,7 +43,7 @@ namespace Cobalt
 
 		VkDeviceAddress mVertexBufferReference;
 
-		std::unique_ptr<Material> mMaterial;
+		std::shared_ptr<Material> mMaterial;
 
 	};
 

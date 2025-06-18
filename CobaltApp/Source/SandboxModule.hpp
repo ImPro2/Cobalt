@@ -31,19 +31,14 @@ namespace Cobalt
 
 	private:
 		CameraController mCameraController;
-
-		Transform mFloorTransform = Transform();
-
-		std::vector<Transform> mSphereTransforms;
-
-		std::unique_ptr<Model> mSphereModel;
-		std::unique_ptr<Model> mCubeModel;
-
 		SceneData mScene;
 
-		bool mCaptureMouse = true;
+		std::unique_ptr<Model> mSponzaModel;
 
+		bool mCaptureMouse = true;
 		float mDeltaTime = 0.0f;
+
+		int32_t mRenderMeshCount = 0;
 	};
 
 }

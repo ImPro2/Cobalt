@@ -73,6 +73,7 @@ namespace Cobalt
 
 	public:
 		const std::vector<VkDescriptorSetLayout>& GetDescriptorSetLayouts() const { return mDescriptorSetLayouts; }
+		const std::vector<VkPushConstantRange>& GetPushConstantRanges() const { return mPushConstantRanges; }
 
 	private:
 		void AddGlobalBindings(slang::VariableLayoutReflection* globalVarLayout);
@@ -81,11 +82,13 @@ namespace Cobalt
 
 		void AddDescriptorBindings(slang::TypeLayoutReflection* typeLayout, BindingOffset bindingOffset);
 		void AddConstantBufferDescriptorBindings(slang::TypeLayoutReflection* elementTypeLayout, BindingOffset containerOffset, BindingOffset elementOffset);
+		void AddPushConstantRange(slang::TypeLayoutReflection* elementTypeLayout, BindingOffset containerOffset, BindingOffset elementOffset);
 
 		int32_t FindOrAddDescriptorSet(int32_t space);
 
 	private:
 		std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
+		std::vector<VkPushConstantRange> mPushConstantRanges;
 		std::vector<DescriptorSetInfo> mDescriptorSetInfos;
 		std::unordered_map<int32_t, int32_t> mDescriptorSpaceIndexMap; // space - index into mDescriptorSetInfos
 	};

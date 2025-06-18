@@ -53,9 +53,7 @@ ConstantBuffer<Scene> gScene;
 VSOutput VSMain(uniform StructuredBuffer<Object> objects, uint instanceID : SV_InstanceID, uint vertexID : SV_VertexID)
 {
 	Object object = objects[instanceID];
-	//MeshVertex vertex = object.VertexBufferRef.Get().Vertices[vertexID];
 	MeshVertex vertex = object.Vertices[vertexID];
-	//MeshVertex vertex = object.VertexBufferRef.Vertices[vertexID];
 
 	float4 positionLocal = float4(vertex.Position, 1.0);
 	float4 positionWorld = mul(object.Transform, positionLocal);
