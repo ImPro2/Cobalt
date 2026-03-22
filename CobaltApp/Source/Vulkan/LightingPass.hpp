@@ -42,9 +42,8 @@ namespace Cobalt
 		{
 			glm::mat4 ProjectionMatrix;
 			glm::mat4 ViewMatrix;
-			VkDeviceAddress Vertices;
-
-			float __padding[2];
+			VkDeviceAddress MeshVertices;
+			float __padding0[2];
 		};
 
 		std::vector<std::unique_ptr<VulkanBuffer>> mSkyboxUniformBuffers;

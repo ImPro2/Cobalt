@@ -83,7 +83,7 @@ namespace Cobalt
 		Cubemap* skybox = AssetManager::GetCubemap(AssetManager::RegisterCubemap("Skybox", cubemapInfo));
 
 		LightingPass* lightingPass = static_cast<LightingPass*>(Renderer::GetRenderGraph().GetPass("Lighting Pass"));
-		lightingPass->SetSkybox(skybox, mCubeMesh);
+		lightingPass->SetSkybox(skybox, mSphereMesh);
 	}
 
 	void SandboxModule::OnShutdown()
@@ -141,7 +141,6 @@ namespace Cobalt
 
 		Transform cubeTransform;
 		cubeTransform.Scale = { 20.0f, 0.2f, 20.0f };
-
 
 		Renderer::BeginScene(mScene, mCameraController.GetProjectionMatrix(), mCameraController.GetViewMatrix());
 		Renderer::DrawMesh(cubeTransform, mCubeMesh);

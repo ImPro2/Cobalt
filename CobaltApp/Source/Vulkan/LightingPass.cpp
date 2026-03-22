@@ -68,64 +68,10 @@ namespace Cobalt
 		mSkybox = skybox;
 		mSkyboxMesh = skyboxMesh;
 
-		float vertices[36 * 4] = {
-			-0.5f, -0.5f, -0.5f, 1.0f,
-			 0.5f, -0.5f, -0.5f, 1.0f,
-			 0.5f,  0.5f, -0.5f, 1.0f,
-			 
-			 0.5f,  0.5f, -0.5f, 1.0f,
-			-0.5f,  0.5f, -0.5f, 1.0f,
-			-0.5f, -0.5f, -0.5f, 1.0f,
-
-			 0.5f, -0.5f, -0.5f, 1.0f,
-			 0.5f, -0.5f,  0.5f, 1.0f,
-			 0.5f,  0.5f,  0.5f, 1.0f,
-			 
-			 0.5f,  0.5f,  0.5f, 1.0f,
-			 0.5f,  0.5f, -0.5f, 1.0f,
-			 0.5f, -0.5f, -0.5f, 1.0f,
-
-			 -0.5f, -0.5f,  0.5f, 1.0f,
-			 -0.5f, -0.5f, -0.5f, 1.0f,
-			 -0.5f,  0.5f, -0.5f, 1.0f,
-
-			 -0.5f,  0.5f, -0.5f, 1.0f,
-			 -0.5f,  0.5f,  0.5f, 1.0f,
-			 -0.5f, -0.5f,  0.5f, 1.0f,
-
-			 -0.5f, -0.5f,  0.5f, 1.0f,
-			  0.5f, -0.5f,  0.5f, 1.0f,
-			  0.5f,  0.5f,  0.5f, 1.0f,
-			 
-			  0.5f,  0.5f,  0.5f, 1.0f,
-			 -0.5f,  0.5f,  0.5f, 1.0f,
-			 -0.5f, -0.5f,  0.5f, 1.0f,
-
-			 -0.5f, -0.5f,  0.5f, 1.0f,
-			  0.5f, -0.5f,  0.5f, 1.0f,
-			  0.5f, -0.5f, -0.5f, 1.0f,
-
-			  0.5f, -0.5f, -0.5f, 1.0f,
-			 -0.5f, -0.5f, -0.5f, 1.0f,
-			 -0.5f, -0.5f,  0.5f, 1.0f,
-
-			 -0.5f, 0.5f,  0.5f, 1.0f,
-			  0.5f, 0.5f,  0.5f, 1.0f,
-			  0.5f, 0.5f, -0.5f, 1.0f,
-
-			  0.5f, 0.5f, -0.5f, 1.0f,
-			 -0.5f, 0.5f, -0.5f, 1.0f,
-			 -0.5f, 0.5f,  0.5f, 1.0f,
-		};
-		
-		mSkyboxCube = VulkanBuffer::CreateGPUBufferFromCPUData(vertices, sizeof(vertices), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-
 		// Build skybox pipeline
 
 		PipelineInfo skyboxPipelineInfo = {
 			.Shader = Renderer::GetShaderLibrary().GetShader("Deferred\\Skybox.slang"),
-			.CullMode = VK_CULL_MODE_NONE,
-			.FrontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE,
 			.EnableDepthTesting = false,
 			.ColorAttachments = {
 				{ true, GraphicsContext::Get().GetSwapchain().GetSurfaceFormat().format }
@@ -169,8 +115,7 @@ namespace Cobalt
 		SkyboxUniformBuffer skyboxUniformBufferData{};
 		skyboxUniformBufferData.ProjectionMatrix = renderContext.ProjectionMatrix;
 		skyboxUniformBufferData.ViewMatrix = renderContext.ViewMatrix;
-		//skyboxUniformBufferData.Vertices = mSkyboxMesh->GetVertexBuffer()->GetDeviceAddress();
-		skyboxUniformBufferData.Vertices = mSkyboxCube->GetDeviceAddress();
+		skyboxUniformBufferData.MeshVertices = mSkyboxMesh->GetVertexBufferReference();
 
 		mSkyboxUniformBuffers[frameIndex]->CopyData(&skyboxUniformBufferData, sizeof(SkyboxUniformBuffer));
 
@@ -180,9 +125,9 @@ namespace Cobalt
 		skyboxShaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mSkyboxPipeline->GetPipeline());
+		vkCmdBindIndexBuffer(commandBuffer, mSkyboxMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		mDescriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, mSkyboxPipeline->GetPipelineLayout(), mSkyboxDescriptors[frameIndex]);
 		vkCmdDrawIndexed(commandBuffer, mSkyboxMesh->GetIndices().size(), 1, 0, 0, 0);
-		vkCmdDraw(commandBuffer, 36, 1, 0, 0);
 	}
 
 	void LightingPass::ExecuteLightingPass(VkCommandBuffer commandBuffer, const RenderContext& renderContext)

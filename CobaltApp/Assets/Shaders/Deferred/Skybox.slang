@@ -4,7 +4,7 @@ struct Uniforms
 {
 	float4x4 ProjectionMatrix;
 	float4x4 ViewMatrix;
-	ConstBufferPointer<float4> Vertices;
+	ConstBufferPointer<MeshVertex> MeshVertices;
 };
 
 struct VSOutput
@@ -16,7 +16,7 @@ struct VSOutput
 [shader("vertex")]
 VSOutput VSMain(uniform ConstantBuffer<Uniforms> uniforms, uint vertexID: SV_VertexID)
 {
-	float4 vertexPos = uniforms.Vertices[vertexID];
+	MeshVertex meshVertex = uniforms.MeshVertices[vertexID];
 
 	// Flip y
 	float4x4 proj = uniforms.ProjectionMatrix;
@@ -29,9 +29,9 @@ VSOutput VSMain(uniform ConstantBuffer<Uniforms> uniforms, uint vertexID: SV_Ver
 	view[2][3] = 0.0;
 
 	VSOutput output;
-	output.Position = mul(proj, mul(view, vertexPos));
-	output.UVW = vertexPos.xyz;
-	
+	output.Position = mul(proj, mul(view, float4(meshVertex.Position.xyz, 1.0)));
+	output.UVW = meshVertex.Position.xyz;
+
 	return output;
 }
 
