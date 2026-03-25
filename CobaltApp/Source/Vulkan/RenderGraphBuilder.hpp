@@ -127,8 +127,12 @@ namespace Cobalt
 		RGResourceHandle DeclareResource(const std::string& resourceName, const RGResourceInfo& resourceInfo);
 		RGResourceHandle GetResource(const std::string& resourceName);
 
+		void SetExternalResource(Texture* texture);
+
 		void AddDependency(RGResourceHandle resourceHandle, RGAccessType accessType);
 		void SetClearColor(RGResourceHandle resourceHandle, VkClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f });
+
+		void SetExecutionCount(uint32_t count);
 
 	public:
 		const std::vector<RGResourceDependency>& GetResourceDependencies() { return mResourceDependencies; }

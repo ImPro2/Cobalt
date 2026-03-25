@@ -127,6 +127,13 @@ namespace Cobalt
 
 		VkImageLayout GetImageLayout() const { return mImageLayout; }
 
+		uint32_t GetWidth()  const { return mWidth;  }
+		uint32_t GetHeight() const { return mHeight; }
+
+		uint32_t GetMipMapLevels() const { return mMipLevels; }
+
+		void SetImageLayout(VkImageLayout imageLayout) { mImageLayout = imageLayout; }
+
 	private:
 		uint8_t* LoadDataFromFile(const std::filesystem::path& filePath);
 		void Create();

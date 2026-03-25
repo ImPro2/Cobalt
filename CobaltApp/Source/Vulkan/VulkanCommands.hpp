@@ -81,6 +81,32 @@ namespace Cobalt
 			CopyBufferToImage(commandBuffer, buffer.GetBuffer(), image.GetImage(), image.GetImageAspectFlags(), { image.GetWidth(), image.GetHeight(), 1 }, bufferOffset, imageOffset);
 		}
 
+		static void CopyImage(VkCommandBuffer commandBuffer, uint32_t srcBaseLayer, uint32_t dstBaseLayer, VkExtent3D extent, VkImage srcImage, VkImage dstImage, VkImageLayout srcImageLayout, VkImageLayout dstImageLayout)
+		{
+			CO_PROFILE_FN();
+
+			VkImageCopy copyRegion = {
+				.srcSubresource = {
+					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+					.baseArrayLayer = srcBaseLayer,
+				},
+				.dstSubresource = {
+					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+					.baseArrayLayer = dstBaseLayer,
+				},
+				.extent = extent
+			};
+
+			vkCmdCopyImage(commandBuffer, srcImage, srcImageLayout, dstImage, dstImageLayout, 1, &copyRegion);
+		}
+
+		static void CopyImageToCubemapFace(VkCommandBuffer commandBuffer, const Texture& texture, const Cubemap& cubemap, uint32_t face)
+		{
+			CO_PROFILE_FN();
+
+			CopyImage(commandBuffer, 0, face, { texture.GetWidth(), texture.GetHeight(), 1 }, texture.GetImage(), cubemap.GetImage(), texture.GetImageLayout(), cubemap.GetImageLayout());
+		}
+
 		static void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageAspectFlags imageAspect, uint32_t mipLevels, uint32_t layers, VkImageLayout oldImageLayout, VkImageLayout newImageLayout)
 		{
 			CO_PROFILE_FN();
@@ -118,6 +144,17 @@ namespace Cobalt
 			TransitionImageLayout(commandBuffer, texture.GetImage(), texture.GetImageAspectFlags(), texture.GetMipMapLevels(), 1, oldImageLayout, newImageLayout);
 
 			texture.SetImageLayout(newImageLayout);
+		}
+
+		static void TransitionImageLayout(VkCommandBuffer commandBuffer, Cubemap& cubemap, VkImageLayout newImageLayout)
+		{
+			CO_PROFILE_FN();
+
+			VkImageLayout oldImageLayout = cubemap.GetImageLayout();
+
+			TransitionImageLayout(commandBuffer, cubemap.GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, cubemap.GetMipMapLevels(), 6, oldImageLayout, newImageLayout);
+
+			cubemap.SetImageLayout(newImageLayout);
 		}
 
 	private:
