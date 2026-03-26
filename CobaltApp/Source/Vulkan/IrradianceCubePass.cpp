@@ -79,6 +79,7 @@ namespace Cobalt
 		ShaderCursor shaderCursor(mPipeline->GetInfo().Shader->GetRootShaderParameter(), mDescriptorHandle);
 		shaderCursor.WriteField("vsInputs", *mVSInputBuffer);
 		shaderCursor.WriteField("fsInputs", *mFSInputBuffer);
+		shaderCursor.Field("fsInputs").WriteField("environmentMap", *mCubemap);
 		shaderCursor.Finalize();
 
 		GraphicsContext::Get().GetDescriptorBufferManager().SetDescriptorBufferOffsets(commandBuffer, mPipeline->GetPipelineLayout(), mDescriptorHandle);
