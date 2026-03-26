@@ -1,6 +1,7 @@
 #pragma once
 #include "VulkanUtils.hpp"
 #include "HashUtils.hpp"
+#include "Texture.hpp"
 
 #include <vector>
 #include <unordered_map>
@@ -42,6 +43,7 @@ namespace Cobalt
 		RGResourceSizeFlags ResourceSizeFlags = RGResourceSizeFlags::SwapchainRelative;
 
 		bool Transient = true;
+		bool External = false;
 		bool SwapchainTarget = false;
 
 		uint32_t Width = 1;
@@ -116,18 +118,20 @@ namespace Cobalt
 	};
 
 	using RGClearColorMap = std::unordered_map<std::pair<RGPassHandle, RGResourceHandle>, VkClearColorValue, RGClearColorMapHash>;
+	using RGLimitedExecutionPasses = std::unordered_map<RGPassHandle, uint32_t>; // pass -> execution count
 
 	class RenderGraphBuilder
 	{
 	public:
-		RenderGraphBuilder(RGPassHandle passHandle, RGResourceNameHandleMap& resourceNameHandleMap, std::vector<RGResourceInfo>& resources, RGClearColorMap& clearColorMap);
+		RenderGraphBuilder(RGPassHandle passHandle, RGResourceNameHandleMap& resourceNameHandleMap, std::vector<RGResourceInfo>& resources, RGClearColorMap& clearColorMap, RGLimitedExecutionPasses& limitedExecutionPasses);
 		~RenderGraphBuilder();
 
 	public:
 		RGResourceHandle DeclareResource(const std::string& resourceName, const RGResourceInfo& resourceInfo);
 		RGResourceHandle GetResource(const std::string& resourceName);
 
-		void SetExternalResource(Texture* texture);
+		RGResourceHandle RegisterExternalResource(const std::string& resourceName, Texture* texture, RGResourceType resourceType);
+		void UnregisterExternalResource(RGResourceHandle resourceHandle);
 
 		void AddDependency(RGResourceHandle resourceHandle, RGAccessType accessType);
 		void SetClearColor(RGResourceHandle resourceHandle, VkClearColorValue clearColor = { 0.0f, 0.0f, 0.0f, 1.0f });
@@ -142,6 +146,7 @@ namespace Cobalt
 		RGResourceNameHandleMap& mResourceNameHandleMap;
 		std::vector<RGResourceInfo>& mResources;
 		RGClearColorMap& mClearColorMap;
+		RGLimitedExecutionPasses& mLimitedExecutionPasses;
 		
 		std::vector<RGResourceDependency> mResourceDependencies;
 	};

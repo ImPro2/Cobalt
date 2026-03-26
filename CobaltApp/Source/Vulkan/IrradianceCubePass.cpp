@@ -37,7 +37,7 @@ namespace Cobalt
 		});
 
 		builder.SetExecutionCount(6);
-		builder.SetExternalResource(mFramebuffer.get());
+		builder.RegisterExternalResource("Irradiance Cube Framebuffer", mFramebuffer.get(), RGResourceType::ColorAttachment);
 
 		PipelineInfo pipelineInfo = {
 			.Shader = Renderer::GetShaderLibrary().GetShader("IBL\\IrradianceCube.slang"),

@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_set>
 #include <functional>
+#include <memory>
 
 namespace Cobalt
 {
@@ -27,6 +28,8 @@ namespace Cobalt
 		std::vector<int32_t> BackBufferBarrierIndices, BackBufferPostBarrierIndices;
 		bool HasDepthAttachment = false;
 		bool HasStencilAttachment = false;
+
+		uint32_t ExecutionCount = 0; // Only for limited execution passes
 
 		RenderPass* Pass;
 	};
@@ -50,12 +53,12 @@ namespace Cobalt
 		const std::vector<std::unique_ptr<RenderPass>>& GetPasses() const { return mPasses; }
 
 	public:
-		template<typename T>
-		void AddPass()
+		template<typename T, typename... Args>
+		void AddPass(Args&&... args)
 		{
 			static_assert(std::is_base_of<RenderPass, T>::value);
 
-			mPasses.push_back(std::make_unique<T>());
+			mPasses.push_back(std::make_unique<T>(std::forward<Args>(args)...));
 			mNamePassHandleMap[mPasses.back()->GetName()] = mPasses.size() - 1;
 		}
 
@@ -72,9 +75,12 @@ namespace Cobalt
 		void AllocateResources(const RGResourceTouchList& resourceTouchList);
 		void BuildCompiledPasses(const RGResourceTouchList& resourceTouchList, const RGPassTouchList& passTouchList, const RGPassAdjacencyGraph& passAdjacencyGraph, const std::vector<bool>& neededPasses);
 
+		void ExecutePass(VkCommandBuffer commandBuffer, const RenderContext& renderContext, RGCompiledPass& compiledPass, VkImage backBufferImage, VkImageView backBufferImageView);
+
 	private:
 		RGResourceNameHandleMap mResourceNameHandleMap;
 		RGClearColorMap mClearColorMap;
+		RGLimitedExecutionPasses mLimitedExecutionPasses;
 
 		RGResourceTouchList mResourceTouchList;
 		RGPassTouchList mPassTouchList;
@@ -88,6 +94,7 @@ namespace Cobalt
 		std::unordered_map<std::string, RGPassHandle> mNamePassHandleMap;
 		std::vector<std::unique_ptr<RenderPass>> mPasses;
 		std::vector<RGPassHandle> mPassOrder;
+		std::vector<RGCompiledPass> mCompiledLimitedExecutionPasses;
 		std::vector<RGCompiledPass> mCompiledPasses;
 
 		PFN_vkCmdBeginRenderingKHR m_vkCmdBeginRenderingKHR;

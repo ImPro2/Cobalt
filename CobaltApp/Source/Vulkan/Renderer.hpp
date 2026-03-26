@@ -72,6 +72,8 @@ namespace Cobalt
 
 		glm::mat4 ProjectionMatrix;
 		glm::mat4 ViewMatrix;
+
+		std::unique_ptr<Cubemap> IrradianceCube;
 	};
 
 	class RenderGraph;

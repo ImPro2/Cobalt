@@ -7,6 +7,7 @@
 #include "RenderGraph.hpp"
 #include "MaterialSystem.hpp"
 
+#include "IrradianceCubePass.hpp"
 #include "GeometryPass.hpp"
 #include "LightingPass.hpp"
 
@@ -47,6 +48,7 @@ namespace Cobalt
 		sData->mShaderLibrary = std::make_unique<ShaderLibrary>("CobaltApp/Assets/Shaders");
 
 		sData->mRenderGraph = std::make_unique<RenderGraph>();
+		//sData->mRenderGraph->AddPass<IrradianceCubePass>(sData->mRenderContext.IrradianceCube.get(), mesh);
 		sData->mRenderGraph->AddPass<GeometryPass>();
 		sData->mRenderGraph->AddPass<LightingPass>();
 		sData->mRenderGraph->Compile();

@@ -1,12 +1,13 @@
 #include "copch.hpp"
 #include "RenderGraphBuilder.hpp"
 #include "HashUtils.hpp"
+#include <cassert>
 
 namespace Cobalt
 {
 
-	RenderGraphBuilder::RenderGraphBuilder(RGPassHandle passHandle, RGResourceNameHandleMap& resourceNameHandleMap, std::vector<RGResourceInfo>& resources, RGClearColorMap& clearColorMap)
-		: mPassHandle(passHandle), mResourceNameHandleMap(resourceNameHandleMap), mResources(resources), mClearColorMap(clearColorMap)
+	RenderGraphBuilder::RenderGraphBuilder(RGPassHandle passHandle, RGResourceNameHandleMap& resourceNameHandleMap, std::vector<RGResourceInfo>& resources, RGClearColorMap& clearColorMap, RGLimitedExecutionPasses& limitedExecutionPasses)
+		: mPassHandle(passHandle), mResourceNameHandleMap(resourceNameHandleMap), mResources(resources), mClearColorMap(clearColorMap), mLimitedExecutionPasses(limitedExecutionPasses)
 	{
 		CO_PROFILE_FN();
 
@@ -46,6 +47,34 @@ namespace Cobalt
 		return RGResourceHandle_Invalid;
 	}
 
+	RGResourceHandle RenderGraphBuilder::RegisterExternalResource(const std::string& resourceName, Texture* texture, RGResourceType resourceType)
+	{
+		CO_PROFILE_FN();
+
+		assert(!mResourceNameHandleMap.contains(resourceName));
+
+		RGResourceInfo resourceInfo = {
+			.ResourceType = resourceType,
+			.ResourceSizeFlags = RGResourceSizeFlags::Absolute,
+			.Transient = false,
+			.External = true,
+			.Width = texture->GetWidth(),
+			.Height = texture->GetHeight()
+		};
+
+		mResources.push_back(resourceInfo);
+		mResourceNameHandleMap[resourceName] = mResources.size() - 1;
+
+		return mResources.size() - 1;
+	}
+
+	void RenderGraphBuilder::UnregisterExternalResource(RGResourceHandle resourceHandle)
+	{
+		CO_PROFILE_FN();
+
+		// TODO
+	}
+
 	void RenderGraphBuilder::AddDependency(RGResourceHandle resourceHandle, RGAccessType accessType)
 	{
 		CO_PROFILE_FN();
@@ -58,6 +87,13 @@ namespace Cobalt
 		CO_PROFILE_FN();
 
 		mClearColorMap[{ mPassHandle, resourceHandle }] = clearColor;
+	}
+
+	void RenderGraphBuilder::SetExecutionCount(uint32_t count)
+	{
+		CO_PROFILE_FN();
+
+		mLimitedExecutionPasses[mPassHandle] = count;
 	}
 
 }
