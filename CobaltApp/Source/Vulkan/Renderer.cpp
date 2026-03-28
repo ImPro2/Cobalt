@@ -48,7 +48,7 @@ namespace Cobalt
 		sData->mShaderLibrary = std::make_unique<ShaderLibrary>("CobaltApp/Assets/Shaders");
 
 		sData->mRenderGraph = std::make_unique<RenderGraph>();
-		//sData->mRenderGraph->AddPass<IrradianceCubePass>(sData->mRenderContext.IrradianceCube.get(), mesh);
+		sData->mRenderGraph->AddPass<IrradianceCubePass>();
 		sData->mRenderGraph->AddPass<GeometryPass>();
 		sData->mRenderGraph->AddPass<LightingPass>();
 		sData->mRenderGraph->Compile();
@@ -65,7 +65,7 @@ namespace Cobalt
 
 		for (VkFramebuffer framebuffer : sData->Framebuffers)
 			vkDestroyFramebuffer(GraphicsContext::Get().GetDevice(), framebuffer, nullptr);*/
-		
+	
 		delete sData;
 		sData = nullptr;
 	}
@@ -76,6 +76,25 @@ namespace Cobalt
 
 		// TODO:
 		//sData->mRenderGraph->OnResize();
+	}
+
+	void Renderer::SetSkybox(Cubemap* environmentMap, const Mesh* skyboxMesh)
+	{
+		CO_PROFILE_FN();
+
+		IrradianceCubePass* irradianceCubePass = static_cast<IrradianceCubePass*>(sData->mRenderGraph->GetPass("Irradiance Cube Pass"));
+		LightingPass* lightingPass = static_cast<LightingPass*>(sData->mRenderGraph->GetPass("Lighting Pass"));
+
+		irradianceCubePass->SetEnvironmentMap(environmentMap, skyboxMesh);
+		lightingPass->SetSkybox(environmentMap, skyboxMesh);
+
+		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [](VkCommandBuffer commandBuffer)
+		{
+			GraphicsContext::Get().GetDescriptorBufferManager().BindDescriptorBuffers(commandBuffer);
+			sData->mRenderGraph->ExecuteLimitedExecutionPasses(commandBuffer, sData->mRenderContext);
+		});
+
+		sData->mRenderContext.IrradianceCube = irradianceCubePass->GetIrradianceCube();
 	}
 
 	void Renderer::BeginScene(const GPUScene& scene, const glm::mat4& projectionMat, const glm::mat4& viewMat)

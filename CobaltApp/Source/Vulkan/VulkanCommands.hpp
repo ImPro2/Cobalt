@@ -89,10 +89,12 @@ namespace Cobalt
 				.srcSubresource = {
 					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
 					.baseArrayLayer = srcBaseLayer,
+					.layerCount = 1,
 				},
 				.dstSubresource = {
 					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
 					.baseArrayLayer = dstBaseLayer,
+					.layerCount = 1,
 				},
 				.extent = extent
 			};

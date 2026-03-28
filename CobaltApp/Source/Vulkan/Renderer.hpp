@@ -73,7 +73,7 @@ namespace Cobalt
 		glm::mat4 ProjectionMatrix;
 		glm::mat4 ViewMatrix;
 
-		std::unique_ptr<Cubemap> IrradianceCube;
+		Cubemap* IrradianceCube;
 	};
 
 	class RenderGraph;
@@ -95,6 +95,8 @@ namespace Cobalt
 		static const RenderContext& GetRenderContext() { return sData->mRenderContext; }
 
 	public:
+		static void SetSkybox(Cubemap* environmentMap, const Mesh* skyboxMesh);
+
 		static void BeginScene(const GPUScene& scene, const glm::mat4& projectionMat, const glm::mat4& viewMat);
 		static void EndScene();
 

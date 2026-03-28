@@ -225,18 +225,29 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		auto paths = cubemapInfo.FacePaths.GetPaths();
+		if (cubemapInfo.FacePaths.LoadedFromFile())
+		{
+			auto paths = cubemapInfo.FacePaths.GetPaths();
 
-		std::vector<uint8_t*> facesData(6);
+			std::vector<uint8_t*> facesData(6);
 
-		for (uint32_t i = 0; i < facesData.size(); i++)
-			facesData[i] = LoadDataFromFile(paths[i]);
+			for (uint32_t i = 0; i < facesData.size(); i++)
+				facesData[i] = LoadDataFromFile(paths[i]);
 
-		Create();
-		CopyData(facesData);
+			Create();
+			CopyData(facesData);
 
-		for (uint8_t* face : facesData)
-			free(face);
+			for (uint8_t* face : facesData)
+				free(face);
+		}
+		else
+		{
+			mFormat = cubemapInfo.Format;
+			mWidth = cubemapInfo.Width;
+			mHeight = cubemapInfo.Height;
+
+			Create();
+		}
 	}
 
 	Cubemap::~Cubemap()

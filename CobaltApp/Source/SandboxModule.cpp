@@ -82,8 +82,7 @@ namespace Cobalt
 
 		Cubemap* skybox = AssetManager::GetCubemap(AssetManager::RegisterCubemap("Skybox", cubemapInfo));
 
-		LightingPass* lightingPass = static_cast<LightingPass*>(Renderer::GetRenderGraph().GetPass("Lighting Pass"));
-		lightingPass->SetSkybox(skybox, mSphereMesh);
+		Renderer::SetSkybox(skybox, mCubeMesh);
 	}
 
 	void SandboxModule::OnShutdown()

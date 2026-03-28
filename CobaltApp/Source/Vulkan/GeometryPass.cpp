@@ -2,6 +2,7 @@
 #include "GeometryPass.hpp"
 #include "Renderer.hpp"
 #include "VulkanCommands.hpp"
+#include "RenderGraph.hpp"
 
 namespace Cobalt
 {
@@ -48,6 +49,8 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
+		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
+
 		VulkanCommands::SetViewport(commandBuffer, GraphicsContext::Get().GetSwapchain().GetExtent());
 
 		uint32_t frameIndex = GraphicsContext::Get().GetFrameIndex();
@@ -72,6 +75,8 @@ namespace Cobalt
 		}
 
 		Renderer::DrawObjects(commandBuffer, mName, renderContext);
+
+		mRenderGraph.EndPass(commandBuffer, mPassHandle);
 	}
 
 }

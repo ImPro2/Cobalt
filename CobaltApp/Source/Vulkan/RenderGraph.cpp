@@ -47,8 +47,8 @@ namespace Cobalt
 
 		switch (accessType)
 		{
-			case RGAccessType::ColorAttachmentWrite: return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 			case RGAccessType::ShaderRead: return VK_IMAGE_USAGE_SAMPLED_BIT;
+			case RGAccessType::ColorAttachmentWrite: return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 			case RGAccessType::DepthAttachment: return VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 			case RGAccessType::Present: return VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 		}
@@ -230,6 +230,7 @@ namespace Cobalt
 		{
 			RenderGraphBuilder builder(passHandle, mResourceNameHandleMap, mResourceInfos, mClearColorMap, mLimitedExecutionPasses);
 
+			mPasses[passHandle]->SetPassHandle(passHandle);
 			mPasses[passHandle]->Setup(builder);
 
 			for (const auto& [resourceHandle, accessType] : builder.GetResourceDependencies())
@@ -375,6 +376,7 @@ namespace Cobalt
 				continue;
 
 			TextureInfo textureInfo;
+			textureInfo.Usage = 0;
 
 			if (resourceInfo.ResourceSizeFlags == RGResourceSizeFlags::SwapchainRelative)
 			{
@@ -386,6 +388,9 @@ namespace Cobalt
 				textureInfo.Width = resourceInfo.Width;
 				textureInfo.Height = resourceInfo.Height;
 			}
+
+			if (resourceInfo.CopySrc)
+				textureInfo.Usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
 			switch (resourceInfo.ResourceType)
 			{
@@ -401,7 +406,7 @@ namespace Cobalt
 				case RGResourceType::DepthAttachment:
 				{
 					textureInfo.Format = defaultDepthFormat;
-					textureInfo.Usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+					textureInfo.Usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 					break;
 				}
 			}
@@ -551,18 +556,12 @@ namespace Cobalt
 				{
 					compiledPass.ImageBarriers.push_back(MakeBarrierForResourceTransition(mResources[resourceHandle]->GetImage(), mResources[resourceHandle]->GetImageAspectFlags(), lastAccessType, accessType));
 				}
-				
 			}
 
-			if (!mLimitedExecutionPasses.contains(passHandle))
-			{
-				mCompiledPasses.push_back(compiledPass);
-			}
-			else
-			{
+			if (mLimitedExecutionPasses.contains(passHandle))
 				compiledPass.ExecutionCount = mLimitedExecutionPasses[passHandle];
-				mCompiledLimitedExecutionPasses.push_back(compiledPass);
-			}
+
+			mCompiledPasses.push_back(compiledPass);
 		}
 	}
 
@@ -593,7 +592,7 @@ namespace Cobalt
 		// Sort passes
 
 		//SortPasses(neededPasses, passAdjacencyGraph, passInDegree);
-		mPassOrder = { 0, 1 };
+		mPassOrder = { 0, 1, 2 };
 		
 		AllocateResources(resourceTouchList);
 		BuildCompiledPasses(resourceTouchList, passTouchList, passAdjacencyGraph, neededPasses);
@@ -605,39 +604,65 @@ namespace Cobalt
 		mPassInDegree = passInDegree;
 	}
 
+	void RenderGraph::ExecuteLimitedExecutionPasses(VkCommandBuffer commandBuffer, const RenderContext& renderContext)
+	{
+		CO_PROFILE_FN();
+
+		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
+		mCurrentBackBufferImage = swapchain.GetBackBuffers()[swapchain.GetBackBufferIndex()];
+		mCurrentBackBufferImageView = swapchain.GetBackBufferViews()[swapchain.GetBackBufferIndex()];
+
+		for (auto& limitedExecPass : mCompiledPasses)
+		{
+			if (limitedExecPass.ExecutionCount == 0)
+				continue;
+
+			//std::vector<VkImageMemoryBarrier2> imageBarriers = limitedExecPass.ImageBarriers;
+			//std::vector<VkImageMemoryBarrier2> postImageBarriers = limitedExecPass.PostImageBarriers;
+
+			for (uint32_t i = 0; i < limitedExecPass.ExecutionCount; i++)
+			{
+				limitedExecPass.Pass->Execute(commandBuffer, renderContext);
+
+				/*if (i == 0)
+				{
+					limitedExecPass.ImageBarriers.clear();
+					limitedExecPass.PostImageBarriers.clear();
+				}*/
+			}
+
+			//limitedExecPass.ImageBarriers = imageBarriers;
+			//limitedExecPass.PostImageBarriers = postImageBarriers;
+		}
+	}
+
 	void RenderGraph::Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext)
 	{
 		CO_PROFILE_FN();
 
 		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
-		VkImage backBufferImage = swapchain.GetBackBuffers()[swapchain.GetBackBufferIndex()];
-		VkImageView backBufferImageView = swapchain.GetBackBufferViews()[swapchain.GetBackBufferIndex()];
-
-		for (auto& limitedExecPass : mCompiledLimitedExecutionPasses)
-		{
-			for (uint32_t i = 0; i < limitedExecPass.ExecutionCount; i++)
-			{
-				ExecutePass(commandBuffer, renderContext, limitedExecPass, backBufferImage, backBufferImageView);
-			}
-		}
-
-		if (!mCompiledLimitedExecutionPasses.empty())
-			mCompiledLimitedExecutionPasses.clear();
+		mCurrentBackBufferImage = swapchain.GetBackBuffers()[swapchain.GetBackBufferIndex()];
+		mCurrentBackBufferImageView = swapchain.GetBackBufferViews()[swapchain.GetBackBufferIndex()];
 
 		for (auto& compiledPass : mCompiledPasses)
 		{
-			ExecutePass(commandBuffer, renderContext, compiledPass, backBufferImage, backBufferImageView);
+			if (compiledPass.ExecutionCount > 0)
+				continue;
+
+			compiledPass.Pass->Execute(commandBuffer, renderContext);
 		}
 	}
 
-	void RenderGraph::ExecutePass(VkCommandBuffer commandBuffer, const RenderContext& renderContext, RGCompiledPass& compiledPass, VkImage backBufferImage, VkImageView backBufferImageView)
+	void RenderGraph::BeginPass(VkCommandBuffer commandBuffer, RGPassHandle passHandle)
 	{
 		CO_PROFILE_FN();
+
+		RGCompiledPass& compiledPass = mCompiledPasses[mPassOrder[passHandle]];
 
 		if (!compiledPass.ImageBarriers.empty())
 		{
 			for (uint32_t i : compiledPass.BackBufferBarrierIndices)
-				compiledPass.ImageBarriers[i].image = backBufferImage;
+				compiledPass.ImageBarriers[i].image = mCurrentBackBufferImage;
 
 			VkDependencyInfo dependencyInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -649,7 +674,7 @@ namespace Cobalt
 		}
 
 		if (compiledPass.BackbufferAttachmentIndex != -1)
-			compiledPass.ColorAttachments[compiledPass.BackbufferAttachmentIndex].imageView = backBufferImageView;
+			compiledPass.ColorAttachments[compiledPass.BackbufferAttachmentIndex].imageView = mCurrentBackBufferImageView;
 
 		VkRenderingInfo renderingInfo = {
 			.sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
@@ -662,13 +687,20 @@ namespace Cobalt
 		};
 
 		m_vkCmdBeginRenderingKHR(commandBuffer, &renderingInfo);
-		compiledPass.Pass->Execute(commandBuffer, renderContext);
+	}
+
+	void RenderGraph::EndPass(VkCommandBuffer commandBuffer, RGPassHandle passHandle)
+	{
+		CO_PROFILE_FN();
+
+		RGCompiledPass& compiledPass = mCompiledPasses[mPassOrder[passHandle]];
+
 		m_vkCmdEndRenderingKHR(commandBuffer);
 
 		if (!compiledPass.PostImageBarriers.empty())
 		{
 			for (uint32_t i : compiledPass.BackBufferPostBarrierIndices)
-				compiledPass.PostImageBarriers[i].image = backBufferImage;
+				compiledPass.PostImageBarriers[i].image = mCurrentBackBufferImage;
 
 			VkDependencyInfo dependencyInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,

@@ -98,12 +98,15 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
+		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
 		VulkanCommands::SetViewport(commandBuffer, GraphicsContext::Get().GetSwapchain().GetExtent());
 
 		if (mSkybox)
 			ExecuteSkyboxPass(commandBuffer, renderContext);
 
 		ExecuteLightingPass(commandBuffer, renderContext);
+
+		mRenderGraph.EndPass(commandBuffer, mPassHandle);
 	}
 
 	void LightingPass::ExecuteSkyboxPass(VkCommandBuffer commandBuffer, const RenderContext& renderContext)
@@ -121,7 +124,8 @@ namespace Cobalt
 
 		ShaderCursor skyboxShaderCursor(mSkyboxPipeline->GetInfo().Shader->GetRootShaderParameter(), mSkyboxDescriptors[frameIndex]);
 		skyboxShaderCursor.WriteField("uniforms", *mSkyboxUniformBuffers[frameIndex]);
-		skyboxShaderCursor.WriteField("skybox", *mSkybox);
+//		skyboxShaderCursor.WriteField("skybox", *mSkybox);
+		skyboxShaderCursor.WriteField("skybox", *renderContext.IrradianceCube);
 		skyboxShaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mSkyboxPipeline->GetPipeline());

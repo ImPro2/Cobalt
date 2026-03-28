@@ -64,7 +64,12 @@ namespace Cobalt
 
 	public:
 		void Compile();
+		void ExecuteLimitedExecutionPasses(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
 		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
+
+	public:
+		void BeginPass(VkCommandBuffer commandBuffer, RGPassHandle passHandle);
+		void EndPass(VkCommandBuffer commandBuffer, RGPassHandle passHandle);
 
 	private:
 		void SetupPassesAndRecordDependencies(RGResourceTouchList& resourceTouchList, RGPassTouchList& passTouchList);
@@ -74,8 +79,6 @@ namespace Cobalt
 
 		void AllocateResources(const RGResourceTouchList& resourceTouchList);
 		void BuildCompiledPasses(const RGResourceTouchList& resourceTouchList, const RGPassTouchList& passTouchList, const RGPassAdjacencyGraph& passAdjacencyGraph, const std::vector<bool>& neededPasses);
-
-		void ExecutePass(VkCommandBuffer commandBuffer, const RenderContext& renderContext, RGCompiledPass& compiledPass, VkImage backBufferImage, VkImageView backBufferImageView);
 
 	private:
 		RGResourceNameHandleMap mResourceNameHandleMap;
@@ -94,8 +97,10 @@ namespace Cobalt
 		std::unordered_map<std::string, RGPassHandle> mNamePassHandleMap;
 		std::vector<std::unique_ptr<RenderPass>> mPasses;
 		std::vector<RGPassHandle> mPassOrder;
-		std::vector<RGCompiledPass> mCompiledLimitedExecutionPasses;
 		std::vector<RGCompiledPass> mCompiledPasses;
+
+		VkImage mCurrentBackBufferImage = VK_NULL_HANDLE;
+		VkImageView mCurrentBackBufferImageView = VK_NULL_HANDLE;
 
 		PFN_vkCmdBeginRenderingKHR m_vkCmdBeginRenderingKHR;
 		PFN_vkCmdEndRenderingKHR m_vkCmdEndRenderingKHR;

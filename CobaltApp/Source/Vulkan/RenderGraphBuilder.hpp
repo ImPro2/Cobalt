@@ -29,6 +29,8 @@ namespace Cobalt
 	{
 		ColorAttachment,
 		DepthAttachment,
+		TransferSrc,
+		TransferDst
 	};
 
 	enum class RGResourceSizeFlags
@@ -44,6 +46,7 @@ namespace Cobalt
 
 		bool Transient = true;
 		bool External = false;
+		bool CopySrc = false;
 		bool SwapchainTarget = false;
 
 		uint32_t Width = 1;

@@ -20,11 +20,13 @@ namespace Cobalt
 	{
 	public:
 		RenderPass(const std::string& name, const std::filesystem::path& shaderPath, RenderPassFlags flags)
-			: mName(name), mShaderPath(shaderPath), mFlags(flags)
+			: mName(name), mShaderPath(shaderPath), mFlags(flags), mRenderGraph(Renderer::GetRenderGraph())
 		{
 		}
 
 		virtual ~RenderPass() = default;
+
+		void SetPassHandle(RGPassHandle passHandle) { mPassHandle = passHandle; }
 
 	public:
 		virtual void Setup(RenderGraphBuilder& builder) = 0;
@@ -39,6 +41,10 @@ namespace Cobalt
 		std::string mName;
 		std::filesystem::path mShaderPath;
 		RenderPassFlags mFlags;
+
+		RGPassHandle mPassHandle;
+
+		RenderGraph& mRenderGraph;
 	};
 
 }

@@ -14,11 +14,11 @@ struct VSOutput
 };
 
 [shader("vertex")]
-VSOutput Main(uniform VSInput vsInput, uint vertexID: SV_VertexID)
+VSOutput Main(uniform ConstantBuffer<VSInput> vsInput, uint vertexID: SV_VertexID)
 {
 	VSOutput output;
-	output.Position = mul(input.ViewProjections[input.InvocationIndex], input.Vertices[vertexID].Position);
-	output.UVW = output.Position.xyz;
+	output.Position = mul(vsInput.ViewProjections[vsInput.InvocationIndex], vsInput.Vertices[vertexID].Position);
+	output.LocalPosition = output.Position.xyz;
 
 	return output;
 }
@@ -31,7 +31,7 @@ struct FSInput
 };
 
 [shader("fragment")]
-float4 Fragment(VSOutput input, uniform FSInupt fsInput)
+float4 Fragment(VSOutput input, uniform ConstantBuffer<FSInput> fsInput)
 {
 	float3 irradiance = float3(0.0);
 	float sampleCount = 0;
@@ -43,9 +43,9 @@ float4 Fragment(VSOutput input, uniform FSInupt fsInput)
 	const float TWO_PI  = 2.0 * float.getPi();
 	const float HALF_PI = 0.5 * float.getPi();
 	
-	for (float phi = 0.0; phi < TWO_PI; phi += input.deltaPhi)
+	for (float phi = 0.0; phi < TWO_PI; phi += fsInput.deltaPhi)
 	{
-		for (float theta = 0.0; theta < HALF_PI; theta += input.deltaTheta)
+		for (float theta = 0.0; theta < HALF_PI; theta += fsInput.deltaTheta)
 		{
 			float3 tangent = right * cos(phi) + up * sin(phi);
 			float3 sampleVector = normal * cos(theta) + tangent * sin(theta);

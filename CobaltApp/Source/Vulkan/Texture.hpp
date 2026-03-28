@@ -96,22 +96,31 @@ namespace Cobalt
 
 	struct CubemapFacePaths
 	{
+		std::array<std::filesystem::path, 6> GetPaths() const
+		{
+			return { RightFace, LeftFace, UpFace, DownFace, FrontFace, BackFace };
+		}
+
+		bool LoadedFromFile() const
+		{
+			return !RightFace.empty() && !LeftFace.empty() && !UpFace.empty() && !FrontFace.empty() && !BackFace.empty();
+		}
+
 		std::filesystem::path RightFace;
 		std::filesystem::path LeftFace;
 		std::filesystem::path UpFace;
 		std::filesystem::path DownFace;
 		std::filesystem::path FrontFace;
 		std::filesystem::path BackFace;
-
-		std::array<std::filesystem::path, 6> GetPaths() const
-		{
-			return { RightFace, LeftFace, UpFace, DownFace, FrontFace, BackFace };
-		}
 	};
 
 	struct CubemapInfo
 	{
 		CubemapFacePaths FacePaths;
+
+		VkFormat Format = VK_FORMAT_UNDEFINED;
+		uint32_t Width = 0;
+		uint32_t Height = 0;
 	};
 
 	class Cubemap
