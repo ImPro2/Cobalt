@@ -20,7 +20,7 @@ namespace Cobalt
 		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext) override;
 
 	private:
-		uint32_t mDimensions = 64;
+		uint32_t mDimensions = 256;
 
 		RGResourceHandle mFramebufferHandle = 0;
 		Pipeline* mPipeline = nullptr;
@@ -29,11 +29,11 @@ namespace Cobalt
 		Cubemap* mEnvironmentMap = nullptr;
 		const Mesh* mMesh = nullptr;
 
-		struct VSInputBuffer
+		struct VSInputData
 		{
-			glm::mat4 ViewProjections[6]; // per invocation
+			glm::mat4 ViewProjection;
 			VkDeviceAddress Vertices;
-			uint32_t InvocationIndex;
+			uint64_t __pad0{};
 		};
 		
 		struct FSInputBuffer
@@ -42,9 +42,11 @@ namespace Cobalt
 			float deltaTheta;
 		};
 
-		std::unique_ptr<VulkanBuffer> mVSInputBuffer, mFSInputBuffer;
+		std::unique_ptr<VulkanBuffer> mVSInputBuffers[6], mFSInputBuffer;
 
 		std::unique_ptr<Cubemap> mIrradianceCube;
+
+		uint32_t mInvocationIndex = 0;
 	};
 
 }

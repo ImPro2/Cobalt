@@ -2,9 +2,8 @@ import Common.Common;
 
 struct VSInput
 {
-	float4x4 ViewProjections[6];
+	float4x4 ViewProjection;
 	ConstBufferPointer<MeshVertex> Vertices;
-	uint InvocationIndex;
 };
 
 struct VSOutput
@@ -16,9 +15,11 @@ struct VSOutput
 [shader("vertex")]
 VSOutput Main(uniform ConstantBuffer<VSInput> vsInput, uint vertexID: SV_VertexID)
 {
+	MeshVertex vertex = vsInput.Vertices[vertexID];
+
 	VSOutput output;
-	output.Position = mul(vsInput.ViewProjections[vsInput.InvocationIndex], vsInput.Vertices[vertexID].Position);
-	output.LocalPosition = output.Position.xyz;
+	output.Position = mul(vsInput.ViewProjection, float4(vertex.Position.xyz, 1.0));
+	output.LocalPosition = vertex.Position.xyz;
 
 	return output;
 }
@@ -33,12 +34,14 @@ struct FSInput
 [shader("fragment")]
 float4 Fragment(VSOutput input, uniform ConstantBuffer<FSInput> fsInput)
 {
+#if 0
 	float3 irradiance = float3(0.0);
-	float sampleCount = 0;
+	uint sampleCount = 0;
 
-	float3 normal = normalize(input.LocalPosition);
-	float3 right  = cross(float3(0.0, 1.0, 0.0), normal);
-	float3 up     = cross(normal, right);
+	float3 normal = normalize(input.LocalPosition.xyz);
+	float3 up = float3(0.0, 1.0, 0.0);
+	float3 right  = normalize(cross(up, normal));
+	up = cross(normal, right);
 	
 	const float TWO_PI  = 2.0 * float.getPi();
 	const float HALF_PI = 0.5 * float.getPi();
@@ -50,9 +53,13 @@ float4 Fragment(VSOutput input, uniform ConstantBuffer<FSInput> fsInput)
 			float3 tangent = right * cos(phi) + up * sin(phi);
 			float3 sampleVector = normal * cos(theta) + tangent * sin(theta);
 			irradiance += fsInput.environmentMap.Sample(sampleVector).rgb * cos(theta) * sin(theta);
-			sampleCount += 1.0;
+			sampleCount++;
 		}
 	}
 
-	return float4(irradiance, 1.0);
+	return float4(float.getPi() * irradiance / float(sampleCount), 1.0);
+#else
+	return float4(fsInput.environmentMap.Sample(input.LocalPosition.xyz).xyz, 1.0);
+	//return float4(float(input.instance) / 6.0, 0.0, 0.0, 1.0);
+#endif
 }

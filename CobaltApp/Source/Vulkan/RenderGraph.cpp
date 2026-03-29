@@ -617,18 +617,18 @@ namespace Cobalt
 			if (limitedExecPass.ExecutionCount == 0)
 				continue;
 
-			//std::vector<VkImageMemoryBarrier2> imageBarriers = limitedExecPass.ImageBarriers;
-			//std::vector<VkImageMemoryBarrier2> postImageBarriers = limitedExecPass.PostImageBarriers;
+			std::vector<VkImageMemoryBarrier2> imageBarriers = limitedExecPass.ImageBarriers;
+			std::vector<VkImageMemoryBarrier2> postImageBarriers = limitedExecPass.PostImageBarriers;
 
 			for (uint32_t i = 0; i < limitedExecPass.ExecutionCount; i++)
 			{
 				limitedExecPass.Pass->Execute(commandBuffer, renderContext);
 
-				/*if (i == 0)
+				if (i == 0)
 				{
 					limitedExecPass.ImageBarriers.clear();
 					limitedExecPass.PostImageBarriers.clear();
-				}*/
+				}
 			}
 
 			//limitedExecPass.ImageBarriers = imageBarriers;
