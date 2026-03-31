@@ -28,9 +28,9 @@ namespace Cobalt::SlangUtils
 	{
 		switch (stage)
 		{
-			case SLANG_STAGE_VERTEX:   return VK_SHADER_STAGE_VERTEX_BIT;
+			case SLANG_STAGE_VERTEX: return VK_SHADER_STAGE_VERTEX_BIT;
 			case SLANG_STAGE_FRAGMENT: return VK_SHADER_STAGE_FRAGMENT_BIT;
-			case SLANG_STAGE_COMPUTE:  return VK_SHADER_STAGE_COMPUTE_BIT;
+			case SLANG_STAGE_COMPUTE: return VK_SHADER_STAGE_COMPUTE_BIT;
 		}
 	}
 
@@ -70,6 +70,17 @@ namespace Cobalt::SlangUtils
 		}
 	}
 
+	inline VkShaderStageFlags SlangStageToVkShaderStageFlags(SlangStage shaderStage)
+	{
+		switch (shaderStage)
+		{
+			case SLANG_STAGE_VERTEX: return VK_SHADER_STAGE_VERTEX_BIT;
+			case SLANG_STAGE_FRAGMENT: return VK_SHADER_STAGE_FRAGMENT_BIT;
+		}
+
+		return VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	}
+
 	inline ShaderParameterKind SlangResourceShapeToShaderParameterKind(SlangResourceShape shape)
 	{
 		switch (shape & SLANG_RESOURCE_BASE_SHAPE_MASK)
@@ -95,6 +106,7 @@ namespace Cobalt::SlangUtils
 		switch (kind)
 		{
 			case slang::TypeReflection::Kind::Resource: return SlangResourceShapeToShaderParameterKind(typeLayout->getResourceShape());
+			case slang::TypeReflection::Kind::Pointer: return ShaderParameterKind::Pointer;
 			case slang::TypeReflection::Kind::Struct: return ShaderParameterKind::None;
 			case slang::TypeReflection::Kind::Matrix: return ShaderParameterKind::Matrix;
 			case slang::TypeReflection::Kind::Vector: return ShaderParameterKind::Vector;
@@ -107,7 +119,6 @@ namespace Cobalt::SlangUtils
 			case slang::TypeReflection::Kind::None:
 			default: return ShaderParameterKind::None;
 		}
-
 	}
 
 }

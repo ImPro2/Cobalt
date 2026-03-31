@@ -84,10 +84,12 @@ namespace Cobalt
 		{
 			CO_PROFILE_FN();
 
-			ShaderParameter& rootShaderParam = PassPipelines.at(passName)->GetInfo().Shader->GetRootShaderParameter();
+			Shader* shader = PassPipelines.at(passName)->GetInfo().Shader;
+			ShaderParameter& rootShaderParam = shader->GetRootShaderParameter();
 			DescriptorHandle descriptorHandle = PassDescriptors.at(passName)[frameIndex];
+			const auto& pushConstantRanges = shader->GetPushConstantRanges();
 
-			return ShaderCursor(rootShaderParam, descriptorHandle);
+			return ShaderCursor(rootShaderParam, descriptorHandle, pushConstantRanges);
 		}
 	};
 

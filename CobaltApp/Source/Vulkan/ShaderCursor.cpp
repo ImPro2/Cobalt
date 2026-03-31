@@ -6,15 +6,22 @@
 namespace Cobalt
 {
 
-	ShaderCursor::ShaderCursor(ShaderParameter& shaderParameter, DescriptorHandle descriptorHandle)
-		: mShaderParameter(shaderParameter), mDescriptorBindings{}, mDescriptorBindingsRef(mDescriptorBindings), mDescriptorHandle(descriptorHandle)
+	ShaderCursor::ShaderCursor(ShaderParameter& shaderParameter, DescriptorHandle descriptorHandle, const std::vector<VkPushConstantRange>& pushConstantRanges, uint8_t* pushConstantBuffer)
+		: mShaderParameter(shaderParameter), mDescriptorBindings{}, mDescriptorBindingsRef(mDescriptorBindings), mDescriptorHandle(descriptorHandle),
+		  mPushConstantRanges(pushConstantRanges), mPushConstantBuffer(pushConstantBuffer)
 	{
 		CO_PROFILE_FN();
 	}
 
+	ShaderCursor::ShaderCursor(const ShaderCursor& other)
+		: mShaderParameter(other.mShaderParameter), mDescriptorBindingsRef(other.mDescriptorBindingsRef), mDescriptorHandle(other.mDescriptorHandle),
+		  mPushConstantRanges(other.mPushConstantRanges), mPushConstantBuffer(other.mPushConstantBuffer)
+	{
+	}
 
-	ShaderCursor::ShaderCursor(ShaderParameter& shaderParameter, DescriptorBindings& descriptorBindings, DescriptorHandle descriptorHandle)
-		: mShaderParameter(shaderParameter), mDescriptorBindingsRef(descriptorBindings), mDescriptorHandle(descriptorHandle)
+	ShaderCursor::ShaderCursor(ShaderParameter& shaderParameter, DescriptorBindings& descriptorBindings, DescriptorHandle descriptorHandle, const std::vector<VkPushConstantRange>& pushConstantRanges, uint8_t* pushConstantBuffer)
+		: mShaderParameter(shaderParameter), mDescriptorBindingsRef(descriptorBindings), mDescriptorHandle(descriptorHandle),
+		  mPushConstantRanges(pushConstantRanges), mPushConstantBuffer(pushConstantBuffer)
 	{
 		CO_PROFILE_FN();
 	}
@@ -22,6 +29,22 @@ namespace Cobalt
 	ShaderCursor::~ShaderCursor()
 	{
 		CO_PROFILE_FN();
+	}
+	
+	void ShaderCursor::Write(const void* data, size_t size)
+	{
+		CO_PROFILE_FN();
+
+		if (mShaderParameter.IsPushConstant)
+		{
+			size_t pushConstantRangeOffset = mPushConstantRanges[mShaderParameter.PushConstantRangeIndex].offset + mShaderParameter.UniformByteOffset;
+			void* dst = mPushConstantBuffer + pushConstantRangeOffset;
+			memcpy(dst, data, size);
+		}
+		else
+		{
+			// TODO
+		}
 	}
 
 	void ShaderCursor::Write(const VulkanBuffer& buffer)
@@ -103,6 +126,8 @@ namespace Cobalt
 
 		auto& descriptorCache = GraphicsContext::Get().GetDescriptorCache();
 		descriptorCache.WriteDescriptorBindingsIfNeeded(mDescriptorHandle, mDescriptorBindingsRef);
+
+		//free(mPushConstantBuffer);
 	}
 
 }

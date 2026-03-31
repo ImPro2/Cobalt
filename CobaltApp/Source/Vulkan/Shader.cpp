@@ -16,8 +16,13 @@ namespace Cobalt
 	{
 		mLinkedProgram = ShaderCompiler::CompileShader(filePath);
 
+		if (filePath.contains("IrradianceCube.slang"))
+		{
+			//__debugbreak();
+		}
+
 		InitShaderStages();
-		InitDescriptorSetLayouts();
+		Reflect();
 	}
 
 	void Shader::InitShaderStages()
@@ -42,12 +47,17 @@ namespace Cobalt
 		}
 	}
 
-	void Shader::InitDescriptorSetLayouts()
+	void Shader::Reflect()
 	{
 		ShaderLayoutBuilder layoutBuilder(mLinkedProgram->getLayout());
 
 		mDescriptorSetLayouts = layoutBuilder.GetDescriptorSetLayouts();
-		mRootShaderParam = layoutBuilder.GetRootShaderParameter();
+		mPushConstantRanges   = layoutBuilder.GetPushConstantRanges();
+		mRootShaderParam      = layoutBuilder.GetRootShaderParameter();
+
+		for (const auto& pushConstantRange : mPushConstantRanges)
+			mPushConstantBufferSize += pushConstantRange.size;
+
 	}
 
 }

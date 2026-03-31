@@ -187,13 +187,27 @@ namespace Cobalt
 		};
 
 		const auto& descriptorSetLayouts = mInfo.Shader->GetDescriptorSetLayouts();
+		const auto& shaderPushConstantRanges = mInfo.Shader->GetPushConstantRanges();
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 			.flags = 0,
 			.setLayoutCount = (uint32_t)descriptorSetLayouts.size(),
 			.pSetLayouts = descriptorSetLayouts.data(),
+//			.pushConstantRangeCount = (uint32_t)pushConstantRanges.size(),
+//			.pPushConstantRanges = pushConstantRanges.data()
 		};
+
+		VkPushConstantRange pushConstantRanges[] = {
+			{ .stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, .offset = 0, .size = 80  },
+//			{ .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT, .offset = 72, .size = 8  },
+		};
+
+		if (!shaderPushConstantRanges.empty())
+		{
+			pipelineLayoutCreateInfo.pushConstantRangeCount = 1; 
+			pipelineLayoutCreateInfo.pPushConstantRanges = pushConstantRanges;
+		}
 
 		VK_CALL(vkCreatePipelineLayout(GraphicsContext::Get().GetDevice(), &pipelineLayoutCreateInfo, nullptr, &mPipelineLayout));
 

@@ -8,6 +8,7 @@ namespace Cobalt
 	enum class ShaderParameterKind 
 	{
 		None = -1,
+		Pointer,
 		Array,
 		UniformBuffer,
 		StorageBuffer,
@@ -26,6 +27,8 @@ namespace Cobalt
 
 	struct ShaderParameter
 	{
+		bool IsRoot = false;
+
 		ShaderParameterKind Kind = ShaderParameterKind::None;
 		ShaderParameterKind ElementKind = ShaderParameterKind::None;
 
@@ -36,6 +39,9 @@ namespace Cobalt
 		size_t ElementStride     = 0;          // If it's an array
 		
 		uint32_t Index = 0; // If it's an element in an array
+
+		bool IsPushConstant = false;
+		uint32_t PushConstantRangeIndex = 0;
 
 		ShaderParameterMap           Fields;   // If it's a struct
 		std::vector<ShaderParameter> Elements; // If it's an array

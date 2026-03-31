@@ -29,21 +29,6 @@ namespace Cobalt
 		Cubemap* mEnvironmentMap = nullptr;
 		const Mesh* mMesh = nullptr;
 
-		struct VSInputData
-		{
-			glm::mat4 ViewProjection;
-			VkDeviceAddress Vertices;
-			uint64_t __pad0{};
-		};
-		
-		struct FSInputBuffer
-		{
-			float deltaPhi;
-			float deltaTheta;
-		};
-
-		std::unique_ptr<VulkanBuffer> mVSInputBuffers[6], mFSInputBuffer;
-
 		std::unique_ptr<Cubemap> mIrradianceCube;
 
 		uint32_t mInvocationIndex = 0;

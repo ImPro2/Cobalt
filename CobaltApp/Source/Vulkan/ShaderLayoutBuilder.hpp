@@ -84,11 +84,11 @@ namespace Cobalt
 		void AddEntryPoint(slang::EntryPointLayout* entryPointLayout);
 		void BuildDescriptorSetLayouts();
 
-		void AddDescriptorBindings(slang::TypeLayoutReflection* typeLayout, BindingOffset bindingOffset);
-		void AddConstantBufferDescriptorBindings(slang::TypeLayoutReflection* elementTypeLayout, BindingOffset containerOffset, BindingOffset elementOffset);
-		void AddPushConstantRange(slang::TypeLayoutReflection* elementTypeLayout, BindingOffset containerOffset, BindingOffset elementOffset);
+		void AddDescriptorBindings(slang::TypeLayoutReflection* typeLayout, BindingOffset bindingOffset, SlangStage shaderStage);
+		void AddConstantBufferDescriptorBindings(slang::TypeLayoutReflection* elementTypeLayout, BindingOffset containerOffset, BindingOffset elementOffset, SlangStage shaderStage);
+		void AddPushConstantRange(slang::TypeLayoutReflection* typeLayout, BindingOffset bindingOffset, SlangStage shaderStage);
 
-		void AddShaderParameters(slang::VariableLayoutReflection* varLayout, ShaderParameter& shaderParameter, uint32_t bindingOffset = 0, uint32_t uniformByteOffset = 0);
+		void AddShaderParameters(slang::VariableLayoutReflection* varLayout, SlangStage shaderStage, ShaderParameter& shaderParameter, uint32_t bindingOffset = 0, uint32_t uniformByteOffset = 0, bool isPushConstant = false, uint32_t pushConstantRangeIndex = 0);
 
 		int32_t FindOrAddDescriptorSet(int32_t space);
 
