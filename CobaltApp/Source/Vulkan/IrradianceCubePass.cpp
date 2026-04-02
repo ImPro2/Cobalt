@@ -40,7 +40,7 @@ namespace Cobalt
 			.CopySrc = true,
 			.Width = mDimensions,
 			.Height = mDimensions
-			});
+		});
 
 		builder.AddDependency(mFramebufferHandle, RGAccessType::ColorAttachmentWrite);
 		builder.SetClearColor(mFramebufferHandle, { 0.0f, 0.0f, 0.2f, 0.0f });
@@ -70,10 +70,8 @@ namespace Cobalt
 			}
 		};
 
-		mPipeline = GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Irradiance Cube Pipeline", pipelineInfo);
-
-		VkDescriptorSetLayout descriptorSetLayout = pipelineInfo.Shader->GetDescriptorSetLayouts()[0];
-		mDescriptorHandle = GraphicsContext::Get().GetDescriptorBufferManager().AllocateDescriptor(descriptorSetLayout, true, true);
+		Pipeline* pipeline = GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Irradiance Cube Pipeline", pipelineInfo);
+		mPipelineBindings = PipelineBindings(pipeline, false);
 	}
 
 	void IrradianceCubePass::Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext)
@@ -85,7 +83,7 @@ namespace Cobalt
 		uint32_t mipLevel = mInvocationIndex / 6;
 		uint32_t viewportSize = static_cast<float>(mDimensions * std::pow(0.5f, mipLevel));
 
-		Texture& framebuffer = Renderer::GetRenderGraph().GetResource(mFramebufferHandle);
+		Texture& framebuffer = mRenderGraph.GetResource(mFramebufferHandle);
 
 		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
 		VulkanCommands::SetViewport(commandBuffer, { viewportSize, viewportSize }, false);
@@ -108,11 +106,7 @@ namespace Cobalt
 		glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 512.0f);
 		glm::mat4 viewProjection = projection * viewMatrices[faceIndex];
 
-		size_t pushConstantBufferSize = mPipeline->GetInfo().Shader->GetPushConstantBufferSize();
-		uint8_t* pushConstantBuffer = new uint8_t[pushConstantBufferSize];
-		std::memset(pushConstantBuffer, 0, pushConstantBufferSize);
-
-		ShaderCursor shaderCursor(mPipeline->GetInfo().Shader->GetRootShaderParameter(), mDescriptorHandle, mPipeline->GetInfo().Shader->GetPushConstantRanges(), pushConstantBuffer);
+		ShaderCursor shaderCursor = mPipelineBindings.GetShaderCursor();
 		shaderCursor.Field("uniforms")
 			.WriteField("ViewProjection", viewProjection)
 			.WriteField("Vertices", mMesh->GetVertexBufferReference())
@@ -121,15 +115,13 @@ namespace Cobalt
 		shaderCursor.WriteField("environmentMap", *mEnvironmentMap);
 		shaderCursor.Finalize();
 
-		GraphicsContext::Get().GetDescriptorBufferManager().SetDescriptorBufferOffsets(commandBuffer, mPipeline->GetPipelineLayout(), mDescriptorHandle);
-		vkCmdPushConstants(commandBuffer, mPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantBufferSize, pushConstantBuffer);
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipeline());
+		GraphicsContext::Get().GetDescriptorBufferManager().SetDescriptorBufferOffsets(commandBuffer, mPipelineBindings.PipelineRef->GetPipelineLayout(), mPipelineBindings.DescriptorHandles[0]);
+		vkCmdPushConstants(commandBuffer, mPipelineBindings.PipelineRef->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, mPipelineBindings.PushConstantBuffer.size(), mPipelineBindings.PushConstantBuffer.data());
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineBindings.PipelineRef->GetPipeline());
 		vkCmdBindIndexBuffer(commandBuffer, mMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		vkCmdDrawIndexed(commandBuffer, mMesh->GetIndices().size(), 1, 0, 0, 0);
 
 		mRenderGraph.EndPass(commandBuffer, mPassHandle);
-
-		delete[] pushConstantBuffer;
 
 		framebuffer.SetImageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
@@ -138,9 +130,7 @@ namespace Cobalt
 		VulkanCommands::TransitionImageLayout(commandBuffer, framebuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		if (mInvocationIndex == mInvocationCount - 1)
-		{
 			VulkanCommands::TransitionImageLayout(commandBuffer, *mIrradianceCube, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-		}
 
 		mInvocationIndex++;
 	}

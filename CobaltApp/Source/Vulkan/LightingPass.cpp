@@ -9,8 +9,7 @@ namespace Cobalt
 {
 
 	LightingPass::LightingPass()
-		: RenderPass("Lighting Pass", "Deferred\\LightingPass.slang", (RenderPassFlags)RenderPassFlagBits::SideAffect),
-		mDescriptorBufferManager(GraphicsContext::Get().GetDescriptorBufferManager())
+		: RenderPass("Lighting Pass", "Deferred\\LightingPass.slang", (RenderPassFlags)RenderPassFlagBits::SideAffect)
 	{
 		CO_PROFILE_FN();
 	}
@@ -49,16 +48,7 @@ namespace Cobalt
 			}
 		};
 
-		mLightingPipeline = GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Lighting", lightingPassPipelineInfo);
-
-		// Allocate descriptors
-
-		uint32_t frameCount = GraphicsContext::Get().GetFrameCount();
-
-		mLightingDescriptors.resize(frameCount);
-
-		for (uint32_t i = 0; i < frameCount; i++)
-			mLightingDescriptors[i] = mDescriptorBufferManager.AllocateDescriptor(lightingPassPipelineInfo.Shader->GetDescriptorSetLayouts()[0], true, true);
+		mLightingPipelineBindings = PipelineBindings(GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Lighting", lightingPassPipelineInfo));
 	}
 
 	void LightingPass::SetSkybox(const Cubemap* skybox, const Mesh* skyboxMesh)
@@ -78,19 +68,16 @@ namespace Cobalt
 			}
 		};
 
-		mSkyboxPipeline = GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Skybox", skyboxPipelineInfo);
+		mSkyboxPipelineBindings = PipelineBindings(GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Skybox", skyboxPipelineInfo));
 
-		// Allocate buffers & descriptors
+		// Allocate buffers
 
 		uint32_t frameCount = GraphicsContext::Get().GetFrameCount();
-
 		mSkyboxUniformBuffers.resize(frameCount);
-		mSkyboxDescriptors.resize(frameCount);
 
 		for (uint32_t i = 0; i < frameCount; i++)
 		{
 			mSkyboxUniformBuffers[i] = VulkanBuffer::CreateMappedBuffer(sizeof(SkyboxUniformBuffer), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT);
-			mSkyboxDescriptors[i] = mDescriptorBufferManager.AllocateDescriptor(skyboxPipelineInfo.Shader->GetDescriptorSetLayouts()[0], true, true);
 		}
 	}
 
@@ -114,6 +101,7 @@ namespace Cobalt
 		CO_PROFILE_FN();
 
 		uint32_t frameIndex = GraphicsContext::Get().GetFrameIndex();
+		auto& descriptorBufferManager = GraphicsContext::Get().GetDescriptorBufferManager();
 
 		SkyboxUniformBuffer skyboxUniformBufferData{};
 		skyboxUniformBufferData.ProjectionMatrix = renderContext.ProjectionMatrix;
@@ -122,15 +110,14 @@ namespace Cobalt
 
 		mSkyboxUniformBuffers[frameIndex]->CopyData(&skyboxUniformBufferData, sizeof(SkyboxUniformBuffer));
 
-		ShaderCursor skyboxShaderCursor(mSkyboxPipeline->GetInfo().Shader->GetRootShaderParameter(), mSkyboxDescriptors[frameIndex]);
-		skyboxShaderCursor.WriteField("uniforms", *mSkyboxUniformBuffers[frameIndex]);
-//		skyboxShaderCursor.WriteField("skybox", *mSkybox);
-		skyboxShaderCursor.WriteField("skybox", *renderContext.IrradianceCube);
-		skyboxShaderCursor.Finalize();
+		ShaderCursor shaderCursor = mSkyboxPipelineBindings.GetShaderCursor(frameIndex);
+		shaderCursor.WriteField("uniforms", *mSkyboxUniformBuffers[frameIndex]);
+		shaderCursor.WriteField("skybox", *mSkybox);
+		shaderCursor.Finalize();
 
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mSkyboxPipeline->GetPipeline());
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mSkyboxPipelineBindings.PipelineRef->GetPipeline());
 		vkCmdBindIndexBuffer(commandBuffer, mSkyboxMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		mDescriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, mSkyboxPipeline->GetPipelineLayout(), mSkyboxDescriptors[frameIndex]);
+		descriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, mSkyboxPipelineBindings.PipelineRef->GetPipelineLayout(), mSkyboxPipelineBindings.DescriptorHandles[frameIndex]);
 		vkCmdDrawIndexed(commandBuffer, mSkyboxMesh->GetIndices().size(), 1, 0, 0, 0);
 	}
 
@@ -142,19 +129,19 @@ namespace Cobalt
 		auto& descriptorBufferManager = GraphicsContext::Get().GetDescriptorBufferManager();
 		auto& renderGraph = Renderer::GetRenderGraph();
 
-		ShaderCursor lightingPassShaderCursor(mLightingPipeline->GetInfo().Shader->GetRootShaderParameter(), mLightingDescriptors[frameIndex]);
-		lightingPassShaderCursor.Field("scene").Write(*renderContext.SceneBuffer);
-		lightingPassShaderCursor.Field("gBuffers")
+		ShaderCursor shaderCursor = mLightingPipelineBindings.GetShaderCursor(frameIndex);
+		shaderCursor.Field("scene").Write(*renderContext.SceneBuffer);
+		shaderCursor.Field("gBuffers")
 			.WriteField("SamplerPosition", renderGraph.GetResource(mPositionAttachment))
 			.WriteField("SamplerBaseColor", renderGraph.GetResource(mBaseColorAttachment))
 			.WriteField("SamplerNormal", renderGraph.GetResource(mNormalAttachment))
 			.WriteField("SamplerOcclusionRoughnessMetallic", renderGraph.GetResource(mOCRAttachment))
 			.WriteField("SamplerEmissive", renderGraph.GetResource(mEmissiveAttachment));
-		lightingPassShaderCursor.WriteField("irradianceMap", *renderContext.IrradianceCube);
-		lightingPassShaderCursor.Finalize();
+		shaderCursor.WriteField("irradianceMap", *renderContext.IrradianceCube);
+		shaderCursor.Finalize();
 
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline->GetPipeline());
-		descriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, mLightingPipeline->GetPipelineLayout(), mLightingDescriptors[frameIndex]);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipelineBindings.PipelineRef->GetPipeline());
+		descriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, mLightingPipelineBindings.PipelineRef->GetPipelineLayout(), mLightingPipelineBindings.DescriptorHandles[frameIndex]);
 		vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 	}
 

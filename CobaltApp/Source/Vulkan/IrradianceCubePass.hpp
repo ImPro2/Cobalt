@@ -1,5 +1,6 @@
 #pragma once
 #include "RenderPass.hpp"
+#include "PipelineBindings.hpp"
 
 namespace Cobalt
 {
@@ -23,8 +24,7 @@ namespace Cobalt
 		uint32_t mDimensions = 32;
 
 		RGResourceHandle mFramebufferHandle = 0;
-		Pipeline* mPipeline = nullptr;
-		DescriptorHandle mDescriptorHandle = 0;
+		PipelineBindings mPipelineBindings;
 
 		Cubemap* mEnvironmentMap = nullptr;
 		const Mesh* mMesh = nullptr;

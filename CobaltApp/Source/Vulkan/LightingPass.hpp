@@ -4,6 +4,7 @@
 #include "Pipeline.hpp"
 #include "ShaderCursor.hpp"
 #include "Texture.hpp"
+#include "PipelineBindings.hpp"
 
 #include <vector>
 
@@ -28,15 +29,8 @@ namespace Cobalt
 		void ExecuteLightingPass(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
 
 	private:
-		DescriptorBufferManager& mDescriptorBufferManager;
-
 		RGResourceHandle mPositionAttachment, mBaseColorAttachment, mNormalAttachment, mOCRAttachment, mEmissiveAttachment;
-
-		Pipeline* mSkyboxPipeline = nullptr;
-		Pipeline* mLightingPipeline = nullptr;
-
-		std::vector<DescriptorHandle> mSkyboxDescriptors;
-		std::vector<DescriptorHandle> mLightingDescriptors;
+		PipelineBindings mSkyboxPipelineBindings, mLightingPipelineBindings;
 
 		struct SkyboxUniformBuffer
 		{
