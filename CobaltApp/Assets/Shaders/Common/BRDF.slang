@@ -9,6 +9,7 @@ public struct CookTorranceBRDF : IBRDF
 {
 	public __init(in float3 baseColor, in float roughness, in float metallic)
 	{
+		BaseColor = baseColor;
 		NormalisedBaseColor = baseColor / float.getPi(); // for diffuse normalisation
 		Roughness = roughness;
 		Metallic = metallic;
@@ -16,14 +17,15 @@ public struct CookTorranceBRDF : IBRDF
 		F0 = float3(0.04);
 		F0 = lerp(F0, baseColor, Metallic);
 	}
-
+	
+	float3 BaseColor;
 	float3 NormalisedBaseColor;
 	float Roughness;
 	float Metallic;
 
 	float3 F0;
 
-	public float3 Evaluate(float3 v, float3 l, float3 n)
+	public float3 Evaluate(in float3 v, in float3 l, in float3 n)
 	{
 		float3 h = normalize(v + l);
 
@@ -46,6 +48,15 @@ public struct CookTorranceBRDF : IBRDF
 		return (diffuse + specular) * nDotL;
 	}
 
+	public float3 CalculateAmbient(in float3 n, in float3 v, in float3 irradiance)
+	{
+		float3 kS = FresnelSchlickRoughness(saturate(dot(n, v)), F0, Roughness);
+		float3 kD = float3(1.0) - kS;
+		kD *= 1.0 - Metallic;
+
+		float3 diffuse = irradiance * BaseColor.rgb;
+		return kD * diffuse;
+	}
 };
 
 // Trowbridge-Reitz GGX normal distribution function
@@ -83,6 +94,11 @@ internal float GeometrySmith(in float nDotV, in float nDotL, in float roughness)
 internal float3 FresnelSchlick(in float hDotV, in float3 f0)
 {
 	float f = pow(saturate(1.0 - hDotV), 5.0);
-	return f + f0 * (1.0 - f);
+	//return f + f0 * (1.0 - f);
+	return f0 + (float3(1.0) - f0) * f;
 }
 
+internal float3 FresnelSchlickRoughness(in float cosTheta, in float3 f0, in float roughness)
+{
+	return f0 + (max(float3(1.0 - roughness), f0) - f0) * pow(saturate(1.0 - cosTheta), 5.0);
+}

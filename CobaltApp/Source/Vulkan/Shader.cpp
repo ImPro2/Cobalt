@@ -16,7 +16,7 @@ namespace Cobalt
 	{
 		mLinkedProgram = ShaderCompiler::CompileShader(filePath);
 
-		if (filePath.contains("IrradianceCube.slang"))
+		if (filePath.contains("LightingPass.slang"))
 		{
 			//__debugbreak();
 		}

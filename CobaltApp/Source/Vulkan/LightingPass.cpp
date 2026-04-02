@@ -124,8 +124,7 @@ namespace Cobalt
 
 		ShaderCursor skyboxShaderCursor(mSkyboxPipeline->GetInfo().Shader->GetRootShaderParameter(), mSkyboxDescriptors[frameIndex]);
 		skyboxShaderCursor.WriteField("uniforms", *mSkyboxUniformBuffers[frameIndex]);
-//		skyboxShaderCursor.WriteField("skybox", *mSkybox);
-		skyboxShaderCursor.WriteField("skybox", *renderContext.IrradianceCube);
+		skyboxShaderCursor.WriteField("skybox", *mSkybox);
 		skyboxShaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mSkyboxPipeline->GetPipeline());
@@ -150,6 +149,7 @@ namespace Cobalt
 			.WriteField("SamplerNormal", renderGraph.GetResource(mNormalAttachment))
 			.WriteField("SamplerOcclusionRoughnessMetallic", renderGraph.GetResource(mOCRAttachment))
 			.WriteField("SamplerEmissive", renderGraph.GetResource(mEmissiveAttachment));
+		lightingPassShaderCursor.WriteField("irradianceMap", *renderContext.IrradianceCube);
 		lightingPassShaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipeline->GetPipeline());

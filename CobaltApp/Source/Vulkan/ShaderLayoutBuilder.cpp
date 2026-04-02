@@ -358,11 +358,12 @@ namespace Cobalt
 			case slang::TypeReflection::Kind::Struct:
 			{
 				uint32_t fieldCount = typeLayout->getFieldCount();
-				uint32_t localBindingOffset = bindingOffset + shaderParameter.Binding;
-				uint32_t localUniformByteOffset = uniformByteOffset + shaderParameter.UniformByteOffset;
 
 				for (uint32_t i = 0; i < fieldCount; i++)
 				{
+					uint32_t localBindingOffset = bindingOffset + shaderParameter.Binding;
+					uint32_t localUniformByteOffset = uniformByteOffset + shaderParameter.UniformByteOffset;
+
 					slang::VariableLayoutReflection* fieldVarLayout  = typeLayout->getFieldByIndex(i);
 					slang::TypeLayoutReflection* fieldTypeLayout  = fieldVarLayout->getTypeLayout();
 					slang::TypeReflection::Kind kind = fieldTypeLayout->getKind();

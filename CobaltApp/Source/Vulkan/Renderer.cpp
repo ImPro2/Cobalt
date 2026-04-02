@@ -95,6 +95,8 @@ namespace Cobalt
 		});
 
 		sData->mRenderContext.IrradianceCube = irradianceCubePass->GetIrradianceCube();
+
+		//vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
 	}
 
 	void Renderer::BeginScene(const GPUScene& scene, const glm::mat4& projectionMat, const glm::mat4& viewMat)
