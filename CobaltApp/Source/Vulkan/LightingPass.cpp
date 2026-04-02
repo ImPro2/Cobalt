@@ -124,7 +124,8 @@ namespace Cobalt
 
 		ShaderCursor skyboxShaderCursor(mSkyboxPipeline->GetInfo().Shader->GetRootShaderParameter(), mSkyboxDescriptors[frameIndex]);
 		skyboxShaderCursor.WriteField("uniforms", *mSkyboxUniformBuffers[frameIndex]);
-		skyboxShaderCursor.WriteField("skybox", *mSkybox);
+//		skyboxShaderCursor.WriteField("skybox", *mSkybox);
+		skyboxShaderCursor.WriteField("skybox", *renderContext.IrradianceCube);
 		skyboxShaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mSkyboxPipeline->GetPipeline());

@@ -73,25 +73,11 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		bool pushConstant = false;
-		uint32_t uniformByteOffset = 0;
-		uint32_t pushConstantRangeIndex = 0;
-
-		if (!mPushConstantRanges.empty())
-		{
-			uniformByteOffset = mPushConstantRanges.back().size;
-			pushConstantRangeIndex = mPushConstantRanges.size() - 1;
-		}
-
 		slang::VariableLayoutReflection* varLayout = entryPointLayout->getVarLayout();
 		BindingOffset entryPointOffset(varLayout);
 
 		AddDescriptorBindings(entryPointLayout->getTypeLayout(), entryPointOffset, entryPointLayout->getStage());
-
-		if (!mPushConstantRanges.empty())
-			pushConstant = true;
-
-		AddShaderParameters(varLayout, entryPointLayout->getStage(), mRootShaderParam, varLayout->getOffset(SLANG_PARAMETER_CATEGORY_DESCRIPTOR_TABLE_SLOT), uniformByteOffset, pushConstant, pushConstantRangeIndex);
+		AddShaderParameters(varLayout, entryPointLayout->getStage(), mRootShaderParam, varLayout->getOffset(SLANG_PARAMETER_CATEGORY_DESCRIPTOR_TABLE_SLOT), 0, !mPushConstantRanges.empty(), mPushConstantRanges.size() - 1);
 	}
 
 	void ShaderLayoutBuilder::AddDescriptorBindings(slang::TypeLayoutReflection* typeLayout, BindingOffset bindingOffset, SlangStage shaderStage)
@@ -272,7 +258,6 @@ namespace Cobalt
 		else
 		{
 			mPushConstantRanges.back().stageFlags |= stageFlags;
-			mPushConstantRanges.back().size += (uint32_t)typeLayout->getSize();
 		}
 
 		AddDescriptorBindings(typeLayout, bindingOffset, shaderStage);

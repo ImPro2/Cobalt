@@ -37,6 +37,8 @@ namespace Cobalt
 
 		if (mShaderParameter.IsPushConstant)
 		{
+			assert(size == mShaderParameter.UniformSize);
+
 			size_t pushConstantRangeOffset = mPushConstantRanges[mShaderParameter.PushConstantRangeIndex].offset + mShaderParameter.UniformByteOffset;
 			void* dst = mPushConstantBuffer + pushConstantRangeOffset;
 			memcpy(dst, data, size);

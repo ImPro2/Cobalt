@@ -16,11 +16,6 @@ namespace Cobalt
 	{
 		mLinkedProgram = ShaderCompiler::CompileShader(filePath);
 
-		if (filePath.contains("LightingPass.slang"))
-		{
-			//__debugbreak();
-		}
-
 		InitShaderStages();
 		Reflect();
 	}
@@ -57,7 +52,6 @@ namespace Cobalt
 
 		for (const auto& pushConstantRange : mPushConstantRanges)
 			mPushConstantBufferSize += pushConstantRange.size;
-
 	}
 
 }

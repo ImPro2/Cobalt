@@ -108,41 +108,28 @@ namespace Cobalt
 		glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 512.0f);
 		glm::mat4 viewProjection = projection * viewMatrices[faceIndex];
 
-		struct PushConstants
-		{
-			glm::mat4 ViewProjection;
-			VkDeviceAddress Vertices;
-			float DeltaTheta = (0.5f * glm::pi<float>()) / 64.0f;
-			float DeltaPhi = (2.0f * glm::pi<float>()) / 180.0f;
-		};
+		size_t pushConstantBufferSize = mPipeline->GetInfo().Shader->GetPushConstantBufferSize();
+		uint8_t* pushConstantBuffer = new uint8_t[pushConstantBufferSize];
+		std::memset(pushConstantBuffer, 0, pushConstantBufferSize);
 
-		PushConstants pushConstants;
-		pushConstants.ViewProjection = viewProjection;
-		pushConstants.Vertices = mMesh->GetVertexBufferReference();
-
-		//size_t pushConstantBufferSize = mPipeline->GetInfo().Shader->GetPushConstantBufferSize();
-		//uint8_t* pushConstantBuffer = new uint8_t[pushConstantBufferSize];
-		//std::memset(pushConstantBuffer, 0, pushConstantBufferSize);
-
-		ShaderCursor shaderCursor(mPipeline->GetInfo().Shader->GetRootShaderParameter(), mDescriptorHandle, mPipeline->GetInfo().Shader->GetPushConstantRanges());
-		//shaderCursor.WriteField("viewProjection", viewProjection);
-		//shaderCursor.WriteField("vertices", mMesh->GetVertexBufferReference());
-		//shaderCursor.WriteField("deltaPhi", (2.0f * glm::pi<float>()) / 180.0f);
-		//shaderCursor.WriteField("deltaTheta", (0.5f * glm::pi<float>()) / 64.0f);
+		ShaderCursor shaderCursor(mPipeline->GetInfo().Shader->GetRootShaderParameter(), mDescriptorHandle, mPipeline->GetInfo().Shader->GetPushConstantRanges(), pushConstantBuffer);
+		shaderCursor.Field("uniforms")
+			.WriteField("ViewProjection", viewProjection)
+			.WriteField("Vertices", mMesh->GetVertexBufferReference())
+			.WriteField("DeltaPhi", (2.0f * glm::pi<float>()) / 180.0f)
+			.WriteField("DeltaTheta", (0.5f * glm::pi<float>()) / 64.0f);
 		shaderCursor.WriteField("environmentMap", *mEnvironmentMap);
 		shaderCursor.Finalize();
 
 		GraphicsContext::Get().GetDescriptorBufferManager().SetDescriptorBufferOffsets(commandBuffer, mPipeline->GetPipelineLayout(), mDescriptorHandle);
-		vkCmdPushConstants(commandBuffer, mPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, 80, &pushConstants);
-		//vkCmdPushConstants(commandBuffer, mPipeline->GetPipelineLayout(), VK_SHADER_STAGE_FRAGMENT_BIT, 72, 8, &pushConstantsFragment);
-		//vkCmdPushConstants(commandBuffer, mPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 72, 8, &pushConstantsFragment);
+		vkCmdPushConstants(commandBuffer, mPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantBufferSize, pushConstantBuffer);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipeline());
 		vkCmdBindIndexBuffer(commandBuffer, mMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		vkCmdDrawIndexed(commandBuffer, mMesh->GetIndices().size(), 1, 0, 0, 0);
 
 		mRenderGraph.EndPass(commandBuffer, mPassHandle);
 
-		//delete[] pushConstantBuffer;
+		delete[] pushConstantBuffer;
 
 		framebuffer.SetImageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
