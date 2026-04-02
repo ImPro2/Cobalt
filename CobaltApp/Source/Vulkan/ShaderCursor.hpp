@@ -14,7 +14,7 @@ namespace Cobalt
 	class ShaderCursor
 	{
 	public:
-		ShaderCursor(ShaderParameter& shaderParameter, DescriptorHandle descriptorHandle, const std::vector<VkPushConstantRange>& pushConstantRanges = {}, uint8_t* pushConstantBuffer = nullptr);
+		ShaderCursor(ShaderParameter& shaderParameter, const DescriptorHandle descriptorHandle, const std::vector<VkPushConstantRange>& pushConstantRanges = {}, uint8_t* pushConstantBuffer = nullptr);
 		ShaderCursor(const ShaderCursor& other);
 		~ShaderCursor();
 

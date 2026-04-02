@@ -1,9 +1,9 @@
 #pragma once
-//#include "Vulkan/ShaderStructs.hpp"
 #include "Vulkan/Pipeline.hpp"
 #include "Vulkan/HashUtils.hpp"
 #include "Vulkan/DescriptorBufferManager.hpp"
 #include "Vulkan/ShaderCursor.hpp"
+#include "Vulkan/PipelineBindings.hpp"
 
 #include <glm/glm.hpp>
 
@@ -76,20 +76,14 @@ namespace Cobalt
 
 	struct ShaderEffect
 	{
-		std::unordered_map<std::string, Pipeline*> PassPipelines;
+		std::unordered_map<std::string, PipelineBindings> PassPipelineBindings;
 		TransparencyMode Transparency;
-		PassDescriptorHandles PassDescriptors;
 
 		ShaderCursor GetShaderCursor(const std::string& passName, uint32_t frameIndex) const
 		{
 			CO_PROFILE_FN();
 
-			Shader* shader = PassPipelines.at(passName)->GetInfo().Shader;
-			ShaderParameter& rootShaderParam = shader->GetRootShaderParameter();
-			DescriptorHandle descriptorHandle = PassDescriptors.at(passName)[frameIndex];
-			const auto& pushConstantRanges = shader->GetPushConstantRanges();
-
-			return ShaderCursor(rootShaderParam, descriptorHandle, pushConstantRanges);
+			return PassPipelineBindings.at(passName).GetShaderCursor(frameIndex);
 		}
 	};
 

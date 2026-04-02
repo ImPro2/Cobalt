@@ -151,8 +151,7 @@ namespace Cobalt
 		for (const DrawBatch& batch : batches)
 		{
 			const VulkanBuffer& indexBuffer = *batch.IndexBuffer;
-			const Pipeline& pipeline = *batch.Effect->PassPipelines.at(passName);
-			DescriptorHandle descriptorHandle = batch.Effect->PassDescriptors.at(passName)[frameIndex];
+			const PipelineBindings& pipelineBindings = batch.Effect->PassPipelineBindings.at(passName);
 
 			if (indexBuffer.GetBuffer() != lastIndexBuffer)
 			{
@@ -160,11 +159,11 @@ namespace Cobalt
 				vkCmdBindIndexBuffer(commandBuffer, indexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 			}
 
-			if (pipeline.GetPipeline() != lastPipeline)
+			if (pipelineBindings.PipelineRef->GetPipeline() != lastPipeline)
 			{
-				lastPipeline = pipeline.GetPipeline();
-				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.GetPipeline());
-				descriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, pipeline.GetPipelineLayout(), descriptorHandle);
+				lastPipeline = pipelineBindings.PipelineRef->GetPipeline();
+				vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineBindings.PipelineRef->GetPipeline());
+				descriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, pipelineBindings.PipelineRef->GetPipelineLayout(), pipelineBindings.DescriptorHandles[frameIndex]);
 			}
 
 			vkCmdDrawIndexed(commandBuffer, batch.IndexCount, batch.InstanceCount, batch.FirstIndex, 0, batch.FirstInstance);
@@ -201,8 +200,8 @@ namespace Cobalt
 			DrawBatch&      lastBatch = batches.back();
 			const DrawCall& currDraw  = renderContext.DrawCalls[i];
 
-			VkPipeline currPipeline = currDraw.Material->GetShaderEffect()->PassPipelines.at(passName)->GetPipeline();
-			VkPipeline lastPipeline = lastBatch.Effect->PassPipelines.at(passName)->GetPipeline();
+			VkPipeline currPipeline = currDraw.Material->GetShaderEffect()->PassPipelineBindings.at(passName).PipelineRef->GetPipeline();
+			VkPipeline lastPipeline = lastBatch.Effect->PassPipelineBindings.at(passName).PipelineRef->GetPipeline();
 
 			bool sameIndexBuffer = currDraw.IndexBuffer == lastBatch.IndexBuffer;
 			bool samePipeline    = lastPipeline == currPipeline;

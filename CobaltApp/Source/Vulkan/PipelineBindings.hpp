@@ -4,6 +4,7 @@
 #include "GraphicsContext.hpp"
 #include "DescriptorBufferManager.hpp"
 #include "ShaderCursor.hpp"
+#include "ShaderParameters.hpp"
 
 namespace Cobalt
 {
@@ -42,7 +43,7 @@ namespace Cobalt
 			PushConstantBuffer.resize(size);
 		}
 
-		ShaderCursor GetShaderCursor(uint32_t frameIndex = 0)
+		ShaderCursor GetShaderCursor(uint32_t frameIndex = 0) const
 		{
 			CO_PROFILE_FN();
 
@@ -52,13 +53,13 @@ namespace Cobalt
 				shader->GetRootShaderParameter(),
 				DescriptorHandles[frameIndex],
 				shader->GetPushConstantRanges(),
-				PushConstantBuffer.empty() ? nullptr : PushConstantBuffer.data()
+				PushConstantBuffer.data()
 			);
 		}
 
-		Pipeline* PipelineRef = nullptr;
-		std::vector<DescriptorHandle> DescriptorHandles;
-		std::vector<uint8_t> PushConstantBuffer;
+		mutable Pipeline* PipelineRef = nullptr;
+		mutable std::vector<DescriptorHandle> DescriptorHandles;
+		mutable std::vector<uint8_t> PushConstantBuffer;
 	};
 
 }

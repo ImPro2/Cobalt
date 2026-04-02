@@ -75,22 +75,8 @@ namespace Cobalt
 		auto& shaderEffect = mShaderEffects[shaderEffectName];
 		shaderEffect.Transparency = transparency;
 
-		// Allocate descriptors
-
-		auto& descriptorBufferManager = GraphicsContext::Get().GetDescriptorBufferManager();
-
 		for (const std::string& passName : mMeshPassNames)
-		{
-			auto& pipeline = shaderEffect.PassPipelines[passName];
-			auto& descriptors = shaderEffect.PassDescriptors[passName];
-
-			pipeline = mPipelineRegistry.GetPipeline(passName);
-
-			VkDescriptorSetLayout descriptorSetLayout = pipeline->GetInfo().Shader->GetDescriptorSetLayouts()[0];
-
-			for (uint32_t i = 0; i < GraphicsContext::Get().GetFrameCount(); i++)
-				descriptors.push_back(descriptorBufferManager.AllocateDescriptor(descriptorSetLayout, true, true));
-		}
+			shaderEffect.PassPipelineBindings[passName] = PipelineBindings(mPipelineRegistry.GetPipeline(passName));
 
 		return &mShaderEffects[shaderEffectName];
 	}

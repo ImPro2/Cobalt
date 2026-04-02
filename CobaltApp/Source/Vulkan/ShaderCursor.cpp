@@ -6,7 +6,7 @@
 namespace Cobalt
 {
 
-	ShaderCursor::ShaderCursor(ShaderParameter& shaderParameter, DescriptorHandle descriptorHandle, const std::vector<VkPushConstantRange>& pushConstantRanges, uint8_t* pushConstantBuffer)
+	ShaderCursor::ShaderCursor(ShaderParameter& shaderParameter, const DescriptorHandle descriptorHandle, const std::vector<VkPushConstantRange>& pushConstantRanges, uint8_t* pushConstantBuffer)
 		: mShaderParameter(shaderParameter), mDescriptorBindings{}, mDescriptorBindingsRef(mDescriptorBindings), mDescriptorHandle(descriptorHandle),
 		  mPushConstantRanges(pushConstantRanges), mPushConstantBuffer(pushConstantBuffer)
 	{
