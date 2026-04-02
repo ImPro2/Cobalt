@@ -11,18 +11,21 @@ namespace Cobalt
 	class VulkanCommands
 	{
 	public:
-		static void SetViewport(VkCommandBuffer commandBuffer, VkExtent2D extent)
+		static void SetViewport(VkCommandBuffer commandBuffer, VkExtent2D extent, bool flipY = true)
 		{
 			CO_PROFILE_FN();
 
-			VkViewport viewport = {
-				.x = 0,
-				.y = (float)extent.height,
-				.width = (float)extent.width,
-				.height = -(float)extent.height,
-				.minDepth = 0.0f,
-				.maxDepth = 1.0f
-			};
+			VkViewport viewport{};
+			viewport.width = (float)extent.width;
+			viewport.height = (float)extent.height;
+			viewport.maxDepth = 1.0f;
+
+			if (flipY)
+			{
+				viewport.y = (float)extent.height;
+				viewport.width = (float)extent.width;
+				viewport.height = -(float)extent.height;
+			}
 
 			VkRect2D scissor = {
 				.extent = extent
@@ -118,9 +121,11 @@ namespace Cobalt
 			auto [srcAccess, srcStage] = GetSyncOptsFromImageLayout(oldImageLayout);
 			auto [dstAccess, dstStage] = GetSyncOptsFromImageLayout(newImageLayout);
 
-			VkImageMemoryBarrier imageMemoryBarrier = {
-				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			VkImageMemoryBarrier2 imageMemoryBarrier = {
+				.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+				.srcStageMask = srcStage,
 				.srcAccessMask = srcAccess,
+				.dstStageMask = dstStage,
 				.dstAccessMask = dstAccess,
 				.oldLayout = oldImageLayout,
 				.newLayout = newImageLayout,
@@ -136,7 +141,15 @@ namespace Cobalt
 				}
 			};
 
-			vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+			//vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+
+			VkDependencyInfo dependencyInfo = {
+				.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+				.imageMemoryBarrierCount = 1,
+				.pImageMemoryBarriers = &imageMemoryBarrier,
+			};
+
+			vkCmdPipelineBarrier2(commandBuffer, &dependencyInfo);
 		}
 
 		static void TransitionImageLayout(VkCommandBuffer commandBuffer, Texture& texture, VkImageLayout newImageLayout)
@@ -162,15 +175,17 @@ namespace Cobalt
 		}
 
 	private:
-		static std::pair<VkAccessFlags, VkPipelineStageFlags> GetSyncOptsFromImageLayout(VkImageLayout imageLayout)
+		static std::pair<VkAccessFlags2, VkPipelineStageFlags2> GetSyncOptsFromImageLayout(VkImageLayout imageLayout)
 		{
 			CO_PROFILE_FN();
 
 			switch (imageLayout)
 			{
-				case VK_IMAGE_LAYOUT_UNDEFINED:                return { 0, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT };
-				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:     return { VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT };
-				case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: return { VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT };
+				case VK_IMAGE_LAYOUT_UNDEFINED:                return { 0, VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT };
+				case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL:     return { VK_ACCESS_2_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_2_TRANSFER_BIT };
+				case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL:     return { VK_ACCESS_2_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_2_TRANSFER_BIT };
+				case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: return { VK_ACCESS_2_SHADER_READ_BIT, VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT };
+				case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL: return { VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT };
 			}
 
 			return {};

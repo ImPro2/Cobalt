@@ -36,7 +36,7 @@ float4 Fragment(VSOutput input, uniform Uniforms uniforms, SamplerCube environme
 	float3 up = float3(0.0, 1.0, 0.0);
 	float3 right  = normalize(cross(up, normal));
 	up = cross(normal, right);
-	
+
 	const float TWO_PI  = 2.0 * float.getPi();
 	const float HALF_PI = 0.5 * float.getPi();
 	

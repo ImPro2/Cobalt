@@ -83,59 +83,12 @@ namespace Cobalt
 
 		uint32_t faceIndex = mInvocationIndex % 6;
 		uint32_t mipLevel = mInvocationIndex / 6;
+		uint32_t viewportSize = static_cast<float>(mDimensions * std::pow(0.5f, mipLevel));
 
 		Texture& framebuffer = Renderer::GetRenderGraph().GetResource(mFramebufferHandle);
 
-		VkImageMemoryBarrier2 memoryBarrier0 = {
-			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			.srcStageMask = /*VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT*/ VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-			.srcAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-			.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-			.image = framebuffer.GetImage(),
-			.subresourceRange = {
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1,
-			},
-		};
-
-		if (mInvocationIndex > 0)
-		{
-			VkDependencyInfo dependencyInfo = {
-				.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-				.imageMemoryBarrierCount = 1,
-				.pImageMemoryBarriers = &memoryBarrier0,
-			};
-
-			vkCmdPipelineBarrier2(commandBuffer, &dependencyInfo);
-
-			framebuffer.SetImageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-		}
-
 		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
-
-		uint32_t viewportSize = static_cast<float>(mDimensions * std::pow(0.5f, mipLevel));
-
-		VkViewport viewport = {
-			.width = (float)viewportSize,
-			.height = (float)viewportSize,
-			.minDepth = 0.0f,
-			.maxDepth = 1.0f
-		};
-
-		VkRect2D scissor = {
-			.extent = { (uint32_t)viewportSize, (uint32_t)viewportSize }
-		};
-
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+		VulkanCommands::SetViewport(commandBuffer, { viewportSize, viewportSize }, false);
 
 		glm::mat4 viewMatrices[6] = {
 			// POSITIVE_X
@@ -191,39 +144,11 @@ namespace Cobalt
 
 		//delete[] pushConstantBuffer;
 
-		VkImageMemoryBarrier2 memoryBarriers[1];
-		memoryBarriers[0] = {
-			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-			.dstStageMask = /*VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT*/ VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-			.dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
-			.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
-			.image = framebuffer.GetImage(),
-			.subresourceRange = {
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-				.baseMipLevel = 0,
-				.levelCount = 1,
-				.baseArrayLayer = 0,
-				.layerCount = 1,
-			},
-		};
+		framebuffer.SetImageLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-		VkDependencyInfo dependencyInfo = {
-			.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-			.imageMemoryBarrierCount = 1,
-			.pImageMemoryBarriers = memoryBarriers,
-		};
-
-		vkCmdPipelineBarrier2(commandBuffer, &dependencyInfo);
-
-		//VulkanCommands::TransitionImageLayout(commandBuffer, framebuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		framebuffer.SetImageLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		VulkanCommands::TransitionImageLayout(commandBuffer, framebuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		VulkanCommands::CopyImageToCubemapFace(commandBuffer, framebuffer, *mIrradianceCube, { viewportSize, viewportSize, 1 }, faceIndex, mipLevel);
-		//VulkanCommands::TransitionImageLayout(commandBuffer, framebuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		VulkanCommands::TransitionImageLayout(commandBuffer, framebuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 		if (mInvocationIndex == mInvocationCount - 1)
 		{
