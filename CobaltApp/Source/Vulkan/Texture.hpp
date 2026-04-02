@@ -121,6 +121,7 @@ namespace Cobalt
 		VkFormat Format = VK_FORMAT_UNDEFINED;
 		uint32_t Width = 0;
 		uint32_t Height = 0;
+		uint32_t MipLevels = 1;
 	};
 
 	class Cubemap

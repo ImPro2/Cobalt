@@ -20,7 +20,7 @@ namespace Cobalt
 		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext) override;
 
 	private:
-		uint32_t mDimensions = 256;
+		uint32_t mDimensions = 32;
 
 		RGResourceHandle mFramebufferHandle = 0;
 		Pipeline* mPipeline = nullptr;
@@ -32,6 +32,7 @@ namespace Cobalt
 		std::unique_ptr<Cubemap> mIrradianceCube;
 
 		uint32_t mInvocationIndex = 0;
+		uint32_t mInvocationCount = 0;
 	};
 
 }

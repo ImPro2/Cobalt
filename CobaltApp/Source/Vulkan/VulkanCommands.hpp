@@ -81,18 +81,20 @@ namespace Cobalt
 			CopyBufferToImage(commandBuffer, buffer.GetBuffer(), image.GetImage(), image.GetImageAspectFlags(), { image.GetWidth(), image.GetHeight(), 1 }, bufferOffset, imageOffset);
 		}
 
-		static void CopyImage(VkCommandBuffer commandBuffer, uint32_t srcBaseLayer, uint32_t dstBaseLayer, VkExtent3D extent, VkImage srcImage, VkImage dstImage, VkImageLayout srcImageLayout, VkImageLayout dstImageLayout)
+		static void CopyImage(VkCommandBuffer commandBuffer, uint32_t srcMipLevel, uint32_t dstMipLevel, uint32_t srcBaseLayer, uint32_t dstBaseLayer, VkExtent3D extent, VkImage srcImage, VkImage dstImage, VkImageLayout srcImageLayout, VkImageLayout dstImageLayout)
 		{
 			CO_PROFILE_FN();
 
 			VkImageCopy copyRegion = {
 				.srcSubresource = {
 					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+					.mipLevel = srcMipLevel,
 					.baseArrayLayer = srcBaseLayer,
 					.layerCount = 1,
 				},
 				.dstSubresource = {
 					.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+					.mipLevel = dstMipLevel,
 					.baseArrayLayer = dstBaseLayer,
 					.layerCount = 1,
 				},
@@ -102,11 +104,11 @@ namespace Cobalt
 			vkCmdCopyImage(commandBuffer, srcImage, srcImageLayout, dstImage, dstImageLayout, 1, &copyRegion);
 		}
 
-		static void CopyImageToCubemapFace(VkCommandBuffer commandBuffer, const Texture& texture, const Cubemap& cubemap, uint32_t face)
+		static void CopyImageToCubemapFace(VkCommandBuffer commandBuffer, const Texture& texture, const Cubemap& cubemap, VkExtent3D extent, uint32_t face, uint32_t dstMipLevel)
 		{
 			CO_PROFILE_FN();
 
-			CopyImage(commandBuffer, 0, face, { texture.GetWidth(), texture.GetHeight(), 1 }, texture.GetImage(), cubemap.GetImage(), texture.GetImageLayout(), cubemap.GetImageLayout());
+			CopyImage(commandBuffer, 0, dstMipLevel, 0, face, extent, texture.GetImage(), cubemap.GetImage(), texture.GetImageLayout(), cubemap.GetImageLayout());
 		}
 
 		static void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageAspectFlags imageAspect, uint32_t mipLevels, uint32_t layers, VkImageLayout oldImageLayout, VkImageLayout newImageLayout)

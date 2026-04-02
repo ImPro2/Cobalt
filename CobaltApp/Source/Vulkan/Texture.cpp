@@ -225,6 +225,8 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
+		mMipLevels = cubemapInfo.MipLevels;
+
 		if (cubemapInfo.FacePaths.LoadedFromFile())
 		{
 			auto paths = cubemapInfo.FacePaths.GetPaths();
@@ -339,6 +341,7 @@ namespace Cobalt
 			.compareEnable = VK_FALSE,
 			.compareOp = VK_COMPARE_OP_NEVER,
 			.minLod = 0.0f,
+//			.minLod = mMipLevels / 2.0f,
 			.maxLod = (float)mMipLevels,
 			.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE,
 			.unnormalizedCoordinates = VK_FALSE,

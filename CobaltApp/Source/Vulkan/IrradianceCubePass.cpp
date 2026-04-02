@@ -33,24 +33,27 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		mFramebufferHandle = builder.DeclareResource("Irradiance Cube Framebuffer", RGResourceInfo {
+		mFramebufferHandle = builder.DeclareResource("Irradiance Cube Framebuffer", RGResourceInfo{
 			.ResourceType = RGResourceType::ColorAttachment,
 			.ResourceSizeFlags = RGResourceSizeFlags::Absolute,
 			.Transient = false,
 			.CopySrc = true,
 			.Width = mDimensions,
 			.Height = mDimensions
-		});
+			});
 
 		builder.AddDependency(mFramebufferHandle, RGAccessType::ColorAttachmentWrite);
-		builder.SetClearColor(mFramebufferHandle);
-		builder.SetExecutionCount(6);
+		builder.SetClearColor(mFramebufferHandle, { 0.0f, 0.0f, 0.2f, 0.0f });
 
 		CubemapInfo irradianceCubeInfo = {
 			.Format = VK_FORMAT_R32G32B32A32_SFLOAT,
 			.Width = mDimensions,
 			.Height = mDimensions,
+			.MipLevels = static_cast<uint32_t>(floor(log2(mDimensions))) + 1
 		};
+
+		mInvocationCount = 6 * irradianceCubeInfo.MipLevels;
+		builder.SetExecutionCount(mInvocationCount);
 
 		mIrradianceCube = std::make_unique<Cubemap>(irradianceCubeInfo);
 
@@ -78,14 +81,17 @@ namespace Cobalt
 		CO_PROFILE_FN();
 		assert(mEnvironmentMap && mMesh);
 
+		uint32_t faceIndex = mInvocationIndex % 6;
+		uint32_t mipLevel = mInvocationIndex / 6;
+
 		Texture& framebuffer = Renderer::GetRenderGraph().GetResource(mFramebufferHandle);
 
 		VkImageMemoryBarrier2 memoryBarrier0 = {
 			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-			.srcStageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
-			.srcAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+			.srcStageMask = /*VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT*/ VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+			.srcAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
 			.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
 			.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 			.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -115,19 +121,23 @@ namespace Cobalt
 
 		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
 
+		uint32_t viewportSize = static_cast<float>(mDimensions * std::pow(0.5f, mipLevel));
+
 		VkViewport viewport = {
-			.width = (float)mDimensions, .height = (float)mDimensions, .minDepth = 0.0f, .maxDepth = 1.0f
+			.width = (float)viewportSize,
+			.height = (float)viewportSize,
+			.minDepth = 0.0f,
+			.maxDepth = 1.0f
 		};
 
 		VkRect2D scissor = {
-			.extent = { mDimensions, mDimensions }
+			.extent = { (uint32_t)viewportSize, (uint32_t)viewportSize }
 		};
 
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 		glm::mat4 viewMatrices[6] = {
-#if 1
 			// POSITIVE_X
 			glm::rotate(glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)), glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
 			// NEGATIVE_X
@@ -140,18 +150,10 @@ namespace Cobalt
 			glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f)),
 			// NEGATIVE_Z
 			glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-#else
-			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-			glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-#endif
 		};
 
 		glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 512.0f);
-		glm::mat4 viewProjection = projection * viewMatrices[mInvocationIndex];
+		glm::mat4 viewProjection = projection * viewMatrices[faceIndex];
 
 		struct PushConstants
 		{
@@ -160,13 +162,6 @@ namespace Cobalt
 			float DeltaTheta = (0.5f * glm::pi<float>()) / 64.0f;
 			float DeltaPhi = (2.0f * glm::pi<float>()) / 180.0f;
 		};
-		struct PushConstantsFragment
-		{
-			float DeltaTheta = 0.1f;
-			float DeltaPhi = 0.1f;
-		};
-
-		static_assert(sizeof(PushConstants) == 80);
 
 		PushConstants pushConstants;
 		pushConstants.ViewProjection = viewProjection;
@@ -190,7 +185,7 @@ namespace Cobalt
 		//vkCmdPushConstants(commandBuffer, mPipeline->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 72, 8, &pushConstantsFragment);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline->GetPipeline());
 		vkCmdBindIndexBuffer(commandBuffer, mMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(commandBuffer, mMesh->GetIndices().size(), 1, 0, 0, mInvocationIndex);
+		vkCmdDrawIndexed(commandBuffer, mMesh->GetIndices().size(), 1, 0, 0, 0);
 
 		mRenderGraph.EndPass(commandBuffer, mPassHandle);
 
@@ -200,9 +195,9 @@ namespace Cobalt
 		memoryBarriers[0] = {
 			.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
 			.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-			.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			.dstStageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT,
-			.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT,
+			.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+			.dstStageMask = /*VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT*/ VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+			.dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT,
 			.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 			.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 			.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -227,10 +222,10 @@ namespace Cobalt
 
 		//VulkanCommands::TransitionImageLayout(commandBuffer, framebuffer, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 		framebuffer.SetImageLayout(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-		VulkanCommands::CopyImageToCubemapFace(commandBuffer, framebuffer, *mIrradianceCube, mInvocationIndex);
+		VulkanCommands::CopyImageToCubemapFace(commandBuffer, framebuffer, *mIrradianceCube, { viewportSize, viewportSize, 1 }, faceIndex, mipLevel);
 		//VulkanCommands::TransitionImageLayout(commandBuffer, framebuffer, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-		if (mInvocationIndex == 5)
+		if (mInvocationIndex == mInvocationCount - 1)
 		{
 			VulkanCommands::TransitionImageLayout(commandBuffer, *mIrradianceCube, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
