@@ -8,6 +8,7 @@
 #include "MaterialSystem.hpp"
 
 #include "IrradianceCubePass.hpp"
+#include "BRDFLUTPass.hpp"
 #include "GeometryPass.hpp"
 #include "LightingPass.hpp"
 
@@ -48,6 +49,7 @@ namespace Cobalt
 		sData->mShaderLibrary = std::make_unique<ShaderLibrary>("CobaltApp/Assets/Shaders");
 
 		sData->mRenderGraph = std::make_unique<RenderGraph>();
+		sData->mRenderGraph->AddPass<BRDFLUTPass>();
 		sData->mRenderGraph->AddPass<IrradianceCubePass>();
 		sData->mRenderGraph->AddPass<GeometryPass>();
 		sData->mRenderGraph->AddPass<LightingPass>();
@@ -82,6 +84,7 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
+		BRDFLUTPass* brdflutPass = static_cast<BRDFLUTPass*>(sData->mRenderGraph->GetPass("BRDFLUT Pass"));
 		IrradianceCubePass* irradianceCubePass = static_cast<IrradianceCubePass*>(sData->mRenderGraph->GetPass("Irradiance Cube Pass"));
 		LightingPass* lightingPass = static_cast<LightingPass*>(sData->mRenderGraph->GetPass("Lighting Pass"));
 
@@ -95,6 +98,7 @@ namespace Cobalt
 		});
 
 		sData->mRenderContext.IrradianceCube = irradianceCubePass->GetIrradianceCube();
+		sData->mRenderContext.BRDFLUT = brdflutPass->GetBRDFLUT();
 
 		//vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
 	}

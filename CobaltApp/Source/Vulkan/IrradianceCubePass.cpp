@@ -83,7 +83,7 @@ namespace Cobalt
 		uint32_t mipLevel = mInvocationIndex / 6;
 		uint32_t viewportSize = static_cast<float>(mDimensions * std::pow(0.5f, mipLevel));
 
-		Texture& framebuffer = mRenderGraph.GetResource(mFramebufferHandle);
+		Texture& framebuffer = *mRenderGraph.GetResource(mFramebufferHandle);
 
 		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
 		VulkanCommands::SetViewport(commandBuffer, { viewportSize, viewportSize }, false);

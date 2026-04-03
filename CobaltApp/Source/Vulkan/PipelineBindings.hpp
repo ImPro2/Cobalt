@@ -24,7 +24,12 @@ namespace Cobalt
 			CO_PROFILE_FN();
 
 			auto& descriptorBufferManager = GraphicsContext::Get().GetDescriptorBufferManager();
-			VkDescriptorSetLayout descriptorSetLayout = PipelineRef->GetInfo().Shader->GetDescriptorSetLayouts()[0];
+			auto descriptorSetLayouts = PipelineRef->GetInfo().Shader->GetDescriptorSetLayouts();
+
+			if (descriptorSetLayouts.empty())
+				return;
+
+			VkDescriptorSetLayout descriptorSetLayout = descriptorSetLayouts[0];
 
 			uint32_t descriptorCount = perFrameDescriptors ? GraphicsContext::Get().GetFrameCount() : 1;
 			DescriptorHandles.resize(descriptorCount);

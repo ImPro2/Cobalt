@@ -48,19 +48,23 @@ public struct CookTorranceBRDF : IBRDF
 		return (diffuse + specular) * nDotL;
 	}
 
-	public float3 CalculateAmbient(in float3 n, in float3 v, in float3 irradiance)
+	public float3 CalculateAmbient(in float3 n, in float3 v, in float3 irradiance, in float2 brdf)
 	{
-		float3 kS = FresnelSchlickRoughness(saturate(dot(n, v)), F0, Roughness);
-		float3 kD = float3(1.0) - kS;
+		float3 diffuse = irradiance * BaseColor.rgb;
+
+		float3 F = FresnelSchlickRoughness(saturate(dot(n, v)), F0, Roughness);
+		float reflection = 0.0;
+		float3 specular = reflection * (F * brdf.x + brdf.y);
+
+		float3 kD = float3(1.0) - F;
 		kD *= 1.0 - Metallic;
 
-		float3 diffuse = irradiance * BaseColor.rgb;
-		return kD * diffuse;
+		return kD * diffuse + specular;
 	}
 };
 
 // Trowbridge-Reitz GGX normal distribution function
-internal float DistributionGGX(in float nDotH, in float roughness)
+public float DistributionGGX(in float nDotH, in float roughness)
 {
 	float a = roughness * roughness;
 	float a2 = a * a;
@@ -72,7 +76,7 @@ internal float DistributionGGX(in float nDotH, in float roughness)
 	return num / denom;
 }
 
-internal float GeometrySchlickGGX(float nDotV, float roughness)
+public float GeometrySchlickGGX(float nDotV, float roughness)
 {
 	float r = roughness + 1.0;
 	float k = (r * r) / 8.0;
@@ -83,7 +87,7 @@ internal float GeometrySchlickGGX(float nDotV, float roughness)
 	return num / denom;
 }
 
-internal float GeometrySmith(in float nDotV, in float nDotL, in float roughness)
+public float GeometrySmith(in float nDotV, in float nDotL, in float roughness)
 {
 	float ggx1  = GeometrySchlickGGX(nDotV, roughness);
 	float ggx2  = GeometrySchlickGGX(nDotL, roughness);
@@ -91,14 +95,14 @@ internal float GeometrySmith(in float nDotV, in float nDotL, in float roughness)
 	return ggx1 * ggx2;
 }
 
-internal float3 FresnelSchlick(in float hDotV, in float3 f0)
+public float3 FresnelSchlick(in float hDotV, in float3 f0)
 {
 	float f = pow(saturate(1.0 - hDotV), 5.0);
 	//return f + f0 * (1.0 - f);
 	return f0 + (float3(1.0) - f0) * f;
 }
 
-internal float3 FresnelSchlickRoughness(in float cosTheta, in float3 f0, in float roughness)
+public float3 FresnelSchlickRoughness(in float cosTheta, in float3 f0, in float roughness)
 {
 	return f0 + (max(float3(1.0 - roughness), f0) - f0) * pow(saturate(1.0 - cosTheta), 5.0);
 }

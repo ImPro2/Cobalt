@@ -31,7 +31,7 @@ struct GBuffers
 };
 
 [shader("fragment")]
-float4 FSMain(VSOutput input, uniform ConstantBuffer<Scene> scene, uniform GBuffers gBuffers, SamplerCube irradianceMap): SV_Target
+float4 FSMain(VSOutput input, uniform ConstantBuffer<Scene> scene, uniform GBuffers gBuffers, SamplerCube irradianceMap, Sampler2D brdfLUT): SV_Target
 {
 	float3 fragPosition = gBuffers.SamplerPosition.Sample(input.UV).xyz;
 	float3 occlusionRoughnessMetallic = gBuffers.SamplerOcclusionRoughnessMetallic.Sample(input.UV).xyz;
@@ -51,14 +51,16 @@ float4 FSMain(VSOutput input, uniform ConstantBuffer<Scene> scene, uniform GBuff
 
 	luminance += scene.DirectionalLight.Illuminate(brdf, material.Normal, viewDir);
 
+	float2 brdfLookUp = brdfLUT.Sample(float2(saturate(dot(material.Normal, viewDir)), material.Roughness)).rg;
 	float3 irradiance = irradianceMap.Sample(material.Normal.xyz).rgb;
 
-	float3 ambient = brdf.CalculateAmbient(material.Normal, viewDir, irradiance);
+	float3 ambient = brdf.CalculateAmbient(material.Normal, viewDir, irradiance, brdfLookUp);
 	float3 color = luminance + ambient;
 
 	color = color / (color + float3(1.0)); // HDR tonemapping
 	color = pow(color, float3(1.0 / 2.2)); // Gamma correction
 	
-	return float4(saturate(color), material.BaseColor.w);
+	return float4(color, material.BaseColor.w);
+	//return float4(brdfLookUp, 0.0, 1.0);
 }
 

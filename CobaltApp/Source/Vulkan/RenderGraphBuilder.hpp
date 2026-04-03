@@ -44,9 +44,12 @@ namespace Cobalt
 		RGResourceType ResourceType;
 		RGResourceSizeFlags ResourceSizeFlags = RGResourceSizeFlags::SwapchainRelative;
 
+		VkFormat Format = VK_FORMAT_UNDEFINED; // Defaults to swapchain format
+
 		bool Transient = true;
 		bool External = false;
 		bool CopySrc = false;
+		bool Sampled = false;
 		bool SwapchainTarget = false;
 
 		uint32_t Width = 1;

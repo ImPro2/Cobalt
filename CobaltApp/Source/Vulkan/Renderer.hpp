@@ -74,6 +74,7 @@ namespace Cobalt
 		glm::mat4 ViewMatrix;
 
 		Cubemap* IrradianceCube;
+		Texture* BRDFLUT;
 	};
 
 	class RenderGraph;

@@ -132,12 +132,13 @@ namespace Cobalt
 		ShaderCursor shaderCursor = mLightingPipelineBindings.GetShaderCursor(frameIndex);
 		shaderCursor.Field("scene").Write(*renderContext.SceneBuffer);
 		shaderCursor.Field("gBuffers")
-			.WriteField("SamplerPosition", renderGraph.GetResource(mPositionAttachment))
-			.WriteField("SamplerBaseColor", renderGraph.GetResource(mBaseColorAttachment))
-			.WriteField("SamplerNormal", renderGraph.GetResource(mNormalAttachment))
-			.WriteField("SamplerOcclusionRoughnessMetallic", renderGraph.GetResource(mOCRAttachment))
-			.WriteField("SamplerEmissive", renderGraph.GetResource(mEmissiveAttachment));
+			.WriteField("SamplerPosition", *renderGraph.GetResource(mPositionAttachment))
+			.WriteField("SamplerBaseColor", *renderGraph.GetResource(mBaseColorAttachment))
+			.WriteField("SamplerNormal", *renderGraph.GetResource(mNormalAttachment))
+			.WriteField("SamplerOcclusionRoughnessMetallic", *renderGraph.GetResource(mOCRAttachment))
+			.WriteField("SamplerEmissive", *renderGraph.GetResource(mEmissiveAttachment));
 		shaderCursor.WriteField("irradianceMap", *renderContext.IrradianceCube);
+		shaderCursor.WriteField("brdfLUT", *renderContext.BRDFLUT);
 		shaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipelineBindings.PipelineRef->GetPipeline());

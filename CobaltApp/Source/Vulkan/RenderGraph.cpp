@@ -179,11 +179,11 @@ namespace Cobalt
 		CO_PROFILE_FN();
 	}
 
-	Texture& RenderGraph::GetResource(RGResourceHandle handle) const
+	Texture* RenderGraph::GetResource(RGResourceHandle handle) const
 	{
 		CO_PROFILE_FN();
 
-		return *mResources[handle];
+		return mResources[handle].get();
 	}
 
 	RenderPass* RenderGraph::GetPass(const std::string& passName) const
@@ -377,6 +377,7 @@ namespace Cobalt
 
 			TextureInfo textureInfo;
 			textureInfo.Usage = 0;
+			textureInfo.Format = resourceInfo.Format;
 
 			if (resourceInfo.ResourceSizeFlags == RGResourceSizeFlags::SwapchainRelative)
 			{
@@ -390,13 +391,17 @@ namespace Cobalt
 			}
 
 			if (resourceInfo.CopySrc)
-				textureInfo.Usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+				textureInfo.Usage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+
+			if (resourceInfo.Sampled)
+				textureInfo.Usage |= VK_IMAGE_USAGE_SAMPLED_BIT;
 
 			switch (resourceInfo.ResourceType)
 			{
 				case RGResourceType::ColorAttachment:
 				{
-					textureInfo.Format = defaultColorFormat;
+					if (textureInfo.Format == VK_FORMAT_UNDEFINED)
+						textureInfo.Format = defaultColorFormat;
 
 					for (auto [_, accessType] : resourceTouchList[resourceHandle])
 						textureInfo.Usage |= RGAccessTypeToVkImageUsage(accessType);
@@ -405,7 +410,9 @@ namespace Cobalt
 				}
 				case RGResourceType::DepthAttachment:
 				{
-					textureInfo.Format = defaultDepthFormat;
+					if (textureInfo.Format == VK_FORMAT_UNDEFINED)
+						textureInfo.Format = defaultDepthFormat;
+
 					textureInfo.Usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 					break;
 				}
@@ -592,7 +599,7 @@ namespace Cobalt
 		// Sort passes
 
 		//SortPasses(neededPasses, passAdjacencyGraph, passInDegree);
-		mPassOrder = { 0, 1, 2 };
+		mPassOrder = { 0, 1, 2, 3 };
 		
 		AllocateResources(resourceTouchList);
 		BuildCompiledPasses(resourceTouchList, passTouchList, passAdjacencyGraph, neededPasses);
