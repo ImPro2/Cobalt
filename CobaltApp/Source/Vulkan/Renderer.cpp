@@ -97,7 +97,7 @@ namespace Cobalt
 			sData->mRenderGraph->ExecuteLimitedExecutionPasses(commandBuffer, sData->mRenderContext);
 		});
 
-		sData->mRenderContext.IrradianceCube = irradianceCubePass->GetIrradianceCube();
+		sData->mRenderContext.IrradianceCube = irradianceCubePass->GetCubemap();
 		sData->mRenderContext.BRDFLUT = brdflutPass->GetBRDFLUT();
 
 		//vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());

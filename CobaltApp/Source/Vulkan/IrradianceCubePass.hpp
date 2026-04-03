@@ -1,11 +1,12 @@
 #pragma once
 #include "RenderPass.hpp"
 #include "PipelineBindings.hpp"
+#include "CubemapPass.hpp"
 
 namespace Cobalt
 {
 
-	class IrradianceCubePass : public RenderPass
+	class IrradianceCubePass : public CubemapPass
 	{
 	public:
 		IrradianceCubePass();
@@ -14,25 +15,15 @@ namespace Cobalt
 	public:
 		void SetEnvironmentMap(Cubemap* envMap, const Mesh* mesh);
 
-		Cubemap* GetIrradianceCube() const { return mIrradianceCube.get(); }
-
 	public:
 		void Setup(RenderGraphBuilder& builder) override;
-		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext) override;
+		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext, uint32_t face, uint32_t mipLevel, uint32_t viewportSize) override;
 
 	private:
-		uint32_t mDimensions = 32;
-
-		RGResourceHandle mFramebufferHandle = 0;
 		PipelineBindings mPipelineBindings;
 
 		Cubemap* mEnvironmentMap = nullptr;
 		const Mesh* mMesh = nullptr;
-
-		std::unique_ptr<Cubemap> mIrradianceCube;
-
-		uint32_t mInvocationIndex = 0;
-		uint32_t mInvocationCount = 0;
 	};
 
 }
