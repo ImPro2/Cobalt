@@ -611,6 +611,24 @@ namespace Cobalt
 		mPassInDegree = passInDegree;
 	}
 
+	void RenderGraph::Recompile()
+	{
+		mResourceNameHandleMap.clear();
+		mClearColorMap.clear();
+		mLimitedExecutionPasses.clear();
+		mResourceTouchList.clear();
+		mPassTouchList.clear();
+		mPassAdjacencyGraph.clear();
+		mNeededPasses.clear();
+		mPassInDegree.clear();
+		mResourceInfos.clear();
+		mResources.clear();
+		mPassOrder.clear();
+		mCompiledPasses.clear();
+
+		Compile();
+	}
+
 	void RenderGraph::ExecutePass(const std::string& passName, VkCommandBuffer commandBuffer, const RenderContext& renderContext)
 	{
 		CO_PROFILE_FN();

@@ -13,6 +13,7 @@ namespace Cobalt
 
 	public:
 		Cubemap* GetCubemap() const { return mCubemap.get(); }
+		std::unique_ptr<Cubemap> TransferCubemap() { return std::move(mCubemap); }
 
 	public:
 		virtual void Setup(RenderGraphBuilder& builder) override;

@@ -74,8 +74,8 @@ namespace Cobalt
 		glm::mat4 ViewMatrix;
 
 		Texture* BRDFLUT;
-		Cubemap* IrradianceCube;
-		Cubemap* PrefilteredEnvironmentMap;
+		std::unique_ptr<Cubemap> IrradianceCube;
+		std::unique_ptr<Cubemap> PrefilteredEnvironmentMap;
 	};
 
 	class RenderGraph;

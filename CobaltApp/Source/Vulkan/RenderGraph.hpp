@@ -64,6 +64,7 @@ namespace Cobalt
 
 	public:
 		void Compile();
+		void Recompile();
 		void ExecutePass(const std::string& passName, VkCommandBuffer commandBuffer, const RenderContext& renderContext);
 		//void ExecuteLimitedExecutionPasses(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
 		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
