@@ -35,11 +35,6 @@ namespace Cobalt
 
 		float mLastDeltaTime = 0.0f;
 		float mLastFPS = 0.0f;
-		
-		glm::vec4 mSphereBaseColor = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		float mSphereRoughnessFactor = 1.0f;
-		float mSphereMetallicFactor  = 0.0f;
-		bool mSphereMaterialChanged = false;
 	};
 
 }

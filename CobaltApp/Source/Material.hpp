@@ -71,9 +71,6 @@ namespace Cobalt
 
 	using MaterialHash = uint64_t;
 
-	// Indexed by mesh pass -> per-frame descriptor handles
-	using PassDescriptorHandles = std::unordered_map<std::string, std::vector<DescriptorHandle>>;
-
 	struct ShaderEffect
 	{
 		std::unordered_map<std::string, PipelineBindings> PassPipelineBindings;

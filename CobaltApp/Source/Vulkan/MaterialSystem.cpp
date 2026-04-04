@@ -88,10 +88,10 @@ namespace Cobalt
 		auto it = mMaterialInfoMaterialMap.find(materialInfo);
 
 		if (it != mMaterialInfoMaterialMap.end())
-		if (true)
 		{
 			Material* material = (*it).second;
 			mNameMaterialMap[materialName] = material;
+			mNameMaterialHandleMap[materialName] = material->GetMaterialHandle();
 			return material;
 		}
 		
@@ -128,6 +128,19 @@ namespace Cobalt
 			return nullptr;
 
 		return mMaterialInfoMaterialMap.at(materialInfo);
+	}
+
+	void MaterialSystem::UpdateMaterial(MaterialHandle materialHandle, const MaterialInfo& materialInfo)
+	{
+		CO_PROFILE_FN();
+
+		Material oldMaterial = mMaterials[materialHandle];
+
+		mMaterials[materialHandle] = Material(materialInfo, oldMaterial.GetShaderEffect(), materialHandle);
+		mGPUPackedMaterials[materialHandle] = materialInfo.PackedMaterial;
+
+		mMaterialInfoMaterialMap.erase(oldMaterial.GetMaterialInfo());
+		mMaterialInfoMaterialMap[materialInfo] = &mMaterials[materialHandle];
 	}
 
 }

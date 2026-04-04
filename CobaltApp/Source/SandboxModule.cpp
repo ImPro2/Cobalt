@@ -175,18 +175,28 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		ImGui::ShowDemoWindow();
-		return;
-
 		ImGui::Begin("Debug");
 
 		ImGui::Text("Delta Time: %fms", mLastDeltaTime * 1000.0f);
 		ImGui::Text("FPS: %f", mLastFPS);
 		ImGui::DragFloat3("Directional Light", &mScene.DirectionalLight.Direction.x, 0.1f, -1.0f, 1.0f);
 
-		mSphereMaterialChanged |= ImGui::DragFloat3("Sphere Base Color", &mSphereBaseColor.x, 0.01f, 0.0f, 1.0f);
-		mSphereMaterialChanged |= ImGui::DragFloat("Sphere Roughness Factor", &mSphereRoughnessFactor, 0.01f, 0.0f, 1.0f);
-		mSphereMaterialChanged |= ImGui::DragFloat("Sphere Metallic Factor", &mSphereMetallicFactor, 0.01f, 0.0f, 1.0f);
+		int sphereIndices[2] = {};
+		ImGui::DragInt2("Sphere", sphereIndices, 1.0f, 0, sSphereGridSize);
+
+		Material* material = mSphereMaterials[sphereIndices[0]][sphereIndices[1]];
+		MaterialInfo materialInfo = material->GetMaterialInfo();
+
+		bool materialChanged = false;
+
+		materialChanged |= ImGui::DragFloat3("Sphere Base Color", &materialInfo.PackedMaterial.BaseColorFactor.x, 0.01f, 0.0f, 1.0f);
+		materialChanged |= ImGui::DragFloat("Sphere Roughness Factor", &materialInfo.PackedMaterial.RoughnessFactor, 0.01f, 0.0f, 1.0f);
+		materialChanged |= ImGui::DragFloat("Sphere Metallic Factor", &materialInfo.PackedMaterial.MetallicFactor, 0.01f, 0.0f, 1.0f);
+
+		if (materialChanged)
+		{
+			Renderer::GetMaterialSystem().UpdateMaterial(material->GetMaterialHandle(), materialInfo);
+		}
 
 		ImGui::End();
 	}
