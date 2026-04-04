@@ -266,6 +266,9 @@ namespace Cobalt
 		uint8_t* data = stbi_load(filePath.string().c_str(), (int32_t*)&mWidth, (int32_t*)&mHeight, &channelCount, STBI_rgb_alpha);
 
 		mFormat = VK_FORMAT_R8G8B8A8_SRGB;
+		mMipLevels = static_cast<uint32_t>(floor(log2(std::min(mWidth, mHeight)))) + 1;
+		mUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT; // for mipmap generation
+
 		return data;
 	}
 
@@ -283,7 +286,7 @@ namespace Cobalt
 			.arrayLayers = 6,
 			.samples = VK_SAMPLE_COUNT_1_BIT,
 			.tiling = VK_IMAGE_TILING_OPTIMAL,
-			.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+			.usage = mUsage,
 			.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 			.queueFamilyIndexCount = 0,
 			.pQueueFamilyIndices = nullptr,
@@ -359,8 +362,10 @@ namespace Cobalt
 
 		std::unique_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::CreateMappedBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 
-		for (uint32_t i = 0; i < 6; i++)
-			stagingBuffer->CopyData(facesData[i], layerSize, i * layerSize);
+		for (uint32_t face = 0; face < 6; face++)
+		{
+			stagingBuffer->CopyData(facesData[face], layerSize, face * layerSize);
+		}
 
 		std::vector<VkBufferImageCopy> bufferImageCopies;
 
@@ -380,9 +385,65 @@ namespace Cobalt
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
 		{
-			VulkanCommands::TransitionImageLayout(commandBuffer, mImage, VK_IMAGE_ASPECT_COLOR_BIT, mMipLevels, 6, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+			VulkanCommands::TransitionImageLayout(commandBuffer, mImage, VK_IMAGE_ASPECT_COLOR_BIT, 0, mMipLevels, 0, 6, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 			vkCmdCopyBufferToImage(commandBuffer, stagingBuffer->GetBuffer(), mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (uint32_t)bufferImageCopies.size(), bufferImageCopies.data());
-			VulkanCommands::TransitionImageLayout(commandBuffer, mImage, VK_IMAGE_ASPECT_COLOR_BIT, mMipLevels, 6, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+			// Generate mipmaps
+
+			uint32_t prevMipWidth = mWidth;
+			uint32_t prevMipHeight = mHeight;
+
+			for (uint32_t mip = 1; mip < mMipLevels; mip++)
+			{
+				for (uint32_t face = 0; face < 6; face++)
+				{
+					VulkanCommands::TransitionImageLayout(commandBuffer, mImage, VK_IMAGE_ASPECT_COLOR_BIT, mip - 1, 1, face, 1, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+					VkImageBlit2 imageBlit = {
+						.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
+						.srcSubresource = {
+							.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+							.mipLevel = mip - 1,
+							.baseArrayLayer = face,
+							.layerCount = 1,
+						},
+						.srcOffsets = {
+							{ 0, 0, 0 },
+							{ (int32_t)prevMipWidth, (int32_t)prevMipHeight, 1 }
+						},
+						.dstSubresource = {
+							.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+							.mipLevel = mip,
+							.baseArrayLayer = face,
+							.layerCount = 1,
+						},
+						.dstOffsets = {
+							{ 0, 0, 0 },
+							{ (int32_t)std::max(prevMipWidth / 2, 1u), (int32_t)std::max(prevMipHeight / 2, 1u), 1 }
+						}
+					};
+
+					VkBlitImageInfo2 blit = {
+						.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2,
+						.srcImage = mImage,
+						.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+						.dstImage = mImage,
+						.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+						.regionCount = 1,
+						.pRegions = &imageBlit,
+						.filter = VK_FILTER_LINEAR,
+					};
+
+					vkCmdBlitImage2(commandBuffer, &blit);
+
+					VulkanCommands::TransitionImageLayout(commandBuffer, mImage, VK_IMAGE_ASPECT_COLOR_BIT, mip - 1, 1, face, 1, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+				}
+
+				prevMipWidth  = std::max(prevMipWidth / 2, 1u);
+				prevMipHeight = std::max(prevMipHeight / 2, 1u);
+			}
+
+			VulkanCommands::TransitionImageLayout(commandBuffer, mImage, VK_IMAGE_ASPECT_COLOR_BIT, mMipLevels - 1, 1, 0, 6, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		});
 
 		mImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
