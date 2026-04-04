@@ -48,12 +48,11 @@ public struct CookTorranceBRDF : IBRDF
 		return (diffuse + specular) * nDotL;
 	}
 
-	public float3 CalculateAmbient(in float3 n, in float3 v, in float3 irradiance, in float2 brdf)
+	public float3 CalculateAmbient(in float3 n, in float3 v, in float2 brdf, in float3 irradiance, in float3 reflection)
 	{
 		float3 diffuse = irradiance * BaseColor.rgb;
 
 		float3 F = FresnelSchlickRoughness(saturate(dot(n, v)), F0, Roughness);
-		float reflection = 0.0;
 		float3 specular = reflection * (F * brdf.x + brdf.y);
 
 		float3 kD = float3(1.0) - F;

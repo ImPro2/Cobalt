@@ -137,8 +137,9 @@ namespace Cobalt
 			.WriteField("SamplerNormal", *renderGraph.GetResource(mNormalAttachment))
 			.WriteField("SamplerOcclusionRoughnessMetallic", *renderGraph.GetResource(mOCRAttachment))
 			.WriteField("SamplerEmissive", *renderGraph.GetResource(mEmissiveAttachment));
-		shaderCursor.WriteField("irradianceMap", *renderContext.IrradianceCube);
 		shaderCursor.WriteField("brdfLUT", *renderContext.BRDFLUT);
+		shaderCursor.WriteField("irradianceMap", *renderContext.IrradianceCube);
+		shaderCursor.WriteField("prefilteredMap", *renderContext.PrefilteredEnvironmentMap);
 		shaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mLightingPipelineBindings.PipelineRef->GetPipeline());

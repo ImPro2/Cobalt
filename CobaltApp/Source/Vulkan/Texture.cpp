@@ -261,6 +261,7 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
+
 		int32_t channelCount = 0;
 
 		uint8_t* data = stbi_load(filePath.string().c_str(), (int32_t*)&mWidth, (int32_t*)&mHeight, &channelCount, STBI_rgb_alpha);
@@ -344,7 +345,6 @@ namespace Cobalt
 			.compareEnable = VK_FALSE,
 			.compareOp = VK_COMPARE_OP_NEVER,
 			.minLod = 0.0f,
-//			.minLod = mMipLevels / 2.0f,
 			.maxLod = (float)mMipLevels,
 			.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE,
 			.unnormalizedCoordinates = VK_FALSE,
