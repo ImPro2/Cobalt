@@ -1,53 +1,46 @@
 #include "copch.hpp"
-#include "IrradianceCubePass.hpp"
-#include "GraphicsContext.hpp"
-#include "VulkanCommands.hpp"
-#include "Renderer.hpp"
+#include "PrefilteredEnvironmentMapPass.hpp"
 #include "RenderGraph.hpp"
-
-#include <cmath>
+#include "VulkanCommands.hpp"
 
 namespace Cobalt
 {
 
-	IrradianceCubePass::IrradianceCubePass()
-		: CubemapPass("Irradiance Cube Pass", "", (RenderPassFlags)RenderPassFlagBits::SideAffect, 32, VK_FORMAT_R32G32B32A32_SFLOAT)
+	PrefilteredEnvironmentMapPass::PrefilteredEnvironmentMapPass()
+		: CubemapPass("Prefiltered Environment Map Pass", "", (RenderPassFlags)RenderPassFlagBits::None, 512, VK_FORMAT_R32G32B32A32_SFLOAT)
 	{
 		CO_PROFILE_FN();
 	}
 
-	IrradianceCubePass::~IrradianceCubePass()
+	PrefilteredEnvironmentMapPass::~PrefilteredEnvironmentMapPass()
 	{
 		CO_PROFILE_FN();
 	}
 
-	void IrradianceCubePass::SetEnvironmentMap(Cubemap* envMap, const Mesh* mesh)
+	void PrefilteredEnvironmentMapPass::SetEnvironmentMap(const Cubemap* environmentMap, const Mesh* mesh)
 	{
 		CO_PROFILE_FN();
 
-		mEnvironmentMap = envMap;
+		mEnvironmentMap = environmentMap;
 		mMesh = mesh;
 	}
 
-	void IrradianceCubePass::Setup(RenderGraphBuilder& builder)
+	void PrefilteredEnvironmentMapPass::Setup(RenderGraphBuilder& builder)
 	{
-		CO_PROFILE_FN();
-
 		CubemapPass::Setup(builder);
 
 		PipelineInfo pipelineInfo = {
-			.Shader = Renderer::GetShaderLibrary().GetShader("IBL\\IrradianceCube.slang"),
+			.Shader = Renderer::GetShaderLibrary().GetShader("IBL\\PrefilteredEnvironmentMap.slang"),
 			.EnableDepthTesting = false,
 			.ColorAttachments = {
 				{ false, mFormat }
 			}
 		};
 
-		Pipeline* pipeline = GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Irradiance Cube Pipeline", pipelineInfo);
-		mPipelineBindings = PipelineBindings(pipeline, false);
+		mPipelineBindings = PipelineBindings(GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("PrefilteredEnvironmentMap", pipelineInfo), false);
 	}
 
-	void IrradianceCubePass::Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext, uint32_t face, uint32_t mipLevel, uint32_t viewportSize)
+	void PrefilteredEnvironmentMapPass::Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext, uint32_t face, uint32_t mipLevel, uint32_t viewportSize)
 	{
 		CO_PROFILE_FN();
 
@@ -57,12 +50,14 @@ namespace Cobalt
 		static glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 512.0f);
 		glm::mat4 viewProjection = projection * mViewMatrices[face];
 
+		float roughness = (float)mipLevel / (mMipLevels - 1);
+
 		ShaderCursor shaderCursor = mPipelineBindings.GetShaderCursor();
 		shaderCursor.Field("uniforms")
 			.WriteField("ViewProjection", viewProjection)
 			.WriteField("Vertices", mMesh->GetVertexBufferReference())
-			.WriteField("DeltaPhi", (2.0f * glm::pi<float>()) / 180.0f)
-			.WriteField("DeltaTheta", (0.5f * glm::pi<float>()) / 64.0f);
+			.WriteField("Roughness", roughness)
+			.WriteField("SampleCount", 32);
 		shaderCursor.WriteField("environmentMap", *mEnvironmentMap);
 		shaderCursor.Finalize();
 

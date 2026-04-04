@@ -7,8 +7,9 @@
 #include "RenderGraph.hpp"
 #include "MaterialSystem.hpp"
 
-#include "IrradianceCubePass.hpp"
 #include "BRDFLUTPass.hpp"
+#include "IrradianceCubePass.hpp"
+#include "PrefilteredEnvironmentMapPass.hpp"
 #include "GeometryPass.hpp"
 #include "LightingPass.hpp"
 
@@ -51,6 +52,7 @@ namespace Cobalt
 		sData->mRenderGraph = std::make_unique<RenderGraph>();
 		sData->mRenderGraph->AddPass<BRDFLUTPass>();
 		sData->mRenderGraph->AddPass<IrradianceCubePass>();
+		sData->mRenderGraph->AddPass<PrefilteredEnvironmentMapPass>();
 		sData->mRenderGraph->AddPass<GeometryPass>();
 		sData->mRenderGraph->AddPass<LightingPass>();
 		sData->mRenderGraph->Compile();
@@ -84,11 +86,13 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		BRDFLUTPass* brdflutPass = static_cast<BRDFLUTPass*>(sData->mRenderGraph->GetPass("BRDFLUT Pass"));
-		IrradianceCubePass* irradianceCubePass = static_cast<IrradianceCubePass*>(sData->mRenderGraph->GetPass("Irradiance Cube Pass"));
-		LightingPass* lightingPass = static_cast<LightingPass*>(sData->mRenderGraph->GetPass("Lighting Pass"));
+		auto brdflutPass           = static_cast<BRDFLUTPass*>(sData->mRenderGraph->GetPass("BRDFLUT Pass"));
+		auto irradianceCubePass    = static_cast<IrradianceCubePass*>(sData->mRenderGraph->GetPass("Irradiance Cube Pass"));
+		auto prefilteredEnvMapPass = static_cast<PrefilteredEnvironmentMapPass*>(sData->mRenderGraph->GetPass("Prefiltered Environment Map Pass"));
+		auto lightingPass          = static_cast<LightingPass*>(sData->mRenderGraph->GetPass("Lighting Pass"));
 
 		irradianceCubePass->SetEnvironmentMap(environmentMap, skyboxMesh);
+		prefilteredEnvMapPass->SetEnvironmentMap(environmentMap, skyboxMesh);
 		lightingPass->SetSkybox(environmentMap, skyboxMesh);
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [](VkCommandBuffer commandBuffer)
@@ -97,10 +101,9 @@ namespace Cobalt
 			sData->mRenderGraph->ExecuteLimitedExecutionPasses(commandBuffer, sData->mRenderContext);
 		});
 
-		sData->mRenderContext.IrradianceCube = irradianceCubePass->GetCubemap();
 		sData->mRenderContext.BRDFLUT = brdflutPass->GetBRDFLUT();
-
-		//vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
+		sData->mRenderContext.IrradianceCube = irradianceCubePass->GetCubemap();
+		sData->mRenderContext.PrefilteredEnvironmentMap = prefilteredEnvMapPass->GetCubemap();
 	}
 
 	void Renderer::BeginScene(const GPUScene& scene, const glm::mat4& projectionMat, const glm::mat4& viewMat)

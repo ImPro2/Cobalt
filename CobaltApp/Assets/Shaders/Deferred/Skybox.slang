@@ -38,5 +38,5 @@ VSOutput VSMain(uniform ConstantBuffer<Uniforms> uniforms, uint vertexID: SV_Ver
 [shader("fragment")]
 float4 FSMain(VSOutput input, uniform SamplerCube skybox)
 {
-	return skybox.Sample(input.UVW);	
+	return skybox.Sample(input.UVW);
 }

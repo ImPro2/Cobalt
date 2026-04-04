@@ -599,7 +599,7 @@ namespace Cobalt
 		// Sort passes
 
 		//SortPasses(neededPasses, passAdjacencyGraph, passInDegree);
-		mPassOrder = { 0, 1, 2, 3 };
+		mPassOrder = { 0, 1, 2, 3, 4 };
 		
 		AllocateResources(resourceTouchList);
 		BuildCompiledPasses(resourceTouchList, passTouchList, passAdjacencyGraph, neededPasses);

@@ -114,7 +114,7 @@ namespace Cobalt
 			CopyImage(commandBuffer, 0, dstMipLevel, 0, face, extent, texture.GetImage(), cubemap.GetImage(), texture.GetImageLayout(), cubemap.GetImageLayout());
 		}
 
-		static void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageAspectFlags imageAspect, uint32_t mipLevels, uint32_t layers, VkImageLayout oldImageLayout, VkImageLayout newImageLayout)
+		static void TransitionImageLayout(VkCommandBuffer commandBuffer, VkImage image, VkImageAspectFlags imageAspect, uint32_t baseMip, uint32_t mipLevels, uint32_t baseLayer, uint32_t layers, VkImageLayout oldImageLayout, VkImageLayout newImageLayout)
 		{
 			CO_PROFILE_FN();
 
@@ -134,14 +134,12 @@ namespace Cobalt
 				.image = image,
 				.subresourceRange = {
 					.aspectMask = imageAspect,
-					.baseMipLevel = 0,
+					.baseMipLevel = baseMip,
 					.levelCount = mipLevels,
-					.baseArrayLayer = 0,
+					.baseArrayLayer = baseLayer,
 					.layerCount = layers
 				}
 			};
-
-			//vkCmdPipelineBarrier(commandBuffer, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
 
 			VkDependencyInfo dependencyInfo = {
 				.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
@@ -158,7 +156,7 @@ namespace Cobalt
 
 			VkImageLayout oldImageLayout = texture.GetImageLayout();
 
-			TransitionImageLayout(commandBuffer, texture.GetImage(), texture.GetImageAspectFlags(), texture.GetMipMapLevels(), 1, oldImageLayout, newImageLayout);
+			TransitionImageLayout(commandBuffer, texture.GetImage(), texture.GetImageAspectFlags(), 0, texture.GetMipMapLevels(), 0, 1, oldImageLayout, newImageLayout);
 
 			texture.SetImageLayout(newImageLayout);
 		}
@@ -169,7 +167,7 @@ namespace Cobalt
 
 			VkImageLayout oldImageLayout = cubemap.GetImageLayout();
 
-			TransitionImageLayout(commandBuffer, cubemap.GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, cubemap.GetMipMapLevels(), 6, oldImageLayout, newImageLayout);
+			TransitionImageLayout(commandBuffer, cubemap.GetImage(), VK_IMAGE_ASPECT_COLOR_BIT, 0, cubemap.GetMipMapLevels(), 0, 6, oldImageLayout, newImageLayout);
 
 			cubemap.SetImageLayout(newImageLayout);
 		}

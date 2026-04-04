@@ -39,7 +39,7 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
-		mFramebufferHandle = builder.DeclareResource("Irradiance Cube Framebuffer", RGResourceInfo{
+		mFramebufferHandle = builder.DeclareResource(mName + " Framebuffer", RGResourceInfo{
 			.ResourceType = RGResourceType::ColorAttachment,
 			.ResourceSizeFlags = RGResourceSizeFlags::Absolute,
 			.Format = mFormat,
