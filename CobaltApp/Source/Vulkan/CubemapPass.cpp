@@ -57,7 +57,7 @@ namespace Cobalt
 			.Format = mFormat,
 			.Width = mDimensions,
 			.Height = mDimensions,
-			.MipLevels = mMipLevels
+			.MipLevels = mMipLevels,
 		});
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)

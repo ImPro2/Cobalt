@@ -18,7 +18,7 @@ namespace Cobalt
 		~LightingPass();
 
 	public:
-		void SetSkybox(const Cubemap* skybox, const Mesh* skyboxMesh);
+		void SetSkybox(const Cubemap* skybox);
 
 	public:
 		void Setup(RenderGraphBuilder& builder) override;
@@ -43,7 +43,6 @@ namespace Cobalt
 		std::vector<std::unique_ptr<VulkanBuffer>> mSkyboxUniformBuffers;
 		std::unique_ptr<VulkanBuffer> mSkyboxCube;
 		const Cubemap* mSkybox = nullptr;
-		const Mesh* mSkyboxMesh = nullptr;
 	};
 
 }

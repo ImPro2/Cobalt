@@ -1,8 +1,11 @@
 #include "copch.hpp"
 #include "Texture.hpp"
+#include "Mesh.hpp"
 #include "GraphicsContext.hpp"
 #include "VulkanBuffer.hpp"
 #include "VulkanCommands.hpp"
+#include "EquirectangularMapProjectionPass.hpp"
+#include "RenderGraph.hpp"
 
 #include <stb_image.h>
 
@@ -51,7 +54,7 @@ namespace Cobalt
 		CO_PROFILE_FN();
 
 		std::unique_ptr<VulkanBuffer> stagingBuffer = VulkanBuffer::CreateMappedBuffer(mAllocationInfo.size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-		stagingBuffer->CopyData(data);
+		stagingBuffer->CopyData(data, mWidth * mHeight * 4);
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [&](VkCommandBuffer commandBuffer)
 		{
@@ -167,6 +170,8 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
+		stbi_set_flip_vertically_on_load(true);
+
 		int32_t width, height, channels;
 		stbi_uc* data = stbi_load(filePath.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
@@ -226,21 +231,29 @@ namespace Cobalt
 		CO_PROFILE_FN();
 
 		mMipLevels = cubemapInfo.MipLevels;
+		mCubeMesh = cubemapInfo.CubeMesh;
 
-		if (cubemapInfo.FacePaths.LoadedFromFile())
+		if (cubemapInfo.FilePaths.LoadedFromFile())
 		{
-			auto paths = cubemapInfo.FacePaths.GetPaths();
+			if (cubemapInfo.FilePaths.IsEquirectangularMap())
+			{
+				Texture equirectangularMap(TextureInfo(cubemapInfo.FilePaths.EquirectangularMap.string()));
+				CopyFromEquirectangularMap(equirectangularMap);
+			}
+			else
+			{
+				auto paths = cubemapInfo.FilePaths.GetFacePaths();
+				std::vector<uint8_t*> facesData(6);
 
-			std::vector<uint8_t*> facesData(6);
+				for (uint32_t i = 0; i < facesData.size(); i++)
+					facesData[i] = LoadDataFromFile(paths[i]);
 
-			for (uint32_t i = 0; i < facesData.size(); i++)
-				facesData[i] = LoadDataFromFile(paths[i]);
+				Create();
+				CopyFromFaces(facesData);
 
-			Create();
-			CopyData(facesData);
-
-			for (uint8_t* face : facesData)
-				free(face);
+				for (uint8_t* face : facesData)
+					free(face);
+			}
 		}
 		else
 		{
@@ -353,7 +366,24 @@ namespace Cobalt
 		VK_CALL(vkCreateSampler(GraphicsContext::Get().GetDevice(), &samplerCreateInfo, nullptr, &mSampler));
 	}
 
-	void Cubemap::CopyData(const std::vector<uint8_t*>& facesData)
+	void Cubemap::CopyFromEquirectangularMap(const Texture& equirectangularMap)
+	{
+		CO_PROFILE_FN();
+
+		auto equirectangularMapProjPass = static_cast<EquirectangularProjectionPass*>(Renderer::GetRenderGraph().GetPass("Equirectangular Projection Pass"));
+		equirectangularMapProjPass->SetEquirectangularMap(&equirectangularMap);
+		equirectangularMapProjPass->SetMesh(mCubeMesh);
+
+		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [](VkCommandBuffer commandBuffer)
+		{
+			GraphicsContext::Get().GetDescriptorBufferManager().BindDescriptorBuffers(commandBuffer);
+			Renderer::GetRenderGraph().ExecutePass("Equirectangular Projection Pass", commandBuffer, Renderer::GetRenderContext());
+		});
+
+		*this = *equirectangularMapProjPass->GetCubemap();
+	}
+
+	void Cubemap::CopyFromFaces(const std::vector<uint8_t*>& facesData)
 	{
 		CO_PROFILE_FN();
 

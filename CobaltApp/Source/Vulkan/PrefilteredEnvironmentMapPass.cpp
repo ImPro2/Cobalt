@@ -17,12 +17,13 @@ namespace Cobalt
 		CO_PROFILE_FN();
 	}
 
-	void PrefilteredEnvironmentMapPass::SetEnvironmentMap(const Cubemap* environmentMap, const Mesh* mesh)
+	void PrefilteredEnvironmentMapPass::SetEnvironmentMap(const Cubemap* environmentMap)
 	{
 		CO_PROFILE_FN();
 
 		mEnvironmentMap = environmentMap;
-		mMesh = mesh;
+		mMesh = environmentMap->GetMesh();
+		mCubemap->SetMesh(mMesh);
 	}
 
 	void PrefilteredEnvironmentMapPass::Setup(RenderGraphBuilder& builder)

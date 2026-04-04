@@ -29,7 +29,7 @@ namespace Cobalt
 		bool HasDepthAttachment = false;
 		bool HasStencilAttachment = false;
 
-		uint32_t ExecutionCount = 0; // Only for limited execution passes
+		uint32_t ExecutionCount = 0;
 
 		RenderPass* Pass;
 	};
@@ -64,7 +64,8 @@ namespace Cobalt
 
 	public:
 		void Compile();
-		void ExecuteLimitedExecutionPasses(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
+		void ExecutePass(const std::string& passName, VkCommandBuffer commandBuffer, const RenderContext& renderContext);
+		//void ExecuteLimitedExecutionPasses(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
 		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
 
 	public:

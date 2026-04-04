@@ -97,7 +97,7 @@ namespace Cobalt
 		static const RenderContext& GetRenderContext() { return sData->mRenderContext; }
 
 	public:
-		static void SetSkybox(Cubemap* environmentMap, const Mesh* skyboxMesh);
+		static void SetSkybox(Cubemap* environmentMap);
 
 		static void BeginScene(const GPUScene& scene, const glm::mat4& projectionMat, const glm::mat4& viewMat);
 		static void EndScene();

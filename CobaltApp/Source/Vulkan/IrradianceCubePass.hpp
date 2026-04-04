@@ -13,7 +13,7 @@ namespace Cobalt
 		~IrradianceCubePass();
 
 	public:
-		void SetEnvironmentMap(Cubemap* envMap, const Mesh* mesh);
+		void SetEnvironmentMap(Cubemap* envMap);
 
 	public:
 		void Setup(RenderGraphBuilder& builder) override;

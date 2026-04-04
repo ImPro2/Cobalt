@@ -8,11 +8,11 @@
 #include "MaterialSystem.hpp"
 
 #include "BRDFLUTPass.hpp"
+#include "EquirectangularMapProjectionPass.hpp"
 #include "IrradianceCubePass.hpp"
 #include "PrefilteredEnvironmentMapPass.hpp"
 #include "GeometryPass.hpp"
 #include "LightingPass.hpp"
-//#include "ImGuiPass.hpp"
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -51,6 +51,7 @@ namespace Cobalt
 		sData->mShaderLibrary = std::make_unique<ShaderLibrary>("CobaltApp/Assets/Shaders");
 
 		sData->mRenderGraph = std::make_unique<RenderGraph>();
+		sData->mRenderGraph->AddPass<EquirectangularProjectionPass>();
 		sData->mRenderGraph->AddPass<BRDFLUTPass>();
 		sData->mRenderGraph->AddPass<IrradianceCubePass>();
 		sData->mRenderGraph->AddPass<PrefilteredEnvironmentMapPass>();
@@ -83,7 +84,7 @@ namespace Cobalt
 		//sData->mRenderGraph->OnResize();
 	}
 
-	void Renderer::SetSkybox(Cubemap* environmentMap, const Mesh* skyboxMesh)
+	void Renderer::SetSkybox(Cubemap* environmentMap)
 	{
 		CO_PROFILE_FN();
 
@@ -92,14 +93,16 @@ namespace Cobalt
 		auto prefilteredEnvMapPass = static_cast<PrefilteredEnvironmentMapPass*>(sData->mRenderGraph->GetPass("Prefiltered Environment Map Pass"));
 		auto lightingPass          = static_cast<LightingPass*>(sData->mRenderGraph->GetPass("Lighting Pass"));
 
-		irradianceCubePass->SetEnvironmentMap(environmentMap, skyboxMesh);
-		prefilteredEnvMapPass->SetEnvironmentMap(environmentMap, skyboxMesh);
-		lightingPass->SetSkybox(environmentMap, skyboxMesh);
+		irradianceCubePass->SetEnvironmentMap(environmentMap);
+		prefilteredEnvMapPass->SetEnvironmentMap(environmentMap);
+		lightingPass->SetSkybox(environmentMap);
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [](VkCommandBuffer commandBuffer)
 		{
 			GraphicsContext::Get().GetDescriptorBufferManager().BindDescriptorBuffers(commandBuffer);
-			sData->mRenderGraph->ExecuteLimitedExecutionPasses(commandBuffer, sData->mRenderContext);
+			sData->mRenderGraph->ExecutePass("BRDFLUT Pass", commandBuffer, sData->mRenderContext);
+			sData->mRenderGraph->ExecutePass("Irradiance Cube Pass", commandBuffer, sData->mRenderContext);
+			sData->mRenderGraph->ExecutePass("Prefiltered Environment Map Pass", commandBuffer, sData->mRenderContext);
 		});
 
 		sData->mRenderContext.BRDFLUT = brdflutPass->GetBRDFLUT();

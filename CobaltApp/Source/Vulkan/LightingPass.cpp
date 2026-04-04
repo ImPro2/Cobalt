@@ -51,12 +51,11 @@ namespace Cobalt
 		mLightingPipelineBindings = PipelineBindings(GraphicsContext::Get().GetPipelineRegistry().BuildPipeline("Lighting", lightingPassPipelineInfo));
 	}
 
-	void LightingPass::SetSkybox(const Cubemap* skybox, const Mesh* skyboxMesh)
+	void LightingPass::SetSkybox(const Cubemap* skybox)
 	{
 		CO_PROFILE_FN();
 
 		mSkybox = skybox;
-		mSkyboxMesh = skyboxMesh;
 
 		// Build skybox pipeline
 
@@ -106,7 +105,7 @@ namespace Cobalt
 		SkyboxUniformBuffer skyboxUniformBufferData{};
 		skyboxUniformBufferData.ProjectionMatrix = renderContext.ProjectionMatrix;
 		skyboxUniformBufferData.ViewMatrix = renderContext.ViewMatrix;
-		skyboxUniformBufferData.MeshVertices = mSkyboxMesh->GetVertexBufferReference();
+		skyboxUniformBufferData.MeshVertices = mSkybox->GetMesh()->GetVertexBufferReference();
 
 		mSkyboxUniformBuffers[frameIndex]->CopyData(&skyboxUniformBufferData, sizeof(SkyboxUniformBuffer));
 
@@ -116,9 +115,9 @@ namespace Cobalt
 		shaderCursor.Finalize();
 
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mSkyboxPipelineBindings.PipelineRef->GetPipeline());
-		vkCmdBindIndexBuffer(commandBuffer, mSkyboxMesh->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(commandBuffer, mSkybox->GetMesh()->GetIndexBuffer()->GetBuffer(), 0, VK_INDEX_TYPE_UINT32);
 		descriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, mSkyboxPipelineBindings.PipelineRef->GetPipelineLayout(), mSkyboxPipelineBindings.DescriptorHandles[frameIndex]);
-		vkCmdDrawIndexed(commandBuffer, mSkyboxMesh->GetIndices().size(), 1, 0, 0, 0);
+		vkCmdDrawIndexed(commandBuffer, mSkybox->GetMesh()->GetIndices().size(), 1, 0, 0, 0);
 	}
 
 	void LightingPass::ExecuteLightingPass(VkCommandBuffer commandBuffer, const RenderContext& renderContext)

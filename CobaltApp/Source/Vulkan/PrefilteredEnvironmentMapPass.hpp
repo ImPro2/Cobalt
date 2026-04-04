@@ -12,7 +12,7 @@ namespace Cobalt
 		~PrefilteredEnvironmentMapPass();
 
 	public:
-		void SetEnvironmentMap(const Cubemap* environmentMap, const Mesh* mesh);
+		void SetEnvironmentMap(const Cubemap* environmentMap);
 
 	public:
 		void Setup(RenderGraphBuilder& builder) override;

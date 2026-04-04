@@ -21,12 +21,13 @@ namespace Cobalt
 		CO_PROFILE_FN();
 	}
 
-	void IrradianceCubePass::SetEnvironmentMap(Cubemap* envMap, const Mesh* mesh)
+	void IrradianceCubePass::SetEnvironmentMap(Cubemap* envMap)
 	{
 		CO_PROFILE_FN();
 
 		mEnvironmentMap = envMap;
-		mMesh = mesh;
+		mMesh = envMap->GetMesh();
+		mCubemap->SetMesh(mMesh);
 	}
 
 	void IrradianceCubePass::Setup(RenderGraphBuilder& builder)

@@ -94,17 +94,21 @@ namespace Cobalt
 		uint32_t mMipLevels;
 	};
 
-	struct CubemapFacePaths
+	struct CubemapFilePaths
 	{
-		std::array<std::filesystem::path, 6> GetPaths() const
+		std::array<std::filesystem::path, 6> GetFacePaths() const
 		{
 			return { RightFace, LeftFace, UpFace, DownFace, FrontFace, BackFace };
 		}
 
 		bool LoadedFromFile() const
 		{
-			return !RightFace.empty() && !LeftFace.empty() && !UpFace.empty() && !FrontFace.empty() && !BackFace.empty();
+			return !EquirectangularMap.empty() || !RightFace.empty() && !LeftFace.empty() && !UpFace.empty() && !FrontFace.empty() && !BackFace.empty();
 		}
+
+		bool IsEquirectangularMap() const { return !EquirectangularMap.empty(); }
+
+		std::filesystem::path EquirectangularMap;
 
 		std::filesystem::path RightFace;
 		std::filesystem::path LeftFace;
@@ -114,14 +118,18 @@ namespace Cobalt
 		std::filesystem::path BackFace;
 	};
 
+	class Mesh;
+
 	struct CubemapInfo
 	{
-		CubemapFacePaths FacePaths;
+		CubemapFilePaths FilePaths;
 
 		VkFormat Format = VK_FORMAT_UNDEFINED;
 		uint32_t Width = 0;
 		uint32_t Height = 0;
 		uint32_t MipLevels = 1;
+
+		const Mesh* CubeMesh = nullptr;
 	};
 
 	class Cubemap
@@ -144,10 +152,14 @@ namespace Cobalt
 
 		void SetImageLayout(VkImageLayout imageLayout) { mImageLayout = imageLayout; }
 
+		const Mesh* GetMesh() const { return mCubeMesh; }
+		void SetMesh(const Mesh* mesh) { mCubeMesh = mesh; }
+
 	private:
 		uint8_t* LoadDataFromFile(const std::filesystem::path& filePath);
 		void Create();
-		void CopyData(const std::vector<uint8_t*>& facesData);
+		void CopyFromEquirectangularMap(const Texture& equirectangularmap);
+		void CopyFromFaces(const std::vector<uint8_t*>& facesData);
 
 	private:
 		VkImage mImage = VK_NULL_HANDLE;
@@ -164,6 +176,8 @@ namespace Cobalt
 
 		VkFormat mFormat;
 		VkImageUsageFlags mUsage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+
+		const Mesh* mCubeMesh = nullptr;
 	};
 
 }

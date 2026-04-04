@@ -599,7 +599,7 @@ namespace Cobalt
 		// Sort passes
 
 		//SortPasses(neededPasses, passAdjacencyGraph, passInDegree);
-		mPassOrder = { 0, 1, 2, 3, 4 };
+		mPassOrder = { 0, 1, 2, 3, 4, 5 };
 		
 		AllocateResources(resourceTouchList);
 		BuildCompiledPasses(resourceTouchList, passTouchList, passAdjacencyGraph, neededPasses);
@@ -611,36 +611,33 @@ namespace Cobalt
 		mPassInDegree = passInDegree;
 	}
 
-	void RenderGraph::ExecuteLimitedExecutionPasses(VkCommandBuffer commandBuffer, const RenderContext& renderContext)
+	void RenderGraph::ExecutePass(const std::string& passName, VkCommandBuffer commandBuffer, const RenderContext& renderContext)
 	{
 		CO_PROFILE_FN();
+
+		RGPassHandle passHandle = mNamePassHandleMap[passName];
+		RGCompiledPass& compiledPass = mCompiledPasses[passHandle];
 
 		const Swapchain& swapchain = GraphicsContext::Get().GetSwapchain();
 		mCurrentBackBufferImage = swapchain.GetBackBuffers()[swapchain.GetBackBufferIndex()];
 		mCurrentBackBufferImageView = swapchain.GetBackBufferViews()[swapchain.GetBackBufferIndex()];
 
-		for (auto& limitedExecPass : mCompiledPasses)
+		std::vector<VkImageMemoryBarrier2> imageBarriers = compiledPass.ImageBarriers;
+		std::vector<VkImageMemoryBarrier2> postImageBarriers = compiledPass.PostImageBarriers;
+
+		for (uint32_t i = 0; i < compiledPass.ExecutionCount; i++)
 		{
-			if (limitedExecPass.ExecutionCount == 0)
-				continue;
+			compiledPass.Pass->Execute(commandBuffer, renderContext);
 
-			std::vector<VkImageMemoryBarrier2> imageBarriers = limitedExecPass.ImageBarriers;
-			std::vector<VkImageMemoryBarrier2> postImageBarriers = limitedExecPass.PostImageBarriers;
-
-			for (uint32_t i = 0; i < limitedExecPass.ExecutionCount; i++)
+			if (i == 0)
 			{
-				limitedExecPass.Pass->Execute(commandBuffer, renderContext);
-
-				if (i == 0)
-				{
-					limitedExecPass.ImageBarriers.clear();
-					limitedExecPass.PostImageBarriers.clear();
-				}
+				compiledPass.ImageBarriers.clear();
+				compiledPass.PostImageBarriers.clear();
 			}
-
-			//limitedExecPass.ImageBarriers = imageBarriers;
-			//limitedExecPass.PostImageBarriers = postImageBarriers;
 		}
+
+		compiledPass.ImageBarriers = imageBarriers;
+		compiledPass.PostImageBarriers = postImageBarriers;
 	}
 
 	void RenderGraph::Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext)

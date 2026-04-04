@@ -59,7 +59,7 @@ namespace Cobalt
 			sphereMaterialInfo.SampledTextures = { defaultTextureImage };
 
 			sphereMaterialInfo.ShaderEffectName = "Opaque";
-			sphereMaterialInfo.PackedMaterial.BaseColorFactor = { 1.0f, 0.0f, 0.0f, 1.0f };
+			sphereMaterialInfo.PackedMaterial.BaseColorFactor = { 0.3f, 0.3f, 0.3f, 1.0f };
 			sphereMaterialInfo.PackedMaterial.MetallicFactor = float(y) / (sSphereGridSize - 1);
 
 			for (uint32_t x = 0; x < sSphereGridSize; x++)
@@ -73,16 +73,18 @@ namespace Cobalt
 		}
 
 		CubemapInfo cubemapInfo;
-		cubemapInfo.FacePaths.BackFace = "CobaltApp/Assets/Textures/Skybox/back.jpg";
-		cubemapInfo.FacePaths.DownFace = "CobaltApp/Assets/Textures/Skybox/bottom.jpg";
-		cubemapInfo.FacePaths.FrontFace = "CobaltApp/Assets/Textures/Skybox/front.jpg";
-		cubemapInfo.FacePaths.LeftFace = "CobaltApp/Assets/Textures/Skybox/left.jpg";
-		cubemapInfo.FacePaths.RightFace = "CobaltApp/Assets/Textures/Skybox/right.jpg";
-		cubemapInfo.FacePaths.UpFace = "CobaltApp/Assets/Textures/Skybox/top.jpg";
+		//cubemapInfo.FilePaths.BackFace = "CobaltApp/Assets/Textures/Skybox/back.jpg";
+		//cubemapInfo.FilePaths.DownFace = "CobaltApp/Assets/Textures/Skybox/bottom.jpg";
+		//cubemapInfo.FilePaths.FrontFace = "CobaltApp/Assets/Textures/Skybox/front.jpg";
+		//cubemapInfo.FilePaths.LeftFace = "CobaltApp/Assets/Textures/Skybox/left.jpg";
+		//cubemapInfo.FilePaths.RightFace = "CobaltApp/Assets/Textures/Skybox/right.jpg";
+		//cubemapInfo.FilePaths.UpFace = "CobaltApp/Assets/Textures/Skybox/top.jpg";
+		cubemapInfo.FilePaths.EquirectangularMap = "CobaltApp/Assets/Textures/HDR/newport_loft.hdr";
+		cubemapInfo.CubeMesh = mCubeMesh;
 
 		Cubemap* skybox = AssetManager::GetCubemap(AssetManager::RegisterCubemap("Skybox", cubemapInfo));
 
-		Renderer::SetSkybox(skybox, mCubeMesh);
+		Renderer::SetSkybox(skybox);
 	}
 
 	void SandboxModule::OnShutdown()
@@ -181,7 +183,7 @@ namespace Cobalt
 		ImGui::Text("FPS: %f", mLastFPS);
 		ImGui::DragFloat3("Directional Light", &mScene.DirectionalLight.Direction.x, 0.1f, -1.0f, 1.0f);
 
-		int sphereIndices[2] = {};
+		static int sphereIndices[2] = {};
 		ImGui::DragInt2("Sphere", sphereIndices, 1.0f, 0, sSphereGridSize);
 
 		Material* material = mSphereMaterials[sphereIndices[0]][sphereIndices[1]];
