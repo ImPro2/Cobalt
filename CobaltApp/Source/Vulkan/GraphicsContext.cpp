@@ -3,7 +3,6 @@
 #include "Application.hpp"
 #include "VulkanUtils.hpp"
 #include "Renderer.hpp"
-#include "ImGuiBackend.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -416,13 +415,13 @@ namespace Cobalt
 
 			for (Module* module : modules)
 				module->OnRender();
+
+			if (enableImGui)
+			{
+				Application::Get()->GetImGuiPass()->RenderFrame(mActiveCommandBuffer);
+			}
 		}
 
-		if (enableImGui)
-		{
-			ImGuiBackend::RenderFrame();
-		}
-		
 		// Submit command buffers
 
 		{
@@ -436,18 +435,6 @@ namespace Cobalt
 
 			VkCommandBuffer commandBuffers[2];
 			commandBuffers[0] = mActiveCommandBuffer;
-
-			if (enableImGui)
-			{
-				commandBuffers[1] = ImGuiBackend::GetActiveCommandBuffer();
-				commandBufferCount = 2;
-			}
-
-			/*std::vector<VkCommandBuffer> commandBuffers;
-			commandBuffers.push_back(mActiveCommandBuffer);
-
-			if (enableImGui)
-				commandBuffers.push_back(ImGuiBackend::GetActiveCommandBuffer());*/
 
 			VkSubmitInfo submitInfo = {
 				.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,

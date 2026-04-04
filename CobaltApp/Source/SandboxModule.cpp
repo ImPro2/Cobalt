@@ -175,6 +175,9 @@ namespace Cobalt
 	{
 		CO_PROFILE_FN();
 
+		ImGui::ShowDemoWindow();
+		return;
+
 		ImGui::Begin("Debug");
 
 		ImGui::Text("Delta Time: %fms", mLastDeltaTime * 1000.0f);

@@ -12,6 +12,7 @@
 #include "PrefilteredEnvironmentMapPass.hpp"
 #include "GeometryPass.hpp"
 #include "LightingPass.hpp"
+//#include "ImGuiPass.hpp"
 
 #include <backends/imgui_impl_vulkan.h>
 

@@ -2,7 +2,7 @@
 #include "Application.hpp"
 #include "AssetManager.hpp"
 #include "Vulkan/Renderer.hpp"
-#include "Vulkan/ImGuiBackend.hpp"
+#include "Vulkan/ImGuiPass.hpp"
 #include "Vulkan/ShaderCompiler.hpp"
 
 namespace Cobalt
@@ -48,7 +48,10 @@ namespace Cobalt
 		Renderer::Init();
 
 		if (mInfo.EnableImGui)
-			ImGuiBackend::Init();
+		{
+			mImGuiPass = std::make_unique<ImGuiPass>();
+			mImGuiPass->Init();
+		}
 
 		for (Module* module : mModules)
 			module->OnInit();
@@ -88,22 +91,22 @@ namespace Cobalt
 					mGraphicsContext->OnResize();
 					Renderer::OnResize();
 
-					if (mInfo.EnableImGui)
-						ImGuiBackend::OnResize();
+					if (mImGuiPass)
+						mImGuiPass->OnResize();
 				}
 			}
 
 			{
 				CO_PROFILE_CATEGORY("ImGui", Optick::Category::UI);
 
-				if (mInfo.EnableImGui)
+				if (mImGuiPass)
 				{
-					ImGuiBackend::BeginFrame();
+					mImGuiPass->BeginFrame();
 
 					for (Module* module : mModules)
 						module->OnUIRender();
 
-					ImGuiBackend::EndFrame();
+					mImGuiPass->EndFrame();
 				}
 			}
 
@@ -137,8 +140,8 @@ namespace Cobalt
 
 		vkDeviceWaitIdle(GraphicsContext::Get().GetDevice());
 
-		if (mInfo.EnableImGui)
-			ImGuiBackend::Shutdown();
+		if (mImGuiPass)
+			mImGuiPass->Shutdown();
 
 		AssetManager::Shutdown();
 		Renderer::Shutdown();

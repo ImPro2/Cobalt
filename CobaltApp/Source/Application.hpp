@@ -2,6 +2,7 @@
 #include "Window.hpp"
 #include "Vulkan/GraphicsContext.hpp"
 #include "Module.hpp"
+#include "Vulkan/ImGuiPass.hpp"
 
 #include <memory>
 
@@ -19,6 +20,7 @@ namespace Cobalt
 	public:
 		static Application* Get() { return sInstance; }
 		const ApplicationInfo& GetInfo() const { return mInfo; }
+		ImGuiPass* GetImGuiPass() const { return mImGuiPass.get(); }
 
 		const Window& GetWindow() const { return *mWindow; }
 
@@ -59,6 +61,8 @@ namespace Cobalt
 		std::unique_ptr<GraphicsContext> mGraphicsContext;
 
 		std::vector<Module*> mModules;
+
+		std::unique_ptr<ImGuiPass> mImGuiPass;
 	};
 
 }
