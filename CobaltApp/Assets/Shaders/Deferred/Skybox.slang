@@ -20,7 +20,7 @@ VSOutput VSMain(uniform ConstantBuffer<Uniforms> uniforms, uint vertexID: SV_Ver
 
 	// Flip y
 	float4x4 proj = uniforms.ProjectionMatrix;
-	proj[1][1] *= -1.0;
+	//proj[1][1] *= -1.0;
 
 	// Remove translation
 	float4x4 view = uniforms.ViewMatrix;

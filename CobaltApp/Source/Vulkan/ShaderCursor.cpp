@@ -128,8 +128,6 @@ namespace Cobalt
 
 		auto& descriptorCache = GraphicsContext::Get().GetDescriptorCache();
 		descriptorCache.WriteDescriptorBindingsIfNeeded(mDescriptorHandle, mDescriptorBindingsRef);
-
-		//free(mPushConstantBuffer);
 	}
 
 }

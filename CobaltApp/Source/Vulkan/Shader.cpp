@@ -16,6 +16,9 @@ namespace Cobalt
 	{
 		mLinkedProgram = ShaderCompiler::CompileShader(filePath);
 
+		//if (filePath.contains("ForwardPass.slang"))
+			//__debugbreak();
+
 		InitShaderStages();
 		Reflect();
 	}

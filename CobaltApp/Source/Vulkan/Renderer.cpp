@@ -13,6 +13,7 @@
 #include "PrefilteredEnvironmentMapPass.hpp"
 #include "GeometryPass.hpp"
 #include "LightingPass.hpp"
+#include "ForwardPass.hpp"
 
 #include <backends/imgui_impl_vulkan.h>
 
@@ -55,8 +56,9 @@ namespace Cobalt
 		sData->mRenderGraph->AddPass<BRDFLUTPass>();
 		sData->mRenderGraph->AddPass<IrradianceCubePass>();
 		sData->mRenderGraph->AddPass<PrefilteredEnvironmentMapPass>();
-		sData->mRenderGraph->AddPass<GeometryPass>();
-		sData->mRenderGraph->AddPass<LightingPass>();
+		//sData->mRenderGraph->AddPass<GeometryPass>();
+		//sData->mRenderGraph->AddPass<LightingPass>();
+		sData->mRenderGraph->AddPass<ForwardPass>();
 		sData->mRenderGraph->Compile();
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [](VkCommandBuffer commandBuffer)
@@ -104,11 +106,15 @@ namespace Cobalt
 		auto brdflutPass           = static_cast<BRDFLUTPass*>(sData->mRenderGraph->GetPass("BRDFLUT Pass"));
 		auto irradianceCubePass    = static_cast<IrradianceCubePass*>(sData->mRenderGraph->GetPass("Irradiance Cube Pass"));
 		auto prefilteredEnvMapPass = static_cast<PrefilteredEnvironmentMapPass*>(sData->mRenderGraph->GetPass("Prefiltered Environment Map Pass"));
-		auto lightingPass          = static_cast<LightingPass*>(sData->mRenderGraph->GetPass("Lighting Pass"));
+
+		if (auto lightingPass = static_cast<LightingPass*>(sData->mRenderGraph->GetPass("Lighting Pass")); lightingPass)
+			lightingPass->SetSkybox(environmentMap);
+
+		if (auto forwardPass = static_cast<ForwardPass*>(sData->mRenderGraph->GetPass("Forward Pass")); forwardPass)
+			forwardPass->SetSkybox(environmentMap);
 
 		irradianceCubePass->SetEnvironmentMap(environmentMap);
 		prefilteredEnvMapPass->SetEnvironmentMap(environmentMap);
-		lightingPass->SetSkybox(environmentMap);
 
 		GraphicsContext::Get().SubmitSingleTimeCommands(GraphicsContext::Get().GetQueue(), [](VkCommandBuffer commandBuffer)
 		{

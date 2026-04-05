@@ -20,12 +20,6 @@ namespace Cobalt
 		void Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext) override;
 
 	private:
-		Shader* mShader = nullptr;
-
-		std::unique_ptr<Pipeline> mPipeline;
-
-		std::vector<DescriptorHandle> mDescriptorHandles;
-
 		RGResourceHandle mPositionAttachment, mBaseColorAttachment, mNormalAttachment, mOCRAttachment, mEmissiveAttachment;
 		RGResourceHandle mDepthStencilAttachment;
 	};

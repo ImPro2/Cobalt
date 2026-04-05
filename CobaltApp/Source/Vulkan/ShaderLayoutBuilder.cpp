@@ -360,6 +360,12 @@ namespace Cobalt
 						parameterCategory == SLANG_PARAMETER_CATEGORY_NONE)
 						continue;
 
+					if (shaderParameter.Fields.contains(fieldVarLayout->getName()))
+					{
+						bindingOffset = (uint32_t)std::max((int32_t)bindingOffset - 1, 0);
+						continue;
+					}
+
 					if (fieldVarLayout->getTypeLayout()->getKind() == slang::TypeReflection::Kind::Struct)
 					{
 						localBindingOffset += fieldVarLayout->getOffset(SLANG_PARAMETER_CATEGORY_DESCRIPTOR_TABLE_SLOT);

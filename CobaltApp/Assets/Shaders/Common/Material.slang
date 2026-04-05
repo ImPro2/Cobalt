@@ -11,11 +11,6 @@ public struct Material
 	public float  Metallic;
 	public float3 Emissive;
 
-	public float3 CalculateAmbient()
-	{
-		return float3(0.03) * BaseColor.xyz;
-	}
-
 	public CookTorranceBRDF PrepareBRDF()
 	{
 		CookTorranceBRDF brdf = CookTorranceBRDF(BaseColor.xyz, Roughness, Metallic);

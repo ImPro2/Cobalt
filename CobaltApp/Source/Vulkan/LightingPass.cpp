@@ -85,7 +85,7 @@ namespace Cobalt
 		CO_PROFILE_FN();
 
 		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
-		VulkanCommands::SetViewport(commandBuffer, GraphicsContext::Get().GetSwapchain().GetExtent());
+		VulkanCommands::SetViewport(commandBuffer, GraphicsContext::Get().GetSwapchain().GetExtent(), false);
 
 		if (mSkybox)
 			ExecuteSkyboxPass(commandBuffer, renderContext);

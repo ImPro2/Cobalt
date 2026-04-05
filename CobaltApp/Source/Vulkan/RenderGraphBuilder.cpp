@@ -1,6 +1,7 @@
 #include "copch.hpp"
 #include "RenderGraphBuilder.hpp"
 #include "HashUtils.hpp"
+#include "GraphicsContext.hpp"
 #include <cassert>
 
 namespace Cobalt
@@ -14,6 +15,7 @@ namespace Cobalt
 		mResourceNameHandleMap["BackBuffer Attachment"] = 0;
 		mResources.emplace_back(RGResourceInfo {
 			.ResourceType = RGResourceType::ColorAttachment,
+			.Format = GraphicsContext::Get().GetSwapchain().GetSurfaceFormat().format,
 			.Transient = false,
 			.SwapchainTarget = true
 		});

@@ -41,8 +41,6 @@ namespace Cobalt
 		builder.SetClearColor(mNormalAttachment);
 		builder.SetClearColor(mOCRAttachment);
 		builder.SetClearColor(mEmissiveAttachment);
-
-		mShader = Renderer::GetShaderLibrary().GetShader("Deferred\\GeometryPass.slang");
 	}
 
 	void GeometryPass::Execute(VkCommandBuffer commandBuffer, const RenderContext& renderContext)
@@ -51,7 +49,7 @@ namespace Cobalt
 
 		mRenderGraph.BeginPass(commandBuffer, mPassHandle);
 
-		VulkanCommands::SetViewport(commandBuffer, GraphicsContext::Get().GetSwapchain().GetExtent());
+		VulkanCommands::SetViewport(commandBuffer, GraphicsContext::Get().GetSwapchain().GetExtent(), false);
 
 		uint32_t frameIndex = GraphicsContext::Get().GetFrameIndex();
 

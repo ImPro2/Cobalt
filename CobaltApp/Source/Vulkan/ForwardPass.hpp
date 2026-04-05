@@ -1,21 +1,15 @@
 #pragma once
 #include "RenderPass.hpp"
-#include "Shader.hpp"
-#include "Pipeline.hpp"
-#include "ShaderCursor.hpp"
-#include "Texture.hpp"
 #include "PipelineBindings.hpp"
-
-#include <vector>
 
 namespace Cobalt
 {
 
-	class LightingPass : public RenderPass
+	class ForwardPass : public RenderPass
 	{
 	public:
-		LightingPass();
-		~LightingPass();
+		ForwardPass();
+		~ForwardPass();
 
 	public:
 		void SetSkybox(const Cubemap* skybox);
@@ -26,11 +20,12 @@ namespace Cobalt
 
 	private:
 		void ExecuteSkyboxPass(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
-		void ExecuteLightingPass(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
+		void ExecuteForwardPass(VkCommandBuffer commandBuffer, const RenderContext& renderContext);
 
 	private:
-		RGResourceHandle mPositionAttachment, mBaseColorAttachment, mNormalAttachment, mOCRAttachment, mEmissiveAttachment;
-		PipelineBindings mSkyboxPipelineBindings, mLightingPipelineBindings;
+		PipelineBindings mForwardPipelineBindings, mSkyboxPipelineBindings;
+		const Cubemap* mSkybox = nullptr;
+		std::vector<std::unique_ptr<VulkanBuffer>> mSkyboxUniformBuffers;
 
 		struct SkyboxUniformBuffer
 		{
@@ -39,9 +34,6 @@ namespace Cobalt
 			VkDeviceAddress MeshVertices;
 			float __padding0[2];
 		};
-
-		std::vector<std::unique_ptr<VulkanBuffer>> mSkyboxUniformBuffers;
-		const Cubemap* mSkybox = nullptr;
 	};
 
 }

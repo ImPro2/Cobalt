@@ -199,7 +199,7 @@ namespace Cobalt
 		return nullptr;
 	}
 
-	std::vector<Texture*> RenderGraph::GetPassOutputAttachments(const std::string& passName) const
+	std::vector<RGResourceInfo> RenderGraph::GetPassOutputAttachmentInfos(const std::string& passName) const
 	{
 		CO_PROFILE_FN();
 
@@ -208,13 +208,13 @@ namespace Cobalt
 
 		const auto& passTouches = mPassTouchList[mNamePassHandleMap.at(passName)];
 
-		std::vector<Texture*> outputAttachments;
+		std::vector<RGResourceInfo> outputAttachments;
 		outputAttachments.reserve(passTouches.size());
 
 		for (const auto& [resourceHandle, accessType] : passTouches)
 		{
 			if (IsWriteRGAccessType(accessType))
-				outputAttachments.push_back(mResources[resourceHandle].get());
+				outputAttachments.push_back(mResourceInfos[resourceHandle]);
 		}
 		
 		return outputAttachments;
@@ -370,7 +370,7 @@ namespace Cobalt
 
 		for (RGResourceHandle resourceHandle = 0; resourceHandle < mResourceInfos.size(); resourceHandle++)
 		{
-			const auto& resourceInfo = mResourceInfos[resourceHandle];
+			auto& resourceInfo = mResourceInfos[resourceHandle];
 
 			if (resourceInfo.SwapchainTarget || resourceInfo.External)
 				continue;
@@ -418,6 +418,7 @@ namespace Cobalt
 				}
 			}
 
+			resourceInfo.Format = textureInfo.Format;
 			mResources[resourceHandle] = std::make_unique<Texture>(textureInfo);
 		}
 	}

@@ -28,15 +28,19 @@ namespace Cobalt
 				.Shader = (Shader*)mShaderLibrary.GetShader(pass->GetShaderPath().string()),
 			};
 
-			const std::vector<Texture*> outputAttachments = mRenderGraph.GetPassOutputAttachments(pass->GetName());
-			pipelineInfo.ColorAttachments.reserve(outputAttachments.size());
+			auto outputAttachmentInfos = mRenderGraph.GetPassOutputAttachmentInfos(pass->GetName());
+			pipelineInfo.ColorAttachments.reserve(outputAttachmentInfos.size());
 
-			for (Texture* outputAttachment : outputAttachments)
+			for (const auto& outputAttachmentInfo : outputAttachmentInfos)
 			{
-				if (outputAttachment->GetImageAspectFlags() & VK_IMAGE_ASPECT_DEPTH_BIT)
-					pipelineInfo.DepthAttachmentFormat = outputAttachment->GetFormat();
+				if (outputAttachmentInfo.Format == VK_FORMAT_D32_SFLOAT)
+				{
+					pipelineInfo.DepthAttachmentFormat = outputAttachmentInfo.Format;
+				}
 				else
-					pipelineInfo.ColorAttachments.push_back({ false, outputAttachment->GetFormat() });
+				{
+					pipelineInfo.ColorAttachments.push_back({ false, outputAttachmentInfo.Format });
+				}
 			}
 
 			mPipelineRegistry.BuildPipeline(pass->GetName(), pipelineInfo);
