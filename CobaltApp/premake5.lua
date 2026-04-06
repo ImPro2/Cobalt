@@ -3,6 +3,7 @@ project "CobaltApp"
 	
 	links
 	{
+		"Cobalt",
         "ImGui",
         "GLFW",
         "stb_image",
@@ -20,6 +21,7 @@ project "CobaltApp"
 
 	includedirs
 	{
+		"%{wks.location}/Cobalt/Source",
 		"Source",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.VulkanSDK}",

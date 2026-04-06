@@ -73,4 +73,5 @@ group "Dependencies"
 	include "Dependencies/fastgltf"
 group ""
 
+include "Cobalt"
 include "CobaltApp"
