@@ -337,7 +337,7 @@ namespace Cobalt
 				shaderParameter.UniformSize = elementTypeLayout->getSize();
 
 				//AddShaderParameters(elementVarLayout, shaderStage, shaderParameter, shaderParameter.Binding, shaderParameter.UniformByteOffset, isPushConstant, pushConstantRangeIndex);
-				AddShaderParameters(elementVarLayout, shaderStage, shaderParameter, shaderParameter.Binding, uniformByteOffset + varLayout->getOffset(), isPushConstant, pushConstantRangeIndex);
+				AddShaderParameters(elementVarLayout, shaderStage, shaderParameter, bindingOffset, uniformByteOffset + varLayout->getOffset(), isPushConstant, pushConstantRangeIndex);
 				break;
 			}
 			case slang::TypeReflection::Kind::Struct:

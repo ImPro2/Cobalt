@@ -182,6 +182,11 @@ namespace Cobalt
 			const VulkanBuffer& indexBuffer = *batch.IndexBuffer;
 			const PipelineBindings& pipelineBindings = batch.Effect->PassPipelineBindings.at(passName);
 
+			ShaderCursor shaderCursor = pipelineBindings.GetShaderCursor(frameIndex);
+			shaderCursor.WriteField("instanceOffset", batch.InstanceOffset);
+
+			vkCmdPushConstants(commandBuffer, pipelineBindings.PipelineRef->GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT, 0, pipelineBindings.PushConstantBuffer.size(), pipelineBindings.PushConstantBuffer.data());
+
 			if (indexBuffer.GetBuffer() != lastIndexBuffer)
 			{
 				lastIndexBuffer = indexBuffer.GetBuffer();
@@ -195,7 +200,7 @@ namespace Cobalt
 				descriptorBufferManager.SetDescriptorBufferOffsets(commandBuffer, pipelineBindings.PipelineRef->GetPipelineLayout(), pipelineBindings.DescriptorHandles[frameIndex]);
 			}
 
-			vkCmdDrawIndexed(commandBuffer, batch.IndexCount, batch.InstanceCount, batch.FirstIndex, 0, batch.FirstInstance);
+			vkCmdDrawIndexed(commandBuffer, batch.IndexCount, batch.InstanceCount, batch.FirstIndex, 0, 0);
 		}
 	}
 
@@ -219,7 +224,7 @@ namespace Cobalt
 		firstBatch.FirstIndex    = renderContext.DrawCalls[0].FirstIndex;
 		firstBatch.IndexCount    = renderContext.DrawCalls[0].IndexCount;
 		firstBatch.Effect        = renderContext.DrawCalls[0].Material->GetShaderEffect();
-		firstBatch.FirstInstance = 0;
+		firstBatch.InstanceOffset = 0;
 		firstBatch.InstanceCount = 1;
 
 		batches.push_back(firstBatch);
@@ -235,6 +240,7 @@ namespace Cobalt
 			bool sameIndexBuffer = currDraw.IndexBuffer == lastBatch.IndexBuffer;
 			bool samePipeline    = lastPipeline == currPipeline;
 
+
 			if (sameIndexBuffer && samePipeline)
 			{
 				lastBatch.InstanceCount++;
@@ -246,7 +252,7 @@ namespace Cobalt
 				newBatch.FirstIndex    = currDraw.FirstIndex;
 				newBatch.IndexCount    = currDraw.IndexCount;
 				newBatch.Effect        = currDraw.Material->GetShaderEffect();
-				newBatch.FirstInstance = i;
+				newBatch.InstanceOffset = i;
 				newBatch.InstanceCount = 1;
 
 				batches.push_back(newBatch);

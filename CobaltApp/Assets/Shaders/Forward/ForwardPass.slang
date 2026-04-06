@@ -34,9 +34,9 @@ struct VSOutput
 ConstantBuffer<Scene> gScene;
 
 [shader("vertex")]
-VSOutput VSMain(StructuredBuffer<Object> objects, uint instanceID: SV_InstanceID, uint vertexID: SV_VertexID)
+VSOutput VSMain(StructuredBuffer<Object> objects, uniform uint instanceOffset, uint instanceID: SV_InstanceID, uint vertexID: SV_VertexID)
 {
-	Object     object = objects[instanceID];
+	Object     object = objects[instanceOffset + instanceID];
 	MeshVertex vertex = object.Vertices[vertexID];
 
 	float4 positionLocal = float4(vertex.Position.xyz, 1.0);
@@ -58,8 +58,6 @@ VSOutput VSMain(StructuredBuffer<Object> objects, uint instanceID: SV_InstanceID
 float4 FSMain(CoarseVertex coarseVertex, StructuredBuffer<PackedMaterial> materials, Sampler2D textures[], Sampler2D brdfLUT, SamplerCube irradianceMap, SamplerCube prefilteredMap): SV_Target
 {
 	PackedMaterial packedMaterial = materials[coarseVertex.MaterialHandle];
-
-	//return float4(saturate(packedMaterial.BaseColorFactor).rgb, 1.0);
 
 	Material material = packedMaterial.Unpack(
 		textures[packedMaterial.BaseColorMapHandle],

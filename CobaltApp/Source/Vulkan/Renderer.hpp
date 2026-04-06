@@ -56,7 +56,7 @@ namespace Cobalt
 		uint32_t FirstIndex = 0;
 		uint32_t IndexCount = 0;
 		const ShaderEffect* Effect = nullptr;
-		uint32_t FirstInstance = 0;
+		uint32_t InstanceOffset = 0;
 		uint32_t InstanceCount = 0;
 	};
 

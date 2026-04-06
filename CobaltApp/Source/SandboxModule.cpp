@@ -140,11 +140,10 @@ namespace Cobalt
 
 		mScene.DirectionalLight.Direction = glm::normalize(mScene.DirectionalLight.Direction);
 
-		Transform cubeTransform;
-		cubeTransform.Scale = { 20.0f, 0.2f, 20.0f };
+		mSphereMesh->SetMaterial(mSphereMaterials[0][0]);
 
 		Renderer::BeginScene(mScene, mCameraController.GetProjectionMatrix(), mCameraController.GetViewMatrix());
-		Renderer::DrawMesh(cubeTransform, mCubeMesh);
+		Renderer::DrawMesh({ .Scale = { 20.0f, 0.0f, 20.0f } }, mCubeMesh);
 
 		float left = -10.0f;
 		float right = 10.0f;
